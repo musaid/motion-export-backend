@@ -8,6 +8,7 @@ import {
 
 export default [
   index('routes/home.tsx'),
+  route('docs', './routes/docs.tsx'),
   ...prefix('api', [
     route('checkout', './routes/api/checkout.ts'),
     route('track', './routes/api/track.ts'),
