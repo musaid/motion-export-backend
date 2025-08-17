@@ -6,6 +6,8 @@ import {
 } from '~/lib/auth.server';
 import { z } from 'zod';
 import type { Route } from './+types/login';
+import { database } from '~/database/context';
+import { adminUsers } from '~/database/schema';
 
 const loginSchema = z.object({
   username: z.string().min(1),
@@ -14,6 +16,13 @@ const loginSchema = z.object({
 });
 
 export async function loader({ request }: Route.LoaderArgs) {
+  // Check if any admin exists
+  const admins = await database().select().from(adminUsers).limit(1);
+  if (admins.length === 0) {
+    // No admin exists, redirect to setup
+    return redirect('/admin/setup');
+  }
+
   const userId = await getUserSession(request);
   if (userId) {
     return redirect('/admin');
@@ -43,6 +52,7 @@ export async function action({ request }: Route.ActionArgs) {
 export default function AdminLogin({ actionData }: Route.ComponentProps) {
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get('redirectTo') || '/admin';
+  const setupSuccess = searchParams.get('setup') === 'success';
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -52,6 +62,14 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
             <h1 className="text-3xl font-bold text-gray-900">Admin Login</h1>
             <p className="text-gray-600 mt-2">Motion Export Dashboard</p>
           </div>
+
+          {setupSuccess && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
+              <p className="text-sm text-green-800">
+                ✓ Admin account created successfully! Please login.
+              </p>
+            </div>
+          )}
 
           <Form method="post" className="space-y-6">
             <input type="hidden" name="redirectTo" value={redirectTo} />

@@ -19,6 +19,7 @@ export default [
     route('webhook', './routes/api/webhook.ts'),
   ]),
   ...prefix('admin', [
+    route('setup', './routes/admin/setup.tsx'),
     layout('./routes/admin/layout.tsx', [
       index('./routes/admin/index.tsx'),
       route('logout', './routes/admin/logout.ts'),
