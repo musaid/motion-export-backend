@@ -5,7 +5,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function sendLicenseEmail(email: string, licenseKey: string) {
   try {
     await resend.emails.send({
-      from: 'Motion Export <noreply@yourdomain.com>',
+      from: 'Motion Export <noreply@motionexport.com>',
       to: email,
       subject: 'Your Motion Export Pro License',
       html: `

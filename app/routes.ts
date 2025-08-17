@@ -9,6 +9,9 @@ import {
 export default [
   index('routes/home.tsx'),
   route('docs', './routes/docs.tsx'),
+  route('checkout', './routes/checkout.tsx'),
+  route('success', './routes/success.tsx'),
+  route('cancel', './routes/cancel.tsx'),
   ...prefix('api', [
     route('checkout', './routes/api/checkout.ts'),
     route('track', './routes/api/track.ts'),

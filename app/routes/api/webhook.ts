@@ -47,10 +47,31 @@ export async function action({ request }: Route.ActionArgs) {
           return new Response('OK', { status: 200 });
         }
 
+        // Fetch the full session details if email is missing
+        let customerEmail = session.customer_email;
+        let customerDetails = session.customer_details;
+        
+        if (!customerEmail) {
+          const fullSession = await stripe.checkout.sessions.retrieve(session.id);
+          customerEmail = fullSession.customer_email || fullSession.customer_details?.email || null;
+          customerDetails = fullSession.customer_details;
+        }
+
+        // If still no email, try to get it from customer details
+        if (!customerEmail && customerDetails?.email) {
+          customerEmail = customerDetails.email;
+        }
+
+        // If we still don't have an email, log error and return
+        if (!customerEmail) {
+          console.error('No email found in checkout session:', session.id);
+          return new Response('OK', { status: 200 });
+        }
+
         // Create license
         const license = await createLicense({
-          email: session.customer_email!,
-          stripeCustomerId: session.customer as string,
+          email: customerEmail,
+          stripeCustomerId: session.customer as string || null,
           stripeSessionId: session.id,
           figmaUserId: session.metadata?.figmaUserId || undefined,
           amount: session.amount_total! / 100,
@@ -58,9 +79,9 @@ export async function action({ request }: Route.ActionArgs) {
         });
 
         // Send email
-        await sendLicenseEmail(session.customer_email!, license.key);
+        await sendLicenseEmail(customerEmail, license.key);
         console.log(
-          `License created: ${license.key} for ${session.customer_email}`,
+          `License created: ${license.key} for ${customerEmail}`,
         );
       }
       break;
