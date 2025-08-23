@@ -1,55 +1,47 @@
-import { Form, Link, Outlet } from 'react-router';
+import { Form, Outlet, useLocation } from 'react-router';
+import { SidebarLayout } from '~/components/sidebar-layout';
+import { Sidebar, SidebarHeader, SidebarBody, SidebarSection, SidebarItem } from '~/components/sidebar';
+import { Button } from '~/components/button';
 
 export default function AdminLayout() {
+  const location = useLocation();
+  
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold">Motion Export Admin</h1>
-              </div>
-              <div className="ml-6 flex space-x-8">
-                <Link
-                  to="/admin"
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/admin/licenses"
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
-                >
-                  Licenses
-                </Link>
-                <Link
-                  to="/admin/analytics"
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
-                >
-                  Analytics
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <Form method="post" action="/admin/logout">
-                <button
-                  type="submit"
-                  className="text-sm text-gray-500 hover:text-gray-900"
-                >
-                  Logout
-                </button>
-              </Form>
-            </div>
-          </div>
+    <SidebarLayout
+      navbar={
+        <div className="flex items-center justify-between px-4 py-4">
+          <h1 className="text-lg font-semibold text-zinc-900 dark:text-white">Motion Export Admin</h1>
         </div>
-      </nav>
-
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      }
+      sidebar={
+        <Sidebar>
+          <SidebarHeader>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Admin Panel</h2>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Manage your licenses</p>
+          </SidebarHeader>
+          <SidebarBody>
+            <SidebarSection>
+              <SidebarItem href="/admin" current={location.pathname === '/admin'}>
+                Dashboard
+              </SidebarItem>
+              <SidebarItem href="/admin/licenses" current={location.pathname === '/admin/licenses'}>
+                Licenses
+              </SidebarItem>
+            </SidebarSection>
+            <SidebarSection className="mt-auto pb-4">
+              <Form method="post" action="/logout">
+                <Button type="submit" color="red" outline className="w-full">
+                  Logout
+                </Button>
+              </Form>
+            </SidebarSection>
+          </SidebarBody>
+        </Sidebar>
+      }
+    >
+      <main className="flex-1 p-6">
         <Outlet />
       </main>
-    </div>
+    </SidebarLayout>
   );
 }

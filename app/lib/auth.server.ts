@@ -43,7 +43,7 @@ export async function requireAdmin(request: Request) {
   const userId = await getUserSession(request);
 
   if (!userId) {
-    throw redirect('/admin/login');
+    throw redirect('/login');
   }
 
   const [admin] = await database()
@@ -53,7 +53,7 @@ export async function requireAdmin(request: Request) {
     .limit(1);
 
   if (!admin) {
-    throw redirect('/admin/login');
+    throw redirect('/login');
   }
 
   return admin;
@@ -64,7 +64,7 @@ export async function logout(request: Request) {
     request.headers.get('Cookie'),
   );
 
-  return redirect('/admin/login', {
+  return redirect('/login', {
     headers: {
       'Set-Cookie': await sessionStorage.destroySession(session),
     },

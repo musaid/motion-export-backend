@@ -12,6 +12,9 @@ export default [
   route('checkout', './routes/checkout.tsx'),
   route('success', './routes/success.tsx'),
   route('cancel', './routes/cancel.tsx'),
+  route('setup', './routes/auth/admin-setup.tsx'),
+  route('login', './routes/auth/admin-login.tsx'),
+  route('logout', './routes/auth/admin-logout.ts'),
   ...prefix('api', [
     route('checkout', './routes/api/checkout.ts'),
     route('track', './routes/api/track.ts'),
@@ -19,12 +22,9 @@ export default [
     route('webhook', './routes/api/webhook.ts'),
   ]),
   ...prefix('admin', [
-    route('setup', './routes/admin/setup.tsx'),
     layout('./routes/admin/layout.tsx', [
       index('./routes/admin/index.tsx'),
-      route('logout', './routes/admin/logout.ts'),
       route('licenses', './routes/admin/licenses.tsx'),
-      route('login', './routes/admin/login.tsx'),
     ]),
   ]),
 ] satisfies RouteConfig;
