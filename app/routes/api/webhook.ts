@@ -69,19 +69,18 @@ export async function action({ request }: Route.ActionArgs) {
         }
 
         // Create license
-        const license = await createLicense({
+        const { license, plainKey } = await createLicense({
           email: customerEmail,
           stripeCustomerId: session.customer as string || null,
           stripeSessionId: session.id,
-          figmaUserId: session.metadata?.figmaUserId || undefined,
           amount: session.amount_total! / 100,
           currency: session.currency!,
         });
 
-        // Send email
-        await sendLicenseEmail(customerEmail, license.key);
+        // Send email with plain key
+        await sendLicenseEmail(customerEmail, plainKey);
         console.log(
-          `License created: ${license.key} for ${customerEmail}`,
+          `License created for ${customerEmail}`,
         );
       }
       break;

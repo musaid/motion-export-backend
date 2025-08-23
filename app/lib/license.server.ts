@@ -2,6 +2,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { customAlphabet } from 'nanoid';
 import { database } from '~/database/context';
 import { licenses, dailyUsage, type License } from '~/database/schema';
+import { hashLicenseKey } from './security.server';
 
 const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 4);
 
@@ -17,50 +18,48 @@ export async function createLicense(data: {
   email: string;
   stripeCustomerId?: string | null;
   stripeSessionId?: string | null;
-  figmaUserId?: string | null;
   amount: number;
   currency: string;
-}): Promise<License> {
-  const key = generateLicenseKey();
-
-  // Store payment intent ID in metadata if needed
-  const metadata = {
-    createdVia: 'stripe_checkout',
-    timestamp: new Date().toISOString(),
-  };
+}): Promise<{ license: License; plainKey: string }> {
+  const plainKey = generateLicenseKey();
+  const hashedKey = hashLicenseKey(plainKey);
 
   const [license] = await database()
     .insert(licenses)
     .values({
-      key,
+      key: hashedKey, // Store hashed version
       email: data.email,
       stripeCustomerId: data.stripeCustomerId,
       stripeSessionId: data.stripeSessionId,
-      figmaUserId: data.figmaUserId,
       amount: data.amount,
       currency: data.currency,
       status: 'active',
       activations: '[]',
-      metadata: JSON.stringify(metadata),
+      metadata: JSON.stringify({
+        createdVia: 'stripe_checkout',
+        timestamp: new Date().toISOString(),
+      }),
     })
     .returning();
 
-  return license;
+  return { license, plainKey }; // Return plain key to send to user
 }
 
 export async function validateLicense(
-  key: string,
+  plainKey: string,
   deviceId: string,
 ): Promise<{
   valid: boolean;
   error?: string;
   license?: License;
 }> {
-  // Get license
+  const hashedKey = hashLicenseKey(plainKey);
+
+  // Get license by hashed key
   const [license] = await database()
     .select()
     .from(licenses)
-    .where(eq(licenses.key, key))
+    .where(eq(licenses.key, hashedKey))
     .limit(1);
 
   if (!license) {
@@ -123,23 +122,20 @@ export async function checkDailyUsage(deviceId: string): Promise<{
   const today = new Date().toISOString().split('T')[0];
   const DAILY_LIMIT = 3;
 
-  // Get or create today's usage
-  let [usage] = await database()
+  // Get today's usage
+  const [usage] = await database()
     .select()
     .from(dailyUsage)
     .where(and(eq(dailyUsage.deviceId, deviceId), eq(dailyUsage.date, today)))
     .limit(1);
 
   if (!usage) {
-    // Create new daily usage record
-    [usage] = await database()
-      .insert(dailyUsage)
-      .values({
-        deviceId,
-        date: today,
-        exportCount: 0,
-      })
-      .returning();
+    // No usage yet today
+    return {
+      count: 0,
+      limit: DAILY_LIMIT,
+      canExport: true,
+    };
   }
 
   return {
@@ -152,10 +148,29 @@ export async function checkDailyUsage(deviceId: string): Promise<{
 export async function incrementDailyUsage(deviceId: string): Promise<void> {
   const today = new Date().toISOString().split('T')[0];
 
-  await database()
-    .update(dailyUsage)
-    .set({
-      exportCount: sql`export_count + 1`,
-    })
-    .where(and(eq(dailyUsage.deviceId, deviceId), eq(dailyUsage.date, today)));
+  // Check if record exists
+  const [existing] = await database()
+    .select()
+    .from(dailyUsage)
+    .where(and(eq(dailyUsage.deviceId, deviceId), eq(dailyUsage.date, today)))
+    .limit(1);
+
+  if (existing) {
+    // Update existing record
+    await database()
+      .update(dailyUsage)
+      .set({
+        exportCount: sql`${dailyUsage.exportCount} + 1`,
+      })
+      .where(eq(dailyUsage.id, existing.id));
+  } else {
+    // Create new record
+    await database()
+      .insert(dailyUsage)
+      .values({
+        deviceId,
+        date: today,
+        exportCount: 1,
+      });
+  }
 }

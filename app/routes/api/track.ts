@@ -1,76 +1,87 @@
-// app/routes/api.track.tsx
 import { data } from 'react-router';
-import { usageAnalytics, dailyUsage } from '~/database/schema';
+import { usageAnalytics } from '~/database/schema';
 import { database } from '~/database/context';
+import { incrementDailyUsage } from '~/lib/license.server';
+import { 
+  validateApiKey, 
+  validateOrigin, 
+  generateSecureDeviceId,
+  checkRateLimit
+} from '~/lib/security.server';
 import { z } from 'zod';
-import { and, eq } from 'drizzle-orm';
 import type { Route } from './+types/track';
 
 const trackSchema = z.object({
   event: z.string(),
-  userId: z.string().optional(),
-  deviceId: z.string().optional(),
-  licenseKey: z.string().optional(),
+  figmaUserId: z.string().optional(),
   properties: z.record(z.string(), z.any()).optional(),
 });
 
 export async function action({ request }: Route.ActionArgs) {
+  // Security: Check origin
+  const origin = request.headers.get('origin');
+  if (!validateOrigin(origin)) {
+    return data({ error: 'Invalid origin' }, { status: 403 });
+  }
+
+  // Security: Check API key
+  const apiKey = request.headers.get('x-api-key');
+  if (!validateApiKey(apiKey)) {
+    return data({ error: 'Invalid API key' }, { status: 401 });
+  }
+
+  // Get IP for rate limiting
+  const ip = request.headers.get('x-forwarded-for') || 
+             request.headers.get('x-real-ip') || 
+             'unknown';
+
+  // Security: Rate limiting (higher limit for tracking)
+  if (!checkRateLimit(ip, 100, 60000)) { // 100 requests per minute
+    return data({ error: 'Rate limit exceeded' }, { status: 429 });
+  }
+
   try {
     const body = await request.json();
-    const data = trackSchema.parse(body);
+    const { event, figmaUserId, properties } = trackSchema.parse(body);
 
-    // Get IP and user agent
-    const ip =
-      request.headers.get('x-forwarded-for') ||
-      request.headers.get('x-real-ip') ||
-      'unknown';
-    const userAgent = request.headers.get('user-agent') || 'unknown';
+    // Generate secure device ID
+    const deviceId = generateSecureDeviceId(figmaUserId, ip);
 
-    // Track event
+    // Only track essential events
+    const essentialEvents = [
+      'export_completed',
+      'plugin_opened',
+      'license_activated'
+    ];
+
+    if (!essentialEvents.includes(event)) {
+      return Response.json({ success: true }); // Silently ignore non-essential events
+    }
+
+    // Track event (minimal data)
     await database()
       .insert(usageAnalytics)
       .values({
-        event: data.event,
-        userId: data.userId,
-        licenseKey: data.licenseKey,
-        properties: JSON.stringify(data.properties || {}),
-        ip,
-        userAgent,
+        event,
+        userId: figmaUserId,
+        properties: JSON.stringify({
+          framework: properties?.framework,
+          count: properties?.animationCount,
+          version: properties?.pluginVersion,
+        }),
+        ip: ip === 'unknown' ? null : ip,
+        userAgent: null, // Don't store user agent
       });
 
-    // If it's an export event, update daily usage
-    if (data.event === 'export_completed' && data.deviceId) {
-      const today = new Date().toISOString().split('T')[0];
-
-      // Check if record exists
-      const [existing] = await database()
-        .select()
-        .from(dailyUsage)
-        .where(
-          and(
-            eq(dailyUsage.deviceId, data.deviceId),
-            eq(dailyUsage.date, today),
-          ),
-        )
-        .limit(1);
-
-      if (existing) {
-        await database()
-          .update(dailyUsage)
-          .set({ exportCount: (existing.exportCount || 0) + 1 })
-          .where(eq(dailyUsage.id, existing.id));
-      } else {
-        await database().insert(dailyUsage).values({
-          deviceId: data.deviceId,
-          date: today,
-          exportCount: 1,
-        });
-      }
+    // Update daily usage ONLY for export events
+    if (event === 'export_completed') {
+      await incrementDailyUsage(deviceId);
     }
 
     return Response.json({ success: true });
   } catch (error) {
     console.error('Tracking error:', error);
-    return data({ error: 'Failed to track event' }, { status: 500 });
+    // Don't expose errors to client
+    return Response.json({ success: true });
   }
 }
