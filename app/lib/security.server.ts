@@ -1,26 +1,61 @@
 import crypto from 'crypto';
 
-// API key for plugin authentication
-const PLUGIN_API_KEY = process.env.PLUGIN_API_KEY || 'motion-export-plugin-2024';
+// Allowed origins for different clients
+const ALLOWED_ORIGINS = {
+  figma: [
+    'https://www.figma.com',
+    'https://figma.com',
+    'null', // Figma plugins send 'null' origin in some cases
+  ],
+  web: [
+    'https://motionexport.com',
+    'https://www.motionexport.com',
+    'http://localhost:3000', // Development only
+  ]
+};
 
-// Allowed origins for CORS
-const ALLOWED_ORIGINS = [
-  'https://www.figma.com',
-  'https://figma.com',
-  'http://localhost:3000', // Development
-];
+// Plugin identifiers (not secrets, just for identification)
+const VALID_PLUGIN_IDS = ['motion-export'];
 
 // Rate limiting cache
 const rateLimitCache = new Map<string, { count: number; resetAt: number }>();
 
-export function validateOrigin(origin: string | null): boolean {
-  if (!origin) return false;
-  return ALLOWED_ORIGINS.includes(origin);
-}
-
-export function validateApiKey(apiKey: string | null): boolean {
-  if (!apiKey) return false;
-  return apiKey === PLUGIN_API_KEY;
+export function validateRequest(request: Request): {
+  valid: boolean;
+  error?: string;
+  clientType?: 'plugin' | 'web';
+} {
+  const origin = request.headers.get('origin');
+  const pluginId = request.headers.get('x-plugin-id');
+  const figmaUserId = request.headers.get('x-figma-user-id');
+  
+  // Check if it's a Figma plugin request
+  if (pluginId) {
+    // Validate plugin ID
+    if (!VALID_PLUGIN_IDS.includes(pluginId)) {
+      return { valid: false, error: 'Invalid plugin' };
+    }
+    
+    // Validate origin is from Figma
+    if (origin && !ALLOWED_ORIGINS.figma.includes(origin)) {
+      return { valid: false, error: 'Invalid origin for plugin' };
+    }
+    
+    // Require Figma user ID for plugin requests
+    if (!figmaUserId || figmaUserId === 'anonymous') {
+      // Allow anonymous for some operations but track differently
+      console.warn('Anonymous plugin request');
+    }
+    
+    return { valid: true, clientType: 'plugin' };
+  }
+  
+  // Check if it's a web app request
+  if (origin && ALLOWED_ORIGINS.web.some(allowed => origin.startsWith(allowed))) {
+    return { valid: true, clientType: 'web' };
+  }
+  
+  return { valid: false, error: 'Unauthorized request source' };
 }
 
 // Generate secure device ID from user data
@@ -29,19 +64,20 @@ export function generateSecureDeviceId(
   ip?: string
 ): string {
   // Use Figma user ID as primary identifier
-  if (figmaUserId) {
+  if (figmaUserId && figmaUserId !== 'anonymous') {
     return `figma-${figmaUserId}`;
   }
   
-  // Fallback to IP-based device ID
+  // Fallback to IP-based device ID for anonymous users
   if (ip && ip !== 'unknown') {
     const hash = crypto.createHash('sha256');
     hash.update(ip);
+    hash.update(process.env.DEVICE_SALT || 'motion-export-device');
     return `ip-${hash.digest('hex').substring(0, 16)}`;
   }
   
-  // Should not reach here in production
-  throw new Error('Unable to generate device ID');
+  // Generate a temporary ID for edge cases
+  return `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
 // Hash license key for storage
@@ -57,16 +93,33 @@ export function verifyLicenseKey(key: string, hash: string): boolean {
   return hashLicenseKey(key) === hash;
 }
 
-// Simple rate limiting
+// Enhanced rate limiting with different limits per client type
 export function checkRateLimit(
   identifier: string,
-  limit: number = 10,
-  windowMs: number = 60000
+  clientType: 'plugin' | 'web' = 'plugin',
+  endpoint: string = 'default'
 ): boolean {
   const now = Date.now();
-  const cached = rateLimitCache.get(identifier);
   
-  // Clean up old entries
+  // Different limits for different client types and endpoints
+  const limits = {
+    plugin: {
+      validate: { requests: 30, windowMs: 60000 }, // 30 per minute
+      track: { requests: 100, windowMs: 60000 },    // 100 per minute
+      default: { requests: 50, windowMs: 60000 }     // 50 per minute
+    },
+    web: {
+      validate: { requests: 10, windowMs: 60000 },   // 10 per minute
+      track: { requests: 50, windowMs: 60000 },      // 50 per minute
+      default: { requests: 20, windowMs: 60000 }     // 20 per minute
+    }
+  };
+  
+  const limit = limits[clientType][endpoint] || limits[clientType].default;
+  const cacheKey = `${clientType}:${endpoint}:${identifier}`;
+  const cached = rateLimitCache.get(cacheKey);
+  
+  // Clean up old entries periodically
   if (rateLimitCache.size > 1000) {
     for (const [key, value] of rateLimitCache.entries()) {
       if (value.resetAt < now) {
@@ -76,14 +129,14 @@ export function checkRateLimit(
   }
   
   if (!cached || cached.resetAt < now) {
-    rateLimitCache.set(identifier, {
+    rateLimitCache.set(cacheKey, {
       count: 1,
-      resetAt: now + windowMs,
+      resetAt: now + limit.windowMs,
     });
     return true;
   }
   
-  if (cached.count >= limit) {
+  if (cached.count >= limit.requests) {
     return false;
   }
   

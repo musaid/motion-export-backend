@@ -1,8 +1,7 @@
 import { data } from 'react-router';
 import { validateLicense, checkDailyUsage } from '~/lib/license.server';
 import { 
-  validateApiKey, 
-  validateOrigin, 
+  validateRequest,
   generateSecureDeviceId,
   checkRateLimit,
   isValidLicenseKeyFormat,
@@ -13,21 +12,14 @@ import type { Route } from './+types/validate';
 
 const validateSchema = z.object({
   licenseKey: z.string().optional(),
-  deviceId: z.string().optional(), // Optional, we'll generate it
   figmaUserId: z.string().optional(),
 });
 
 export async function action({ request }: Route.ActionArgs) {
-  // Security: Check origin
-  const origin = request.headers.get('origin');
-  if (!validateOrigin(origin)) {
-    return data({ valid: false, error: 'Invalid origin' }, { status: 403 });
-  }
-
-  // Security: Check API key
-  const apiKey = request.headers.get('x-api-key');
-  if (!validateApiKey(apiKey)) {
-    return data({ valid: false, error: 'Invalid API key' }, { status: 401 });
+  // Validate request source (plugin or web)
+  const validation = validateRequest(request);
+  if (!validation.valid) {
+    return data({ valid: false, error: validation.error }, { status: 403 });
   }
 
   // Get IP for rate limiting and device ID generation
@@ -35,14 +27,20 @@ export async function action({ request }: Route.ActionArgs) {
              request.headers.get('x-real-ip') || 
              'unknown';
 
-  // Security: Rate limiting
-  if (!checkRateLimit(ip, 30, 60000)) { // 30 requests per minute
+  // Get Figma user ID from header (more reliable than body)
+  const figmaUserId = request.headers.get('x-figma-user-id') || undefined;
+  
+  // Generate identifier for rate limiting
+  const rateLimitId = figmaUserId || ip;
+
+  // Apply rate limiting based on client type
+  if (!checkRateLimit(rateLimitId, validation.clientType, 'validate')) {
     return data({ valid: false, error: 'Rate limit exceeded' }, { status: 429 });
   }
 
   try {
     const body = await request.json();
-    const { licenseKey, figmaUserId } = validateSchema.parse(body);
+    const { licenseKey } = validateSchema.parse(body);
 
     // Generate secure device ID server-side
     const deviceId = generateSecureDeviceId(figmaUserId, ip);

@@ -3,8 +3,7 @@ import { usageAnalytics } from '~/database/schema';
 import { database } from '~/database/context';
 import { incrementDailyUsage } from '~/lib/license.server';
 import { 
-  validateApiKey, 
-  validateOrigin, 
+  validateRequest,
   generateSecureDeviceId,
   checkRateLimit
 } from '~/lib/security.server';
@@ -18,16 +17,10 @@ const trackSchema = z.object({
 });
 
 export async function action({ request }: Route.ActionArgs) {
-  // Security: Check origin
-  const origin = request.headers.get('origin');
-  if (!validateOrigin(origin)) {
-    return data({ error: 'Invalid origin' }, { status: 403 });
-  }
-
-  // Security: Check API key
-  const apiKey = request.headers.get('x-api-key');
-  if (!validateApiKey(apiKey)) {
-    return data({ error: 'Invalid API key' }, { status: 401 });
+  // Validate request source (plugin or web)
+  const validation = validateRequest(request);
+  if (!validation.valid) {
+    return data({ error: validation.error }, { status: 403 });
   }
 
   // Get IP for rate limiting
@@ -35,14 +28,20 @@ export async function action({ request }: Route.ActionArgs) {
              request.headers.get('x-real-ip') || 
              'unknown';
 
-  // Security: Rate limiting (higher limit for tracking)
-  if (!checkRateLimit(ip, 100, 60000)) { // 100 requests per minute
+  // Get Figma user ID from header
+  const figmaUserId = request.headers.get('x-figma-user-id') || undefined;
+  
+  // Generate identifier for rate limiting
+  const rateLimitId = figmaUserId || ip;
+
+  // Apply rate limiting based on client type
+  if (!checkRateLimit(rateLimitId, validation.clientType, 'track')) {
     return data({ error: 'Rate limit exceeded' }, { status: 429 });
   }
 
   try {
     const body = await request.json();
-    const { event, figmaUserId, properties } = trackSchema.parse(body);
+    const { event, properties } = trackSchema.parse(body);
 
     // Generate secure device ID
     const deviceId = generateSecureDeviceId(figmaUserId, ip);
@@ -68,13 +67,14 @@ export async function action({ request }: Route.ActionArgs) {
           framework: properties?.framework,
           count: properties?.animationCount,
           version: properties?.pluginVersion,
+          clientType: validation.clientType,
         }),
         ip: ip === 'unknown' ? null : ip,
         userAgent: null, // Don't store user agent
       });
 
-    // Update daily usage ONLY for export events
-    if (event === 'export_completed') {
+    // Update daily usage ONLY for export events from plugins
+    if (event === 'export_completed' && validation.clientType === 'plugin') {
       await incrementDailyUsage(deviceId);
     }
 
