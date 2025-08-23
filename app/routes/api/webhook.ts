@@ -89,20 +89,43 @@ export async function action({ request }: Route.ActionArgs) {
     case 'charge.refunded': {
       const charge = event.data.object as Stripe.Charge;
 
-      // Find license by payment intent ID stored in metadata
+      // Get the payment intent ID
       const paymentIntentId = charge.payment_intent as string;
+      
+      // First try to find by session ID (more reliable)
+      let license = null;
+      
+      // Get the checkout session from the payment intent
+      if (paymentIntentId) {
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        const sessionId = paymentIntent.metadata?.checkout_session_id || 
+                         (paymentIntent as any).checkout_session;
+        
+        if (sessionId) {
+          const [foundLicense] = await database()
+            .select()
+            .from(licenses)
+            .where(eq(licenses.stripeSessionId, sessionId))
+            .limit(1);
+          license = foundLicense;
+        }
+      }
+      
+      // Fallback to customer search if no session ID
+      if (!license && charge.customer) {
+        const allLicenses = await database()
+          .select()
+          .from(licenses)
+          .where(eq(licenses.stripeCustomerId, charge.customer as string));
 
-      // Search for license with this payment intent in metadata
-      const allLicenses = await database()
-        .select()
-        .from(licenses)
-        .where(eq(licenses.stripeCustomerId, charge.customer as string));
-
-      // Find the matching license
-      const license = allLicenses.find((l) => {
-        const metadata = JSON.parse(l.metadata || '{}');
-        return metadata.paymentIntentId === paymentIntentId;
-      });
+        // Find the most recent active license
+        license = allLicenses
+          .filter(l => l.status === 'active')
+          .sort((a, b) => 
+            new Date(b.purchasedAt!).getTime() - 
+            new Date(a.purchasedAt!).getTime()
+          )[0];
+      }
 
       if (license) {
         // Revoke the license
@@ -163,6 +186,47 @@ export async function action({ request }: Route.ActionArgs) {
             .where(eq(licenses.id, license.id));
 
           console.log(`License revoked due to dispute: ${license.key}`);
+        }
+      }
+      break;
+    }
+
+    case 'charge.dispute.closed': {
+      const dispute = event.data.object as Stripe.Dispute;
+      
+      // Check if we won the dispute
+      if (dispute.status === 'won') {
+        const chargeId = dispute.charge as string;
+        const chargeDetails = await stripe.charges.retrieve(chargeId);
+        
+        if (chargeDetails.customer) {
+          // Find the disputed license
+          const [license] = await database()
+            .select()
+            .from(licenses)
+            .where(eq(licenses.stripeCustomerId, chargeDetails.customer as string))
+            .limit(1);
+          
+          if (license && license.status === 'disputed') {
+            // Reactivate the license
+            await database()
+              .update(licenses)
+              .set({
+                status: 'active',
+                metadata: JSON.stringify({
+                  ...JSON.parse(license.metadata || '{}'),
+                  disputeResolvedAt: new Date().toISOString(),
+                  disputeOutcome: 'won',
+                }),
+                updatedAt: new Date().toISOString(),
+              })
+              .where(eq(licenses.id, license.id));
+            
+            console.log(`License reactivated after winning dispute: ${license.key}`);
+            
+            // Optionally send email to customer about reactivation
+            // await sendLicenseReactivatedEmail(license.email);
+          }
         }
       }
       break;
