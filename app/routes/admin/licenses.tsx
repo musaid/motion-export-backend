@@ -161,7 +161,6 @@ export default function AdminLicenses({ loaderData }: Route.ComponentProps) {
                           type="submit"
                           name="_action"
                           value="revoke"
-                          color="red"
                           outline
                           className="text-sm"
                         >
@@ -172,7 +171,6 @@ export default function AdminLicenses({ loaderData }: Route.ComponentProps) {
                           type="submit"
                           name="_action"
                           value="activate"
-                          color="green"
                           outline
                           className="text-sm"
                         >

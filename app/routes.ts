@@ -12,9 +12,9 @@ export default [
   route('checkout', './routes/checkout.tsx'),
   route('success', './routes/success.tsx'),
   route('cancel', './routes/cancel.tsx'),
-  route('setup', './routes/auth/admin-setup.tsx'),
-  route('login', './routes/auth/admin-login.tsx'),
-  route('logout', './routes/auth/admin-logout.ts'),
+  route('setup', './routes/auth/setup.tsx'),
+  route('login', './routes/auth/login.tsx'),
+  route('logout', './routes/auth/logout.ts'),
   ...prefix('api', [
     route('checkout', './routes/api/checkout.ts'),
     route('track', './routes/api/track.ts'),

@@ -30,7 +30,7 @@ export default function AdminLayout() {
             </SidebarSection>
             <SidebarSection className="mt-auto pb-4">
               <Form method="post" action="/logout">
-                <Button type="submit" color="red" outline className="w-full">
+                <Button type="submit" outline className="w-full">
                   Logout
                 </Button>
               </Form>

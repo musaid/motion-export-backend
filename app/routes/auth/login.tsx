@@ -67,8 +67,18 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
         {/* Logo/Brand */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            <svg
+              className="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
             </svg>
           </div>
           <Heading>Welcome back</Heading>
@@ -76,7 +86,7 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
         </div>
 
         {setupSuccess && (
-          <Alert className="mb-6">
+          <Alert className="mb-6" onClose={() => {}}>
             Admin account created successfully! Please login.
           </Alert>
         )}
@@ -122,11 +132,7 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
             </div>
           </div>
 
-          {actionData?.error && (
-            <Alert color="red">
-              {actionData.error}
-            </Alert>
-          )}
+          {actionData?.error && <Alert color="red" onClose={() => {}}>{actionData.error}</Alert>}
 
           <Button type="submit" className="w-full">
             Sign in to dashboard
@@ -136,11 +142,9 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
         <Divider className="my-8" />
 
         <div className="text-center">
-          <Text className="text-sm">
-            Motion Export Admin Panel
-          </Text>
-          <Link 
-            to="/" 
+          <Text className="text-sm">Motion Export Admin Panel</Text>
+          <Link
+            to="/"
             className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors mt-2 inline-block"
           >
             ← Back to website
