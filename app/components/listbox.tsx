@@ -5,21 +5,18 @@ import { Fragment } from 'react';
 export function Listbox<T>({
   className,
   placeholder,
-  autoFocus,
   'aria-label': ariaLabel,
   children: options,
   ...props
 }: {
   className?: string;
   placeholder?: React.ReactNode;
-  autoFocus?: boolean;
   'aria-label'?: string;
   children?: React.ReactNode;
 } & Omit<Headless.ListboxProps<typeof Fragment, T>, 'as' | 'multiple'>) {
   return (
     <Headless.Listbox {...props} multiple={false}>
       <Headless.ListboxButton
-        autoFocus={autoFocus}
         data-slot="control"
         aria-label={ariaLabel}
         className={clsx([
@@ -123,7 +120,7 @@ export function ListboxOption<T>({
   Headless.ListboxOptionProps<'div', T>,
   'as' | 'className'
 >) {
-  let sharedClasses = clsx(
+  const sharedClasses = clsx(
     // Base
     'flex min-w-0 items-center',
     // Icons

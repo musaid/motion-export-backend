@@ -2,7 +2,12 @@ import { redirect } from 'react-router';
 import Stripe from 'stripe';
 import type { Route } from './+types/checkout';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  throw new Error('STRIPE_SECRET_KEY must be set in environment variables');
+}
+
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2025-07-30.basil',
 });
 
@@ -13,7 +18,7 @@ export async function loader({}: Route.LoaderArgs) {
       payment_method_types: ['card'],
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID!,
+          price: process.env.STRIPE_PRICE_ID || '',
           quantity: 1,
         },
       ],

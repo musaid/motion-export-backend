@@ -51,7 +51,7 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     return createUserSession(admin.id, redirectTo || '/admin');
-  } catch (error) {
+  } catch {
     return data({ error: 'Invalid form submission' }, { status: 400 });
   }
 }
@@ -132,7 +132,11 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
             </div>
           </div>
 
-          {actionData?.error && <Alert color="red" onClose={() => {}}>{actionData.error}</Alert>}
+          {actionData?.error && (
+            <Alert color="red" onClose={() => {}}>
+              {actionData.error}
+            </Alert>
+          )}
 
           <Button type="submit" className="w-full">
             Sign in to dashboard

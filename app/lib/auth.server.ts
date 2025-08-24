@@ -5,13 +5,18 @@ import { eq } from 'drizzle-orm';
 import { database } from '~/database/context';
 
 // Session storage
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret) {
+  throw new Error('SESSION_SECRET must be set in environment variables');
+}
+
 const sessionStorage = createCookieSessionStorage({
   cookie: {
     name: '_session',
     sameSite: 'lax',
     path: '/',
     httpOnly: true,
-    secrets: [process.env.SESSION_SECRET!],
+    secrets: [sessionSecret],
     secure: process.env.NODE_ENV === 'production',
     maxAge: 60 * 60 * 24 * 7, // 7 days
   },

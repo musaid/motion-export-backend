@@ -2,10 +2,10 @@ import { data } from 'react-router';
 import { usageAnalytics } from '~/database/schema';
 import { database } from '~/database/context';
 import { incrementDailyUsage } from '~/lib/license.server';
-import { 
+import {
   validateRequest,
   generateSecureDeviceId,
-  checkRateLimit
+  checkRateLimit,
 } from '~/lib/security.server';
 import { z } from 'zod';
 import type { Route } from './+types/track';
@@ -24,13 +24,14 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   // Get IP for rate limiting
-  const ip = request.headers.get('x-forwarded-for') || 
-             request.headers.get('x-real-ip') || 
-             'unknown';
+  const ip =
+    request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
 
   // Get Figma user ID from header
   const figmaUserId = request.headers.get('x-figma-user-id') || undefined;
-  
+
   // Generate identifier for rate limiting
   const rateLimitId = figmaUserId || ip;
 
@@ -50,7 +51,7 @@ export async function action({ request }: Route.ActionArgs) {
     const essentialEvents = [
       'export_completed',
       'plugin_opened',
-      'license_activated'
+      'license_activated',
     ];
 
     if (!essentialEvents.includes(event)) {

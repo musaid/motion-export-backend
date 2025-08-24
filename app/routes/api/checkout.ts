@@ -3,7 +3,12 @@ import { z } from 'zod';
 import type { Route } from './+types/checkout';
 import { data } from 'react-router';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  throw new Error('STRIPE_SECRET_KEY must be set in environment variables');
+}
+
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2025-07-30.basil',
 });
 
@@ -13,7 +18,6 @@ const checkoutSchema = z.object({
 });
 
 export async function action({ request }: Route.ActionArgs) {
-  
   try {
     const body = await request.json();
     const { userId, email } = checkoutSchema.parse(body);
@@ -22,7 +26,7 @@ export async function action({ request }: Route.ActionArgs) {
       payment_method_types: ['card'],
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID!,
+          price: process.env.STRIPE_PRICE_ID || '',
           quantity: 1,
         },
       ],

@@ -8,7 +8,14 @@ import { Heading } from '~/components/heading';
 import { Text } from '~/components/text';
 import { Input } from '~/components/input';
 import { Button } from '~/components/button';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '~/components/table';
+import {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableHeader,
+  TableCell,
+} from '~/components/table';
 import { Badge } from '~/components/badge';
 import { Pagination } from '~/components/pagination';
 
@@ -96,9 +103,7 @@ export default function AdminLicenses({ loaderData }: Route.ComponentProps) {
             placeholder="Search by email..."
             className="flex-1"
           />
-          <Button type="submit">
-            Search
-          </Button>
+          <Button type="submit">Search</Button>
         </Form>
       </div>
 
@@ -127,20 +132,30 @@ export default function AdminLicenses({ loaderData }: Route.ComponentProps) {
                   <TableCell>{license.email}</TableCell>
                   <TableCell>${license.amount?.toFixed(2) || '0.00'}</TableCell>
                   <TableCell>
-                    <Badge 
+                    <Badge
                       color={
-                        license.status === 'active' ? 'green' :
-                        license.status === 'revoked' ? 'red' :
-                        license.status === 'refunded' ? 'orange' :
-                        license.status === 'disputed' ? 'red' :
-                        'zinc'
+                        license.status === 'active'
+                          ? 'green'
+                          : license.status === 'revoked'
+                            ? 'red'
+                            : license.status === 'refunded'
+                              ? 'orange'
+                              : license.status === 'disputed'
+                                ? 'red'
+                                : 'zinc'
                       }
                     >
                       {license.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <span className={activations.length >= 5 ? 'text-orange-600 dark:text-orange-400' : ''}>
+                    <span
+                      className={
+                        activations.length >= 5
+                          ? 'text-orange-600 dark:text-orange-400'
+                          : ''
+                      }
+                    >
                       {activations.length} / 5
                     </span>
                   </TableCell>

@@ -9,7 +9,6 @@ export function Combobox<T>({
   anchor = 'bottom',
   className,
   placeholder,
-  autoFocus,
   'aria-label': ariaLabel,
   children,
   ...props
@@ -19,7 +18,6 @@ export function Combobox<T>({
   filter?: (value: T, query: string) => boolean;
   className?: string;
   placeholder?: string;
-  autoFocus?: boolean;
   'aria-label'?: string;
   children: (value: NonNullable<T>) => React.ReactElement;
 } & Omit<Headless.ComboboxProps<T, false>, 'as' | 'multiple' | 'children'> & {
@@ -62,7 +60,6 @@ export function Combobox<T>({
         ])}
       >
         <Headless.ComboboxInput
-          autoFocus={autoFocus}
           data-slot="control"
           aria-label={ariaLabel}
           displayValue={(option: T) => displayValue(option) ?? ''}
@@ -146,7 +143,7 @@ export function ComboboxOption<T>({
   Headless.ComboboxOptionProps<'div', T>,
   'as' | 'className'
 >) {
-  let sharedClasses = clsx(
+  const sharedClasses = clsx(
     // Base
     'flex min-w-0 items-center',
     // Icons

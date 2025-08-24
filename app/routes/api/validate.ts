@@ -1,11 +1,11 @@
 import { data } from 'react-router';
 import { validateLicense, checkDailyUsage } from '~/lib/license.server';
-import { 
+import {
   validateRequest,
   generateSecureDeviceId,
   checkRateLimit,
   isValidLicenseKeyFormat,
-  sanitizeInput
+  sanitizeInput,
 } from '~/lib/security.server';
 import { z } from 'zod';
 import type { Route } from './+types/validate';
@@ -19,28 +19,26 @@ export async function action({ request }: Route.ActionArgs) {
   // Validate request source (plugin or web)
   const validation = validateRequest(request);
   if (!validation.valid) {
-    return data(
-      { valid: false, error: validation.error }, 
-      { status: 403 }
-    );
+    return data({ valid: false, error: validation.error }, { status: 403 });
   }
 
   // Get IP for rate limiting and device ID generation
-  const ip = request.headers.get('x-forwarded-for') || 
-             request.headers.get('x-real-ip') || 
-             'unknown';
+  const ip =
+    request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
 
   // Get Figma user ID from header (more reliable than body)
   const figmaUserId = request.headers.get('x-figma-user-id') || undefined;
-  
+
   // Generate identifier for rate limiting
   const rateLimitId = figmaUserId || ip;
 
   // Apply rate limiting based on client type
   if (!checkRateLimit(rateLimitId, validation.clientType, 'validate')) {
     return data(
-      { valid: false, error: 'Rate limit exceeded' }, 
-      { status: 429 }
+      { valid: false, error: 'Rate limit exceeded' },
+      { status: 429 },
     );
   }
 
@@ -65,13 +63,13 @@ export async function action({ request }: Route.ActionArgs) {
 
       const result = await validateLicense(sanitizedKey, deviceId);
 
-      if (result.valid) {
+      if (result.valid && result.license) {
         return data({
           valid: true,
           isPro: true,
           license: {
-            email: result.license!.email,
-            purchasedAt: result.license!.purchasedAt,
+            email: result.license.email,
+            purchasedAt: result.license.purchasedAt,
           },
         });
       }
@@ -94,9 +92,6 @@ export async function action({ request }: Route.ActionArgs) {
     });
   } catch (error) {
     console.error('Validation error:', error);
-    return data(
-      { valid: false, error: 'Validation failed' }, 
-      { status: 500 }
-    );
+    return data({ valid: false, error: 'Validation failed' }, { status: 500 });
   }
 }

@@ -14,12 +14,12 @@ import { Divider } from '~/components/divider';
 export async function loader() {
   // Check if any admin exists
   const admins = await database().select().from(adminUsers).limit(1);
-  
+
   if (admins.length > 0) {
     // If admin exists, redirect to login
     return redirect('/login');
   }
-  
+
   return null;
 }
 
@@ -31,19 +31,19 @@ export async function action({ request }: Route.ActionArgs) {
 
   // Validation
   const errors: Record<string, string> = {};
-  
+
   if (!username || username.length < 3) {
     errors.username = 'Username must be at least 3 characters';
   }
-  
+
   if (!password || password.length < 8) {
     errors.password = 'Password must be at least 8 characters';
   }
-  
+
   if (password !== confirmPassword) {
     errors.confirmPassword = 'Passwords do not match';
   }
-  
+
   if (Object.keys(errors).length > 0) {
     return { errors };
   }
@@ -61,13 +61,11 @@ export async function action({ request }: Route.ActionArgs) {
 
   // Create admin user
   const passwordHash = await bcrypt.hash(password, 10);
-  
-  await database()
-    .insert(adminUsers)
-    .values({
-      username,
-      passwordHash,
-    });
+
+  await database().insert(adminUsers).values({
+    username,
+    passwordHash,
+  });
 
   return redirect('/login?setup=success');
 }
@@ -81,8 +79,18 @@ export default function AdminSetup({ actionData }: Route.ComponentProps) {
         {/* Logo/Brand */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            <svg
+              className="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              />
             </svg>
           </div>
           <Heading>Welcome to Motion Export</Heading>
@@ -94,7 +102,10 @@ export default function AdminSetup({ actionData }: Route.ComponentProps) {
         <Form method="post" className="space-y-6">
           <div className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"
+              >
                 Username
               </label>
               <Input
@@ -108,7 +119,9 @@ export default function AdminSetup({ actionData }: Route.ComponentProps) {
                 placeholder="Choose a username"
               />
               {errors?.username && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.username}</p>
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.username}
+                </p>
               )}
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 Minimum 3 characters
@@ -116,7 +129,10 @@ export default function AdminSetup({ actionData }: Route.ComponentProps) {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"
+              >
                 Password
               </label>
               <Input
@@ -130,7 +146,9 @@ export default function AdminSetup({ actionData }: Route.ComponentProps) {
                 placeholder="Choose a strong password"
               />
               {errors?.password && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password}</p>
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.password}
+                </p>
               )}
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 Minimum 8 characters
@@ -138,7 +156,10 @@ export default function AdminSetup({ actionData }: Route.ComponentProps) {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"
+              >
                 Confirm Password
               </label>
               <Input
@@ -151,7 +172,9 @@ export default function AdminSetup({ actionData }: Route.ComponentProps) {
                 placeholder="Confirm your password"
               />
               {errors?.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.confirmPassword}</p>
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.confirmPassword}
+                </p>
               )}
             </div>
           </div>
@@ -164,11 +187,9 @@ export default function AdminSetup({ actionData }: Route.ComponentProps) {
         <Divider className="my-8" />
 
         <div className="text-center">
-          <Text className="text-sm">
-            Setting up Motion Export Admin
-          </Text>
-          <Link 
-            to="/" 
+          <Text className="text-sm">Setting up Motion Export Admin</Text>
+          <Link
+            to="/"
             className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors mt-2 inline-block"
           >
             ← Back to website

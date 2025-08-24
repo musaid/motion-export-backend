@@ -6,23 +6,33 @@ import { database } from '~/database/context';
 import { eq } from 'drizzle-orm';
 import { licenses } from '~/database/schema';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  throw new Error('STRIPE_SECRET_KEY must be set in environment variables');
+}
+
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2025-07-30.basil',
 });
 
 export async function action({ request }: Route.ActionArgs) {
-  const signature = request.headers.get('stripe-signature')!;
+  const signature = request.headers.get('stripe-signature');
+  if (!signature) {
+    return new Response('Missing signature', { status: 400 });
+  }
+
   const body = await request.text();
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error('STRIPE_WEBHOOK_SECRET not configured');
+    return new Response('Webhook not configured', { status: 500 });
+  }
 
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!,
-    );
-  } catch (err) {
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+  } catch {
     console.error('Webhook signature verification failed');
     return new Response('Invalid signature', { status: 400 });
   }
@@ -50,10 +60,15 @@ export async function action({ request }: Route.ActionArgs) {
         // Fetch the full session details if email is missing
         let customerEmail = session.customer_email;
         let customerDetails = session.customer_details;
-        
+
         if (!customerEmail) {
-          const fullSession = await stripe.checkout.sessions.retrieve(session.id);
-          customerEmail = fullSession.customer_email || fullSession.customer_details?.email || null;
+          const fullSession = await stripe.checkout.sessions.retrieve(
+            session.id,
+          );
+          customerEmail =
+            fullSession.customer_email ||
+            fullSession.customer_details?.email ||
+            null;
           customerDetails = fullSession.customer_details;
         }
 
@@ -69,19 +84,17 @@ export async function action({ request }: Route.ActionArgs) {
         }
 
         // Create license
-        const { license, plainKey } = await createLicense({
+        const { plainKey } = await createLicense({
           email: customerEmail,
-          stripeCustomerId: session.customer as string || null,
+          stripeCustomerId: (session.customer as string) || null,
           stripeSessionId: session.id,
-          amount: session.amount_total! / 100,
-          currency: session.currency!,
+          amount: (session.amount_total || 0) / 100,
+          currency: session.currency || 'usd',
         });
 
         // Send email with plain key
         await sendLicenseEmail(customerEmail, plainKey);
-        console.log(
-          `License created for ${customerEmail}`,
-        );
+        console.log(`License created for ${customerEmail}`);
       }
       break;
     }
@@ -91,16 +104,22 @@ export async function action({ request }: Route.ActionArgs) {
 
       // Get the payment intent ID
       const paymentIntentId = charge.payment_intent as string;
-      
+
       // First try to find by session ID (more reliable)
       let license = null;
-      
+
       // Get the checkout session from the payment intent
       if (paymentIntentId) {
-        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-        const sessionId = paymentIntent.metadata?.checkout_session_id || 
-                         (paymentIntent as any).checkout_session;
-        
+        const paymentIntent =
+          await stripe.paymentIntents.retrieve(paymentIntentId);
+        const sessionId =
+          paymentIntent.metadata?.checkout_session_id ||
+          (
+            paymentIntent as Stripe.PaymentIntent & {
+              checkout_session?: string;
+            }
+          ).checkout_session;
+
         if (sessionId) {
           const [foundLicense] = await database()
             .select()
@@ -110,7 +129,7 @@ export async function action({ request }: Route.ActionArgs) {
           license = foundLicense;
         }
       }
-      
+
       // Fallback to customer search if no session ID
       if (!license && charge.customer) {
         const allLicenses = await database()
@@ -120,10 +139,11 @@ export async function action({ request }: Route.ActionArgs) {
 
         // Find the most recent active license
         license = allLicenses
-          .filter(l => l.status === 'active')
-          .sort((a, b) => 
-            new Date(b.purchasedAt!).getTime() - 
-            new Date(a.purchasedAt!).getTime()
+          .filter((l) => l.status === 'active')
+          .sort(
+            (a, b) =>
+              new Date(b.purchasedAt || 0).getTime() -
+              new Date(a.purchasedAt || 0).getTime(),
           )[0];
       }
 
@@ -167,8 +187,8 @@ export async function action({ request }: Route.ActionArgs) {
           .filter((l) => l.status === 'active')
           .sort(
             (a, b) =>
-              new Date(b.purchasedAt!).getTime() -
-              new Date(a.purchasedAt!).getTime(),
+              new Date(b.purchasedAt || 0).getTime() -
+              new Date(a.purchasedAt || 0).getTime(),
           )[0];
 
         if (license) {
@@ -193,20 +213,22 @@ export async function action({ request }: Route.ActionArgs) {
 
     case 'charge.dispute.closed': {
       const dispute = event.data.object as Stripe.Dispute;
-      
+
       // Check if we won the dispute
       if (dispute.status === 'won') {
         const chargeId = dispute.charge as string;
         const chargeDetails = await stripe.charges.retrieve(chargeId);
-        
+
         if (chargeDetails.customer) {
           // Find the disputed license
           const [license] = await database()
             .select()
             .from(licenses)
-            .where(eq(licenses.stripeCustomerId, chargeDetails.customer as string))
+            .where(
+              eq(licenses.stripeCustomerId, chargeDetails.customer as string),
+            )
             .limit(1);
-          
+
           if (license && license.status === 'disputed') {
             // Reactivate the license
             await database()
@@ -221,9 +243,11 @@ export async function action({ request }: Route.ActionArgs) {
                 updatedAt: new Date().toISOString(),
               })
               .where(eq(licenses.id, license.id));
-            
-            console.log(`License reactivated after winning dispute: ${license.key}`);
-            
+
+            console.log(
+              `License reactivated after winning dispute: ${license.key}`,
+            );
+
             // Optionally send email to customer about reactivation
             // await sendLicenseReactivatedEmail(license.email);
           }

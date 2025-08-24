@@ -1,4 +1,3 @@
-import { Link } from 'react-router';
 import type { Route } from './+types/index';
 import { requireAdmin } from '~/lib/auth.server';
 import { database } from '~/database/context';
@@ -7,7 +6,14 @@ import { desc, sql, gte } from 'drizzle-orm';
 import { Heading } from '~/components/heading';
 import { Text } from '~/components/text';
 import { Button } from '~/components/button';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '~/components/table';
+import {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableHeader,
+  TableCell,
+} from '~/components/table';
 import { Badge } from '~/components/badge';
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -64,11 +70,11 @@ export default function AdminDashboard({ loaderData }: Route.ComponentProps) {
       <div className="flex justify-between items-center">
         <div>
           <Heading>Dashboard</Heading>
-          <Text className="mt-1">Monitor your licenses and usage analytics</Text>
+          <Text className="mt-1">
+            Monitor your licenses and usage analytics
+          </Text>
         </div>
-        <Button href="/admin/licenses">
-          Manage Licenses
-        </Button>
+        <Button href="/admin/licenses">Manage Licenses</Button>
       </div>
 
       {/* Stats Grid */}
@@ -125,12 +131,8 @@ export default function AdminDashboard({ loaderData }: Route.ComponentProps) {
                 <TableCell className="font-mono text-sm">
                   {license.key}
                 </TableCell>
-                <TableCell>
-                  {license.email}
-                </TableCell>
-                <TableCell>
-                  ${license.amount?.toFixed(2) || '0.00'}
-                </TableCell>
+                <TableCell>{license.email}</TableCell>
+                <TableCell>${license.amount?.toFixed(2) || '0.00'}</TableCell>
                 <TableCell>
                   <Badge color={license.status === 'active' ? 'green' : 'zinc'}>
                     {license.status}

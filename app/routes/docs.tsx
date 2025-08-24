@@ -40,7 +40,10 @@ export default function Docs({}: Route.ComponentProps) {
         <div className="container mx-auto px-6">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <Link to="/" className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+              <Link
+                to="/"
+                className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent"
+              >
                 Motion Export
               </Link>
               <span className="text-gray-600">/</span>
@@ -99,7 +102,8 @@ export default function Docs({}: Route.ComponentProps) {
                 <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm rounded-xl p-6 mb-8 border border-white/10">
                   <p className="text-gray-300 m-0">
                     Get started with Motion Export in less than 2 minutes.
-                    Export your first animation from Figma to production-ready code.
+                    Export your first animation from Figma to production-ready
+                    code.
                   </p>
                 </div>
 
@@ -135,7 +139,10 @@ export default function Docs({}: Route.ComponentProps) {
                     <ol className="space-y-3 text-gray-400 ml-12">
                       <li className="flex items-start gap-3">
                         <span className="text-purple-400 mt-1">→</span>
-                        <span>Design your frames with the elements you want to animate</span>
+                        <span>
+                          Design your frames with the elements you want to
+                          animate
+                        </span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="text-purple-400 mt-1">→</span>
@@ -143,7 +150,10 @@ export default function Docs({}: Route.ComponentProps) {
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="text-purple-400 mt-1">→</span>
-                        <span>Choose your animation type (Smart Animate, Dissolve, etc.)</span>
+                        <span>
+                          Choose your animation type (Smart Animate, Dissolve,
+                          etc.)
+                        </span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="text-purple-400 mt-1">→</span>
@@ -182,10 +192,13 @@ export default function Docs({}: Route.ComponentProps) {
                 </div>
 
                 <div className="bg-gradient-to-r from-green-600/20 to-emerald-600/20 backdrop-blur-sm rounded-xl p-6 mt-12 border border-green-500/20">
-                  <h3 className="font-semibold text-green-400 mb-3 text-lg">💡 Pro Tip</h3>
+                  <h3 className="font-semibold text-green-400 mb-3 text-lg">
+                    💡 Pro Tip
+                  </h3>
                   <p className="text-gray-300 m-0">
                     Name your layers consistently when using Smart Animate.
-                    Motion Export matches elements by name to track property changes.
+                    Motion Export matches elements by name to track property
+                    changes.
                   </p>
                 </div>
               </div>
@@ -226,11 +239,15 @@ export default function Docs({}: Route.ComponentProps) {
                         </li>
                         <li className="flex items-start gap-3">
                           <span className="text-blue-400 mt-1">3.</span>
-                          <span>The plugin will be added to your Figma account</span>
+                          <span>
+                            The plugin will be added to your Figma account
+                          </span>
                         </li>
                         <li className="flex items-start gap-3">
                           <span className="text-blue-400 mt-1">4.</span>
-                          <span>Access it from Plugins → Motion Export in any file</span>
+                          <span>
+                            Access it from Plugins → Motion Export in any file
+                          </span>
                         </li>
                       </ol>
                     </div>
@@ -246,7 +263,9 @@ export default function Docs({}: Route.ComponentProps) {
                         </li>
                         <li className="flex items-start gap-3">
                           <span className="text-purple-400 mt-1">2.</span>
-                          <span>Go to Plugins → Browse plugins in Community</span>
+                          <span>
+                            Go to Plugins → Browse plugins in Community
+                          </span>
                         </li>
                         <li className="flex items-start gap-3">
                           <span className="text-purple-400 mt-1">3.</span>
@@ -275,7 +294,9 @@ export default function Docs({}: Route.ComponentProps) {
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="text-green-400">✓</span>
-                        <span>At least one frame with prototype connections</span>
+                        <span>
+                          At least one frame with prototype connections
+                        </span>
                       </li>
                     </ul>
                   </div>
@@ -285,28 +306,41 @@ export default function Docs({}: Route.ComponentProps) {
                       License Activation
                     </h2>
                     <p className="text-gray-400 mb-6">
-                      Motion Export offers 3 free exports per day. To unlock unlimited exports:
+                      Motion Export offers 3 free exports per day. To unlock
+                      unlimited exports:
                     </p>
                     <div className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 backdrop-blur-sm rounded-xl p-6 border border-white/10">
                       <ol className="space-y-3 text-gray-300">
                         <li className="flex items-start gap-3">
-                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">1</span>
+                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">
+                            1
+                          </span>
                           <span>Purchase a Pro license for $29</span>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">2</span>
+                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">
+                            2
+                          </span>
                           <span>You'll receive a license key via email</span>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">3</span>
+                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">
+                            3
+                          </span>
                           <span>Open Motion Export in Figma</span>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">4</span>
-                          <span>Click the settings icon and enter your license key</span>
+                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">
+                            4
+                          </span>
+                          <span>
+                            Click the settings icon and enter your license key
+                          </span>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">5</span>
+                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">
+                            5
+                          </span>
                           <span>Enjoy unlimited exports!</span>
                         </li>
                       </ol>
@@ -315,7 +349,9 @@ export default function Docs({}: Route.ComponentProps) {
                 </div>
 
                 <div className="bg-gradient-to-r from-yellow-600/20 to-orange-600/20 backdrop-blur-sm rounded-xl p-6 mt-12 border border-yellow-500/20">
-                  <h3 className="font-semibold text-yellow-400 mb-3 text-lg">📝 Note</h3>
+                  <h3 className="font-semibold text-yellow-400 mb-3 text-lg">
+                    📝 Note
+                  </h3>
                   <p className="text-gray-300 m-0">
                     The free version includes all features and frameworks. The
                     only limitation is the number of daily exports.
@@ -337,7 +373,9 @@ export default function Docs({}: Route.ComponentProps) {
                     </h2>
 
                     <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 mb-6 border border-white/10">
-                      <h3 className="text-xl font-medium mb-4 text-purple-400">Smart Animate</h3>
+                      <h3 className="text-xl font-medium mb-4 text-purple-400">
+                        Smart Animate
+                      </h3>
                       <p className="text-gray-400 mb-4">
                         Smart Animate is the most powerful animation type. It
                         automatically animates matching layers between frames.
@@ -345,15 +383,24 @@ export default function Docs({}: Route.ComponentProps) {
                       <ul className="space-y-3 text-gray-400">
                         <li className="flex items-start gap-3">
                           <span className="text-purple-400 mt-1">•</span>
-                          <span>Use identical layer names for elements you want to animate</span>
+                          <span>
+                            Use identical layer names for elements you want to
+                            animate
+                          </span>
                         </li>
                         <li className="flex items-start gap-3">
                           <span className="text-purple-400 mt-1">•</span>
-                          <span>Motion Export tracks position, size, rotation, and opacity changes</span>
+                          <span>
+                            Motion Export tracks position, size, rotation, and
+                            opacity changes
+                          </span>
                         </li>
                         <li className="flex items-start gap-3">
                           <span className="text-purple-400 mt-1">•</span>
-                          <span>Nested elements are fully supported (industry first!)</span>
+                          <span>
+                            Nested elements are fully supported (industry
+                            first!)
+                          </span>
                         </li>
                       </ul>
                     </div>
@@ -364,15 +411,31 @@ export default function Docs({}: Route.ComponentProps) {
                       </h3>
                       <div className="grid gap-3">
                         {[
-                          { name: 'Smart Animate', desc: 'Morphs between matching elements' },
+                          {
+                            name: 'Smart Animate',
+                            desc: 'Morphs between matching elements',
+                          },
                           { name: 'Dissolve', desc: 'Fades between frames' },
-                          { name: 'Move In/Out', desc: 'Slides frames in from edges' },
-                          { name: 'Push', desc: 'Pushes one frame out while bringing another in' },
-                          { name: 'Slide In/Out', desc: 'Slides frames over each other' }
+                          {
+                            name: 'Move In/Out',
+                            desc: 'Slides frames in from edges',
+                          },
+                          {
+                            name: 'Push',
+                            desc: 'Pushes one frame out while bringing another in',
+                          },
+                          {
+                            name: 'Slide In/Out',
+                            desc: 'Slides frames over each other',
+                          },
                         ].map((transition, i) => (
                           <div key={i} className="flex items-start gap-3">
-                            <span className="text-blue-400 font-semibold min-w-[120px]">{transition.name}:</span>
-                            <span className="text-gray-400">{transition.desc}</span>
+                            <span className="text-blue-400 font-semibold min-w-[120px]">
+                              {transition.name}:
+                            </span>
+                            <span className="text-gray-400">
+                              {transition.desc}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -392,7 +455,9 @@ export default function Docs({}: Route.ComponentProps) {
                         <ol className="space-y-3 text-gray-400">
                           <li className="flex items-start gap-3">
                             <span className="text-pink-400">1.</span>
-                            <span>Open Motion Export from the Plugins menu</span>
+                            <span>
+                              Open Motion Export from the Plugins menu
+                            </span>
                           </li>
                           <li className="flex items-start gap-3">
                             <span className="text-pink-400">2.</span>
@@ -400,11 +465,15 @@ export default function Docs({}: Route.ComponentProps) {
                           </li>
                           <li className="flex items-start gap-3">
                             <span className="text-pink-400">3.</span>
-                            <span>The plugin will detect all prototype connections</span>
+                            <span>
+                              The plugin will detect all prototype connections
+                            </span>
                           </li>
                           <li className="flex items-start gap-3">
                             <span className="text-pink-400">4.</span>
-                            <span>Review the detected animations in the list</span>
+                            <span>
+                              Review the detected animations in the list
+                            </span>
                           </li>
                         </ol>
                       </div>
@@ -416,20 +485,37 @@ export default function Docs({}: Route.ComponentProps) {
                         <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
                           <div className="grid gap-4">
                             <div className="flex items-start gap-3">
-                              <span className="text-orange-400 font-semibold min-w-[100px]">Framework:</span>
-                              <span className="text-gray-400">CSS, React, Vue, Vanilla JS, Framer Motion, React Spring</span>
+                              <span className="text-orange-400 font-semibold min-w-[100px]">
+                                Framework:
+                              </span>
+                              <span className="text-gray-400">
+                                CSS, React, Vue, Vanilla JS, Framer Motion,
+                                React Spring
+                              </span>
                             </div>
                             <div className="flex items-start gap-3">
-                              <span className="text-orange-400 font-semibold min-w-[100px]">Units:</span>
-                              <span className="text-gray-400">Pixels (px) or REM</span>
+                              <span className="text-orange-400 font-semibold min-w-[100px]">
+                                Units:
+                              </span>
+                              <span className="text-gray-400">
+                                Pixels (px) or REM
+                              </span>
                             </div>
                             <div className="flex items-start gap-3">
-                              <span className="text-orange-400 font-semibold min-w-[100px]">Variables:</span>
-                              <span className="text-gray-400">Enable CSS variables for theming</span>
+                              <span className="text-orange-400 font-semibold min-w-[100px]">
+                                Variables:
+                              </span>
+                              <span className="text-gray-400">
+                                Enable CSS variables for theming
+                              </span>
                             </div>
                             <div className="flex items-start gap-3">
-                              <span className="text-orange-400 font-semibold min-w-[100px]">Minification:</span>
-                              <span className="text-gray-400">Reduce code size</span>
+                              <span className="text-orange-400 font-semibold min-w-[100px]">
+                                Minification:
+                              </span>
+                              <span className="text-gray-400">
+                                Reduce code size
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -448,7 +534,9 @@ export default function Docs({}: Route.ComponentProps) {
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="text-green-400">✓</span>
-                        <span>Use component variants for reusable micro-interactions</span>
+                        <span>
+                          Use component variants for reusable micro-interactions
+                        </span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="text-green-400">✓</span>
@@ -467,7 +555,9 @@ export default function Docs({}: Route.ComponentProps) {
                 </div>
 
                 <div className="bg-gradient-to-r from-blue-600/20 to-indigo-600/20 backdrop-blur-sm rounded-xl p-6 mt-12 border border-blue-500/20">
-                  <h3 className="font-semibold text-blue-400 mb-3 text-lg">🎯 Advanced Tip</h3>
+                  <h3 className="font-semibold text-blue-400 mb-3 text-lg">
+                    🎯 Advanced Tip
+                  </h3>
                   <p className="text-gray-300 m-0">
                     For complex multi-step animations, create intermediate
                     frames and chain them with "After Delay" triggers.
@@ -488,17 +578,22 @@ export default function Docs({}: Route.ComponentProps) {
                       License Validation API
                     </h2>
                     <p className="text-gray-400 mb-6">
-                      Validate license keys and check usage limits programmatically.
+                      Validate license keys and check usage limits
+                      programmatically.
                     </p>
 
                     <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
                       <div className="px-4 py-3 border-b border-white/10 flex items-center gap-2">
-                        <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded">POST</span>
-                        <span className="text-gray-400 font-mono text-sm">/api/validate</span>
+                        <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded">
+                          POST
+                        </span>
+                        <span className="text-gray-400 font-mono text-sm">
+                          /api/validate
+                        </span>
                       </div>
                       <pre className="p-4 text-sm overflow-x-auto">
                         <code className="text-gray-300">
-{`{
+                          {`{
   "licenseKey": "XXXX-XXXX-XXXX-XXXX",
   "deviceId": "unique-device-identifier"
 }`}
@@ -506,11 +601,13 @@ export default function Docs({}: Route.ComponentProps) {
                       </pre>
                     </div>
 
-                    <h3 className="text-xl font-medium mt-6 mb-4 text-gray-300">Response</h3>
+                    <h3 className="text-xl font-medium mt-6 mb-4 text-gray-300">
+                      Response
+                    </h3>
                     <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
                       <pre className="p-4 text-sm overflow-x-auto">
                         <code className="text-gray-300">
-{`{
+                          {`{
   "valid": true,
   "licenseType": "pro",
   "remainingExports": "unlimited",
@@ -531,12 +628,16 @@ export default function Docs({}: Route.ComponentProps) {
 
                     <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
                       <div className="px-4 py-3 border-b border-white/10 flex items-center gap-2">
-                        <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded">POST</span>
-                        <span className="text-gray-400 font-mono text-sm">/api/track</span>
+                        <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded">
+                          POST
+                        </span>
+                        <span className="text-gray-400 font-mono text-sm">
+                          /api/track
+                        </span>
                       </div>
                       <pre className="p-4 text-sm overflow-x-auto">
                         <code className="text-gray-300">
-{`{
+                          {`{
   "event": "export_completed",
   "deviceId": "unique-device-identifier",
   "properties": {
@@ -558,26 +659,46 @@ export default function Docs({}: Route.ComponentProps) {
                       <table className="w-full">
                         <thead>
                           <tr className="border-b border-white/10">
-                            <th className="px-4 py-3 text-left text-gray-400 font-medium">Code</th>
-                            <th className="px-4 py-3 text-left text-gray-400 font-medium">Description</th>
+                            <th className="px-4 py-3 text-left text-gray-400 font-medium">
+                              Code
+                            </th>
+                            <th className="px-4 py-3 text-left text-gray-400 font-medium">
+                              Description
+                            </th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/10">
                           <tr>
-                            <td className="px-4 py-3 font-mono text-sm text-purple-400">INVALID_LICENSE</td>
-                            <td className="px-4 py-3 text-gray-400">License key is invalid or not found</td>
+                            <td className="px-4 py-3 font-mono text-sm text-purple-400">
+                              INVALID_LICENSE
+                            </td>
+                            <td className="px-4 py-3 text-gray-400">
+                              License key is invalid or not found
+                            </td>
                           </tr>
                           <tr>
-                            <td className="px-4 py-3 font-mono text-sm text-purple-400">LIMIT_EXCEEDED</td>
-                            <td className="px-4 py-3 text-gray-400">Daily export limit reached (free tier)</td>
+                            <td className="px-4 py-3 font-mono text-sm text-purple-400">
+                              LIMIT_EXCEEDED
+                            </td>
+                            <td className="px-4 py-3 text-gray-400">
+                              Daily export limit reached (free tier)
+                            </td>
                           </tr>
                           <tr>
-                            <td className="px-4 py-3 font-mono text-sm text-purple-400">LICENSE_REVOKED</td>
-                            <td className="px-4 py-3 text-gray-400">License has been revoked</td>
+                            <td className="px-4 py-3 font-mono text-sm text-purple-400">
+                              LICENSE_REVOKED
+                            </td>
+                            <td className="px-4 py-3 text-gray-400">
+                              License has been revoked
+                            </td>
                           </tr>
                           <tr>
-                            <td className="px-4 py-3 font-mono text-sm text-purple-400">MAX_DEVICES</td>
-                            <td className="px-4 py-3 text-gray-400">Maximum device activations reached (5)</td>
+                            <td className="px-4 py-3 font-mono text-sm text-purple-400">
+                              MAX_DEVICES
+                            </td>
+                            <td className="px-4 py-3 text-gray-400">
+                              Maximum device activations reached (5)
+                            </td>
                           </tr>
                         </tbody>
                       </table>
@@ -595,17 +716,22 @@ export default function Docs({}: Route.ComponentProps) {
 
                 <div className="space-y-12">
                   <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">CSS / SCSS</h2>
+                    <h2 className="text-2xl font-semibold mb-6 text-white">
+                      CSS / SCSS
+                    </h2>
                     <p className="text-gray-400 mb-6">
-                      Pure CSS animations using @keyframes. Perfect for any project.
+                      Pure CSS animations using @keyframes. Perfect for any
+                      project.
                     </p>
                     <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
                       <div className="px-4 py-3 border-b border-white/10">
-                        <span className="text-xs text-gray-500">styles.css</span>
+                        <span className="text-xs text-gray-500">
+                          styles.css
+                        </span>
                       </div>
                       <pre className="p-4 text-sm overflow-x-auto">
                         <code className="text-gray-300">
-{`.animated-element {
+                          {`.animated-element {
   animation: fadeIn 0.3s ease-out forwards;
 }
 
@@ -625,17 +751,21 @@ export default function Docs({}: Route.ComponentProps) {
                   </div>
 
                   <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">React</h2>
+                    <h2 className="text-2xl font-semibold mb-6 text-white">
+                      React
+                    </h2>
                     <p className="text-gray-400 mb-6">
                       React components with inline styles and state management.
                     </p>
                     <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
                       <div className="px-4 py-3 border-b border-white/10">
-                        <span className="text-xs text-gray-500">AnimatedComponent.jsx</span>
+                        <span className="text-xs text-gray-500">
+                          AnimatedComponent.jsx
+                        </span>
                       </div>
                       <pre className="p-4 text-sm overflow-x-auto">
                         <code className="text-gray-300">
-{`const AnimatedComponent = () => {
+                          {`const AnimatedComponent = () => {
   const [isAnimated, setIsAnimated] = useState(false);
 
   return (
@@ -658,17 +788,21 @@ export default function Docs({}: Route.ComponentProps) {
                   </div>
 
                   <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">Vue 3</h2>
+                    <h2 className="text-2xl font-semibold mb-6 text-white">
+                      Vue 3
+                    </h2>
                     <p className="text-gray-400 mb-6">
                       Vue 3 Composition API with reactive animations.
                     </p>
                     <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
                       <div className="px-4 py-3 border-b border-white/10">
-                        <span className="text-xs text-gray-500">AnimatedComponent.vue</span>
+                        <span className="text-xs text-gray-500">
+                          AnimatedComponent.vue
+                        </span>
                       </div>
                       <pre className="p-4 text-sm overflow-x-auto">
                         <code className="text-gray-300">
-{`<template>
+                          {`<template>
   <transition name="fade">
     <div v-if="show" class="element">
       Content
@@ -693,17 +827,22 @@ export default function Docs({}: Route.ComponentProps) {
                   </div>
 
                   <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">Framer Motion</h2>
+                    <h2 className="text-2xl font-semibold mb-6 text-white">
+                      Framer Motion
+                    </h2>
                     <p className="text-gray-400 mb-6">
-                      Advanced React animations with spring physics and gestures.
+                      Advanced React animations with spring physics and
+                      gestures.
                     </p>
                     <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
                       <div className="px-4 py-3 border-b border-white/10">
-                        <span className="text-xs text-gray-500">AnimatedCard.tsx</span>
+                        <span className="text-xs text-gray-500">
+                          AnimatedCard.tsx
+                        </span>
                       </div>
                       <pre className="p-4 text-sm overflow-x-auto">
                         <code className="text-gray-300">
-{`<motion.div
+                          {`<motion.div
   initial={{ opacity: 0, scale: 0.9 }}
   animate={{ opacity: 1, scale: 1 }}
   transition={{
@@ -722,17 +861,21 @@ export default function Docs({}: Route.ComponentProps) {
                   </div>
 
                   <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">React Spring</h2>
+                    <h2 className="text-2xl font-semibold mb-6 text-white">
+                      React Spring
+                    </h2>
                     <p className="text-gray-400 mb-6">
                       Physics-based animations with React hooks.
                     </p>
                     <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
                       <div className="px-4 py-3 border-b border-white/10">
-                        <span className="text-xs text-gray-500">SpringAnimation.jsx</span>
+                        <span className="text-xs text-gray-500">
+                          SpringAnimation.jsx
+                        </span>
                       </div>
                       <pre className="p-4 text-sm overflow-x-auto">
                         <code className="text-gray-300">
-{`const styles = useSpring({
+                          {`const styles = useSpring({
   from: { opacity: 0, transform: 'scale(0.9)' },
   to: { opacity: 1, transform: 'scale(1)' },
   config: { tension: 300, friction: 20 }
@@ -769,22 +912,32 @@ return (
                           No animations detected
                         </h3>
                         <p className="text-gray-400 mb-4">
-                          <span className="text-gray-500">Problem:</span> The plugin doesn't find any animations after scanning.
+                          <span className="text-gray-500">Problem:</span> The
+                          plugin doesn't find any animations after scanning.
                         </p>
                         <div>
                           <p className="text-gray-500 mb-2">Solution:</p>
                           <ul className="space-y-2 text-gray-400">
                             <li className="flex items-start gap-3">
                               <span className="text-green-400 mt-1">→</span>
-                              <span>Ensure frames are connected with prototype connections</span>
+                              <span>
+                                Ensure frames are connected with prototype
+                                connections
+                              </span>
                             </li>
                             <li className="flex items-start gap-3">
                               <span className="text-green-400 mt-1">→</span>
-                              <span>Check that you're in a file with prototypes, not a library</span>
+                              <span>
+                                Check that you're in a file with prototypes, not
+                                a library
+                              </span>
                             </li>
                             <li className="flex items-start gap-3">
                               <span className="text-green-400 mt-1">→</span>
-                              <span>Verify that frames contain actual content to animate</span>
+                              <span>
+                                Verify that frames contain actual content to
+                                animate
+                              </span>
                             </li>
                           </ul>
                         </div>
@@ -795,22 +948,30 @@ return (
                           Smart Animate not working correctly
                         </h3>
                         <p className="text-gray-400 mb-4">
-                          <span className="text-gray-500">Problem:</span> Elements aren't animating smoothly between frames.
+                          <span className="text-gray-500">Problem:</span>{' '}
+                          Elements aren't animating smoothly between frames.
                         </p>
                         <div>
                           <p className="text-gray-500 mb-2">Solution:</p>
                           <ul className="space-y-2 text-gray-400">
                             <li className="flex items-start gap-3">
                               <span className="text-green-400 mt-1">→</span>
-                              <span>Ensure layer names match exactly between frames</span>
+                              <span>
+                                Ensure layer names match exactly between frames
+                              </span>
                             </li>
                             <li className="flex items-start gap-3">
                               <span className="text-green-400 mt-1">→</span>
-                              <span>Check that layer structure is consistent</span>
+                              <span>
+                                Check that layer structure is consistent
+                              </span>
                             </li>
                             <li className="flex items-start gap-3">
                               <span className="text-green-400 mt-1">→</span>
-                              <span>Avoid changing layer types (e.g., frame to group)</span>
+                              <span>
+                                Avoid changing layer types (e.g., frame to
+                                group)
+                              </span>
                             </li>
                           </ul>
                         </div>
@@ -821,7 +982,8 @@ return (
                           License key not working
                         </h3>
                         <p className="text-gray-400 mb-4">
-                          <span className="text-gray-500">Problem:</span> Pro license key is rejected.
+                          <span className="text-gray-500">Problem:</span> Pro
+                          license key is rejected.
                         </p>
                         <div>
                           <p className="text-gray-500 mb-2">Solution:</p>
@@ -832,11 +994,16 @@ return (
                             </li>
                             <li className="flex items-start gap-3">
                               <span className="text-green-400 mt-1">→</span>
-                              <span>Check for extra spaces before or after the key</span>
+                              <span>
+                                Check for extra spaces before or after the key
+                              </span>
                             </li>
                             <li className="flex items-start gap-3">
                               <span className="text-green-400 mt-1">→</span>
-                              <span>Verify you're using the key from your purchase email</span>
+                              <span>
+                                Verify you're using the key from your purchase
+                                email
+                              </span>
                             </li>
                             <li className="flex items-start gap-3">
                               <span className="text-green-400 mt-1">→</span>
@@ -855,23 +1022,33 @@ return (
                     <ul className="space-y-3 text-gray-400">
                       <li className="flex items-start gap-3">
                         <span className="text-blue-400">💡</span>
-                        <span>Limit the number of elements in complex animations</span>
+                        <span>
+                          Limit the number of elements in complex animations
+                        </span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="text-blue-400">💡</span>
-                        <span>Use transform properties instead of position changes</span>
+                        <span>
+                          Use transform properties instead of position changes
+                        </span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="text-blue-400">💡</span>
-                        <span>Enable hardware acceleration with will-change CSS</span>
+                        <span>
+                          Enable hardware acceleration with will-change CSS
+                        </span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="text-blue-400">💡</span>
-                        <span>Avoid animating box-shadow and filters on mobile</span>
+                        <span>
+                          Avoid animating box-shadow and filters on mobile
+                        </span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="text-blue-400">💡</span>
-                        <span>Test on actual devices, not just desktop browsers</span>
+                        <span>
+                          Test on actual devices, not just desktop browsers
+                        </span>
                       </li>
                     </ul>
                   </div>

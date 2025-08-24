@@ -165,12 +165,10 @@ export async function incrementDailyUsage(deviceId: string): Promise<void> {
       .where(eq(dailyUsage.id, existing.id));
   } else {
     // Create new record
-    await database()
-      .insert(dailyUsage)
-      .values({
-        deviceId,
-        date: today,
-        exportCount: 1,
-      });
+    await database().insert(dailyUsage).values({
+      deviceId,
+      date: today,
+      exportCount: 1,
+    });
   }
 }
