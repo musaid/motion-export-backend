@@ -7,7 +7,6 @@ import {
   isValidLicenseKeyFormat,
   sanitizeInput
 } from '~/lib/security.server';
-import { corsHeaders } from '~/lib/cors.server';
 import { z } from 'zod';
 import type { Route } from './+types/validate';
 
@@ -17,13 +16,12 @@ const validateSchema = z.object({
 });
 
 export async function action({ request }: Route.ActionArgs) {
-  const origin = request.headers.get('origin');
   // Validate request source (plugin or web)
   const validation = validateRequest(request);
   if (!validation.valid) {
     return data(
       { valid: false, error: validation.error }, 
-      { status: 403, headers: corsHeaders(origin) }
+      { status: 403 }
     );
   }
 
@@ -42,7 +40,7 @@ export async function action({ request }: Route.ActionArgs) {
   if (!checkRateLimit(rateLimitId, validation.clientType, 'validate')) {
     return data(
       { valid: false, error: 'Rate limit exceeded' }, 
-      { status: 429, headers: corsHeaders(origin) }
+      { status: 429 }
     );
   }
 
@@ -62,7 +60,7 @@ export async function action({ request }: Route.ActionArgs) {
           valid: false,
           isPro: false,
           error: 'Invalid license key format',
-        }, { headers: corsHeaders(origin) });
+        });
       }
 
       const result = await validateLicense(sanitizedKey, deviceId);
@@ -75,14 +73,14 @@ export async function action({ request }: Route.ActionArgs) {
             email: result.license!.email,
             purchasedAt: result.license!.purchasedAt,
           },
-        }, { headers: corsHeaders(origin) });
+        });
       }
 
       return data({
         valid: false,
         isPro: false,
         error: result.error,
-      }, { headers: corsHeaders(origin) });
+      });
     }
 
     // Check daily usage for free tier
@@ -93,12 +91,12 @@ export async function action({ request }: Route.ActionArgs) {
       isPro: false,
       dailyUsageCount: usage.count,
       dailyLimit: usage.limit,
-    }, { headers: corsHeaders(origin) });
+    });
   } catch (error) {
     console.error('Validation error:', error);
     return data(
       { valid: false, error: 'Validation failed' }, 
-      { status: 500, headers: corsHeaders(origin) }
+      { status: 500 }
     );
   }
 }

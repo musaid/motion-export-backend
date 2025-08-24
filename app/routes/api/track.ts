@@ -7,7 +7,6 @@ import {
   generateSecureDeviceId,
   checkRateLimit
 } from '~/lib/security.server';
-import { corsHeaders } from '~/lib/cors.server';
 import { z } from 'zod';
 import type { Route } from './+types/track';
 
@@ -18,11 +17,10 @@ const trackSchema = z.object({
 });
 
 export async function action({ request }: Route.ActionArgs) {
-  const origin = request.headers.get('origin');
   // Validate request source (plugin or web)
   const validation = validateRequest(request);
   if (!validation.valid) {
-    return data({ error: validation.error }, { status: 403, headers: corsHeaders(origin) });
+    return data({ error: validation.error }, { status: 403 });
   }
 
   // Get IP for rate limiting
@@ -38,7 +36,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   // Apply rate limiting based on client type
   if (!checkRateLimit(rateLimitId, validation.clientType, 'track')) {
-    return data({ error: 'Rate limit exceeded' }, { status: 429, headers: corsHeaders(origin) });
+    return data({ error: 'Rate limit exceeded' }, { status: 429 });
   }
 
   try {
@@ -56,7 +54,7 @@ export async function action({ request }: Route.ActionArgs) {
     ];
 
     if (!essentialEvents.includes(event)) {
-      return Response.json({ success: true }, { headers: corsHeaders(origin) }); // Silently ignore non-essential events
+      return Response.json({ success: true }); // Silently ignore non-essential events
     }
 
     // Track event (minimal data)
@@ -80,10 +78,10 @@ export async function action({ request }: Route.ActionArgs) {
       await incrementDailyUsage(deviceId);
     }
 
-    return Response.json({ success: true }, { headers: corsHeaders(origin) });
+    return Response.json({ success: true });
   } catch (error) {
     console.error('Tracking error:', error);
     // Don't expose errors to client
-    return Response.json({ success: true }, { headers: corsHeaders(origin) });
+    return Response.json({ success: true });
   }
 }

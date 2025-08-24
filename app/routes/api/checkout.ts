@@ -2,7 +2,6 @@ import Stripe from 'stripe';
 import { z } from 'zod';
 import type { Route } from './+types/checkout';
 import { data } from 'react-router';
-import { corsHeaders } from '~/lib/cors.server';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-07-30.basil',
@@ -14,7 +13,6 @@ const checkoutSchema = z.object({
 });
 
 export async function action({ request }: Route.ActionArgs) {
-  const origin = request.headers.get('origin');
   
   try {
     const body = await request.json();
@@ -41,12 +39,12 @@ export async function action({ request }: Route.ActionArgs) {
     return data({
       checkoutUrl: session.url,
       sessionId: session.id,
-    }, { headers: corsHeaders(origin) });
+    });
   } catch (error) {
     console.error('Checkout error:', error);
     return data(
       { error: 'Failed to create checkout session' },
-      { status: 500, headers: corsHeaders(origin) },
+      { status: 500 },
     );
   }
 }
