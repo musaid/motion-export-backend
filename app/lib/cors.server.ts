@@ -1,4 +1,7 @@
 // CORS configuration for API routes
+// Note: CORS is now handled by Express middleware in server/app.ts
+// These functions are kept for compatibility but the actual CORS handling
+// happens at the Express level before React Router processes the request
 
 export function corsHeaders(origin: string | null = null): HeadersInit {
   // Allow specific origins including 'null' for local Figma development
@@ -22,17 +25,4 @@ export function corsHeaders(origin: string | null = null): HeadersInit {
     'Access-Control-Max-Age': '86400', // 24 hours
     'Access-Control-Allow-Credentials': 'true'
   };
-}
-
-export function handleCors(request: Request): Response | null {
-  // Handle preflight OPTIONS request
-  if (request.method === 'OPTIONS') {
-    const origin = request.headers.get('origin');
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders(origin)
-    });
-  }
-  
-  return null;
 }

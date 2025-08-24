@@ -7,7 +7,7 @@ import {
   generateSecureDeviceId,
   checkRateLimit
 } from '~/lib/security.server';
-import { corsHeaders, handleCors } from '~/lib/cors.server';
+import { corsHeaders } from '~/lib/cors.server';
 import { z } from 'zod';
 import type { Route } from './+types/track';
 
@@ -17,25 +17,7 @@ const trackSchema = z.object({
   properties: z.record(z.string(), z.any()).optional(),
 });
 
-// Handle OPTIONS and GET requests
-export async function loader({ request }: Route.LoaderArgs) {
-  // Handle CORS preflight
-  const corsResponse = handleCors(request);
-  if (corsResponse) return corsResponse;
-  
-  const origin = request.headers.get('origin');
-  // Return method not allowed for GET
-  return data(
-    { error: 'Method not allowed' }, 
-    { status: 405, headers: corsHeaders(origin) }
-  );
-}
-
 export async function action({ request }: Route.ActionArgs) {
-  // Handle CORS preflight
-  const corsResponse = handleCors(request);
-  if (corsResponse) return corsResponse;
-  
   const origin = request.headers.get('origin');
   // Validate request source (plugin or web)
   const validation = validateRequest(request);

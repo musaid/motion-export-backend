@@ -15,6 +15,37 @@ declare module "react-router" {
 
 export const app = express();
 
+// CORS middleware for API routes
+app.use((req, res, next) => {
+  // Only handle CORS for API routes
+  if (req.path.startsWith('/api/')) {
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+      'https://www.figma.com',
+      'https://figma.com',
+      'https://motionexport.com',
+      'https://www.motionexport.com',
+      'http://localhost:3000',
+      'null' // Local Figma plugins send 'null' as origin
+    ];
+    
+    const isAllowed = !origin || allowedOrigins.includes(origin);
+    const allowOrigin = isAllowed ? (origin || '*') : 'https://motionexport.com';
+    
+    res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Plugin-Id, X-Figma-User-Id, X-API-Key');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    
+    // Handle preflight OPTIONS request
+    if (req.method === 'OPTIONS') {
+      return res.status(204).send();
+    }
+  }
+  next();
+});
+
 if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required");
 
 const client = postgres(process.env.DATABASE_URL);
