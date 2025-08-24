@@ -24,20 +24,6 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
-export async function loader({ request }: Route.LoaderArgs) {
-  return data(
-    {},
-    {
-      headers: {
-        'Access-Control-Allow-Origin': 'https://www.figma.com',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Max-Age': '86400',
-      },
-    },
-  );
-}
-
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
