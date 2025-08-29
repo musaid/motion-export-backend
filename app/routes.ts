@@ -9,6 +9,8 @@ import {
 export default [
   index('routes/home.tsx'),
   route('docs', './routes/docs.tsx'),
+  route('privacy', './routes/privacy.tsx'),
+  route('terms', './routes/terms.tsx'),
   route('checkout', './routes/checkout.tsx'),
   route('success', './routes/success.tsx'),
   route('cancel', './routes/cancel.tsx'),

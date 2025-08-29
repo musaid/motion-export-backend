@@ -587,18 +587,15 @@ const AnimatedCard = () => {
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
             <p>© 2025 Animate.dev. All rights reserved.</p>
             <div className="flex gap-6 mt-4 md:mt-0">
-              <button
-                type="button"
+              <Link
+                to="/privacy"
                 className="hover:text-white transition-colors"
               >
                 Privacy
-              </button>
-              <button
-                type="button"
-                className="hover:text-white transition-colors"
-              >
+              </Link>
+              <Link to="/terms" className="hover:text-white transition-colors">
                 Terms
-              </button>
+              </Link>
             </div>
           </div>
         </div>

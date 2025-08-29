@@ -97,6 +97,18 @@ export function verifyLicenseKey(key: string, hash: string): boolean {
 }
 
 // Enhanced rate limiting with different limits per client type
+type RateLimitConfig = {
+  requests: number;
+  windowMs: number;
+};
+
+type EndpointLimits = {
+  validate: RateLimitConfig;
+  track: RateLimitConfig;
+  default: RateLimitConfig;
+  [key: string]: RateLimitConfig;
+};
+
 export function checkRateLimit(
   identifier: string,
   clientType: 'plugin' | 'web' = 'plugin',
@@ -105,7 +117,7 @@ export function checkRateLimit(
   const now = Date.now();
 
   // Different limits for different client types and endpoints
-  const limits = {
+  const limits: Record<'plugin' | 'web', EndpointLimits> = {
     plugin: {
       validate: { requests: 30, windowMs: 60000 }, // 30 per minute
       track: { requests: 100, windowMs: 60000 }, // 100 per minute
@@ -118,7 +130,8 @@ export function checkRateLimit(
     },
   };
 
-  const limit = limits[clientType][endpoint] || limits[clientType].default;
+  const clientLimits = limits[clientType];
+  const limit = clientLimits[endpoint] || clientLimits.default;
   const cacheKey = `${clientType}:${endpoint}:${identifier}`;
   const cached = rateLimitCache.get(cacheKey);
 
