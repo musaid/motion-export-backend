@@ -37,12 +37,12 @@ export default function Home({}: Route.ComponentProps) {
               >
                 Docs
               </Link>
-              <Link
-                to="/checkout"
+              <a
+                href="/checkout"
                 className="px-4 py-2 bg-white text-black rounded-full text-sm font-medium hover:bg-gray-200 transition-all"
               >
                 Get Pro
-              </Link>
+              </a>
             </div>
           </div>
         </div>
@@ -107,12 +107,12 @@ export default function Home({}: Route.ComponentProps) {
                   />
                 </svg>
               </a>
-              <Link
-                to="/checkout"
+              <a
+                href="/checkout"
                 className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-medium hover:scale-105 transition-all"
               >
                 Unlock Pro - $29
-              </Link>
+              </a>
             </div>
 
             <p className="text-sm text-gray-500 mt-6">
@@ -428,12 +428,12 @@ const AnimatedCard = () => {
                 ))}
               </ul>
 
-              <Link
-                to="/checkout"
+              <a
+                href="/checkout"
                 className="block w-full text-center px-6 py-3 bg-white text-black rounded-full font-medium hover:bg-gray-200 transition-all"
               >
                 Get Pro License
-              </Link>
+              </a>
             </div>
           </div>
 
@@ -476,12 +476,12 @@ const AnimatedCard = () => {
               >
                 Install Free Plugin
               </a>
-              <Link
-                to="/checkout"
+              <a
+                href="/checkout"
                 className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-medium hover:scale-105 transition-all"
               >
                 Buy Pro License
-              </Link>
+              </a>
             </div>
           </div>
         </div>
@@ -521,12 +521,12 @@ const AnimatedCard = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    to="/checkout"
+                  <a
+                    href="/checkout"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Pricing
-                  </Link>
+                  </a>
                 </li>
               </ul>
             </div>

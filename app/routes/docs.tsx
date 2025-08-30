@@ -58,12 +58,12 @@ export default function Docs({}: Route.ComponentProps) {
               >
                 Plugin
               </a>
-              <Link
-                to="/checkout"
+              <a
+                href="/checkout"
                 className="px-4 py-2 bg-white text-black rounded-full text-sm font-medium hover:bg-gray-200 transition-all"
               >
                 Get Pro
-              </Link>
+              </a>
             </div>
           </div>
         </div>
