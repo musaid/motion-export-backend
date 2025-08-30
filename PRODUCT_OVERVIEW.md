@@ -440,13 +440,12 @@ Our unique position as the first and only native Figma animation exporter, combi
 
 - **Website**: [motionexport.com](https://motionexport.com)
 - **Documentation**: [docs.motionexport.com](https://docs.motionexport.com)
-- **GitHub**: [github.com/animate-dev/motion-export](https://github.com/animate-dev/motion-export)
 - **Support**: support@motionexport.com
-- **Discord**: [discord.gg/motionexport](https://discord.gg/motionexport)
+- **Discord**: [discord.gg/U9JxpKnBhe](https://discord.gg/U9JxpKnBhe)
 - **Twitter/X**: [@motionexport](https://twitter.com/motionexport)
 
 ---
 
 *Motion Export - Where Design Meets Development*
 
-*Version 1.0.0 | January 2025 | Built with ❤️ by Animate.dev*
+*Version 1.0.0 | January 2025 | Built with ❤️ by Motion Export*

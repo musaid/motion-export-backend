@@ -40,11 +40,16 @@ export default function Docs({}: Route.ComponentProps) {
         <div className="container mx-auto px-6">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <Link
-                to="/"
-                className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent"
-              >
-                Motion Export
+              <Link to="/" className="flex items-center gap-3 group">
+                <img 
+                  src="/logo.svg" 
+                  alt="Motion Export" 
+                  className="w-8 h-8 transition-transform group-hover:scale-110"
+                  style={{ filter: 'brightness(0) saturate(100%) invert(59%) sepia(94%) saturate(1165%) hue-rotate(201deg) brightness(101%) contrast(96%)' }}
+                />
+                <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+                  Motion Export
+                </span>
               </Link>
               <span className="text-gray-600">/</span>
               <span className="text-gray-400">Documentation</span>
@@ -1070,18 +1075,11 @@ return (
                           <span>support@motionexport.com</span>
                         </a>
                         <a
-                          href="https://discord.gg/motionexport"
+                          href="https://discord.gg/U9JxpKnBhe"
                           className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors"
                         >
                           <span className="text-2xl">💬</span>
-                          <span>discord.gg/motionexport</span>
-                        </a>
-                        <a
-                          href="https://github.com/animate-dev/motion-export/issues"
-                          className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors"
-                        >
-                          <span className="text-2xl">🐛</span>
-                          <span>Report issues on GitHub</span>
+                          <span>Join our Discord</span>
                         </a>
                       </div>
                     </div>

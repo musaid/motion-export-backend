@@ -13,8 +13,28 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Cancel({}: Route.ComponentProps) {
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center">
-      <div className="max-w-2xl mx-auto px-6 py-12 text-center">
+    <div className="min-h-screen bg-black text-white">
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-lg border-b border-white/10">
+        <div className="container mx-auto px-6">
+          <div className="flex justify-center items-center h-16">
+            <Link to="/" className="flex items-center gap-3 group">
+              <img 
+                src="/logo.svg" 
+                alt="Motion Export" 
+                className="w-8 h-8 transition-transform group-hover:scale-110"
+                style={{ filter: 'brightness(0) saturate(100%) invert(59%) sepia(94%) saturate(1165%) hue-rotate(201deg) brightness(101%) contrast(96%)' }}
+              />
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+                Motion Export
+              </span>
+            </Link>
+          </div>
+        </div>
+      </nav>
+      
+      <div className="min-h-screen flex items-center justify-center pt-16">
+        <div className="max-w-2xl mx-auto px-6 py-12 text-center">
         {/* Cancel Icon */}
         <div className="mb-8">
           <div className="w-24 h-24 mx-auto bg-gradient-to-r from-orange-400 to-red-600 rounded-full flex items-center justify-center">
@@ -101,6 +121,7 @@ export default function Cancel({}: Route.ComponentProps) {
         <p className="text-sm text-gray-500 mt-8">
           You can still use the free version with 3 exports per day
         </p>
+      </div>
       </div>
     </div>
   );

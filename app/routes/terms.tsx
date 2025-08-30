@@ -9,13 +9,22 @@ export default function TermsOfService({}: Route.ComponentProps) {
       <main className="flex flex-1 flex-col">
         <div className="grow p-6 lg:p-10">
           <div className="mx-auto max-w-4xl">
-            <Link
-              to="/"
-              className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-            >
-              ← Back to Home
-            </Link>
-            <Heading className="text-4xl font-semibold text-center mb-6 mt-8">
+            <nav className="mb-8">
+              <Link
+                to="/"
+                className="inline-flex items-center gap-3 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 group"
+              >
+                <span>←</span>
+                <img 
+                  src="/logo.svg" 
+                  alt="Motion Export" 
+                  className="w-6 h-6 transition-transform group-hover:scale-110"
+                  style={{ filter: 'brightness(0) saturate(100%) invert(59%) sepia(94%) saturate(1165%) hue-rotate(201deg) brightness(101%) contrast(96%)' }}
+                />
+                <span className="font-medium">Motion Export</span>
+              </Link>
+            </nav>
+            <Heading className="text-4xl font-semibold text-center mb-6">
               Terms of Service
             </Heading>
             <Text className="text-center mb-12 max-w-2xl mx-auto">

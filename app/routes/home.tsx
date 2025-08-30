@@ -19,9 +19,17 @@ export default function Home({}: Route.ComponentProps) {
       <nav className="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-lg border-b border-white/10">
         <div className="container mx-auto px-6">
           <div className="flex justify-between items-center h-16">
-            <div className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
-              Motion Export
-            </div>
+            <Link to="/" className="flex items-center gap-3 group">
+              <img 
+                src="/logo.svg" 
+                alt="Motion Export" 
+                className="w-8 h-8 transition-transform group-hover:scale-110"
+                style={{ filter: 'brightness(0) saturate(100%) invert(59%) sepia(94%) saturate(1165%) hue-rotate(201deg) brightness(101%) contrast(96%)' }}
+              />
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+                Motion Export
+              </span>
+            </Link>
             <div className="flex gap-8 items-center">
               <a
                 href="https://www.figma.com/community/plugin/1543550763369836937"
@@ -492,8 +500,16 @@ const AnimatedCard = () => {
         <div className="container mx-auto px-6">
           <div className="grid md:grid-cols-5 gap-8 mb-8">
             <div className="md:col-span-2">
-              <div className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent mb-4">
-                Motion Export
+              <div className="flex items-center gap-3 mb-4">
+                <img 
+                  src="/logo.svg" 
+                  alt="Motion Export" 
+                  className="w-8 h-8"
+                  style={{ filter: 'brightness(0) saturate(100%) invert(59%) sepia(94%) saturate(1165%) hue-rotate(201deg) brightness(101%) contrast(96%)' }}
+                />
+                <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+                  Motion Export
+                </span>
               </div>
               <p className="text-gray-400 text-sm">
                 The first Figma plugin for exporting animations to
@@ -536,18 +552,10 @@ const AnimatedCard = () => {
               <ul className="space-y-2 text-sm">
                 <li>
                   <a
-                    href="https://discord.gg/motionexport"
+                    href="https://discord.gg/U9JxpKnBhe"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Discord
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://github.com/animate-dev/motion-export"
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    GitHub
                   </a>
                 </li>
                 <li>
@@ -585,7 +593,7 @@ const AnimatedCard = () => {
           </div>
 
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-            <p>© 2025 Animate.dev. All rights reserved.</p>
+            <p>© 2025 Motion Export. All rights reserved.</p>
             <div className="flex gap-6 mt-4 md:mt-0">
               <Link
                 to="/privacy"
