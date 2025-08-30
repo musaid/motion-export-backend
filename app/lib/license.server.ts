@@ -96,13 +96,22 @@ export async function validateLicense(
     existingActivation.lastChecked = new Date().toISOString();
   }
 
+  // Extract figmaUserId from deviceId if present and not already stored
+  let updateData: any = {
+    activations: JSON.stringify(activations),
+    updatedAt: new Date().toISOString(),
+  };
+  
+  // If deviceId contains figma user ID and license doesn't have it yet, store it
+  if (deviceId.startsWith('figma-') && !license.figmaUserId) {
+    const figmaUserId = deviceId.replace('figma-', '');
+    updateData.figmaUserId = figmaUserId;
+  }
+
   // Update license
   await database()
     .update(licenses)
-    .set({
-      activations: JSON.stringify(activations),
-      updatedAt: new Date().toISOString(),
-    })
+    .set(updateData)
     .where(eq(licenses.id, license.id));
 
   return {

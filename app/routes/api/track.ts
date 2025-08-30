@@ -29,20 +29,25 @@ export async function action({ request }: Route.ActionArgs) {
     request.headers.get('x-real-ip') ||
     'unknown';
 
-  // Get Figma user ID from header
-  const figmaUserId = request.headers.get('x-figma-user-id') || undefined;
-
-  // Generate identifier for rate limiting
-  const rateLimitId = figmaUserId || ip;
-
-  // Apply rate limiting based on client type
-  if (!checkRateLimit(rateLimitId, validation.clientType, 'track')) {
-    return data({ error: 'Rate limit exceeded' }, { status: 429 });
-  }
-
   try {
     const body = await request.json();
-    const { event, properties } = trackSchema.parse(body);
+    const {
+      event,
+      properties,
+      figmaUserId: bodyUserId,
+    } = trackSchema.parse(body);
+
+    // Get Figma user ID from header or body
+    const figmaUserId =
+      request.headers.get('x-figma-user-id') || bodyUserId || undefined;
+
+    // Generate identifier for rate limiting
+    const rateLimitId = figmaUserId || ip;
+
+    // Apply rate limiting based on client type
+    if (!checkRateLimit(rateLimitId, validation.clientType, 'track')) {
+      return data({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
 
     // Generate secure device ID
     const deviceId = generateSecureDeviceId(figmaUserId, ip);

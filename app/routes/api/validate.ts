@@ -28,31 +28,32 @@ export async function action({ request }: Route.ActionArgs) {
     request.headers.get('x-real-ip') ||
     'unknown';
 
-  // Get Figma user ID from header (more reliable than body)
-  const figmaUserId = request.headers.get('x-figma-user-id') || undefined;
-
-  // Generate identifier for rate limiting
-  const rateLimitId = figmaUserId || ip;
-
-  // Apply rate limiting based on client type
-  if (!checkRateLimit(rateLimitId, validation.clientType, 'validate')) {
-    return data(
-      { valid: false, error: 'Rate limit exceeded' },
-      { status: 429 },
-    );
-  }
-
   try {
     const body = await request.json();
-    const { licenseKey } = validateSchema.parse(body);
+    const parsed = validateSchema.parse(body);
+
+    // Get Figma user ID from header or body
+    const figmaUserId =
+      request.headers.get('x-figma-user-id') || parsed.figmaUserId || undefined;
+
+    // Generate identifier for rate limiting
+    const rateLimitId = figmaUserId || ip;
+
+    // Apply rate limiting based on client type
+    if (!checkRateLimit(rateLimitId, validation.clientType, 'validate')) {
+      return data(
+        { valid: false, error: 'Rate limit exceeded' },
+        { status: 429 },
+      );
+    }
 
     // Generate secure device ID server-side
     const deviceId = generateSecureDeviceId(figmaUserId, ip);
 
     // Check for pro license
-    if (licenseKey) {
+    if (parsed.licenseKey) {
       // Validate license key format
-      const sanitizedKey = sanitizeInput(licenseKey);
+      const sanitizedKey = sanitizeInput(parsed.licenseKey);
       if (!isValidLicenseKeyFormat(sanitizedKey)) {
         return data({
           valid: false,

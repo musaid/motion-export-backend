@@ -1,4 +1,5 @@
 import { data, Form, Link, useSearchParams } from 'react-router';
+import * as React from 'react';
 import { licenses } from '~/database/schema';
 import { requireAdmin } from '~/lib/auth.server';
 import { eq, like, desc, sql } from 'drizzle-orm';
@@ -79,19 +80,153 @@ export async function action({ request }: Route.ActionArgs) {
     return data({ success: true });
   }
 
+  if (action === 'create') {
+    const email = formData.get('email') as string;
+    const amount = parseFloat(formData.get('amount') as string) || 0;
+    
+    if (!email) {
+      return data({ error: 'Email is required' }, { status: 400 });
+    }
+
+    // Import the createLicense function
+    const { createLicense } = await import('~/lib/license.server');
+    const { sendLicenseEmail } = await import('~/lib/email.server');
+    
+    // Create the license
+    const { license, plainKey } = await createLicense({
+      email,
+      stripeCustomerId: null,
+      stripeSessionId: null,
+      amount,
+      currency: 'usd',
+    });
+
+    // Update metadata to indicate manual creation
+    await database()
+      .update(licenses)
+      .set({
+        metadata: JSON.stringify({
+          createdVia: 'admin_panel',
+          createdBy: 'admin',
+          reason: amount === 0 ? 'free_license' : 'offline_payment',
+          timestamp: new Date().toISOString(),
+        }),
+      })
+      .where(eq(licenses.id, license.id));
+
+    // Optionally send email
+    const sendEmail = formData.get('sendEmail') === 'on';
+    if (sendEmail) {
+      try {
+        await sendLicenseEmail(email, plainKey);
+      } catch (error) {
+        console.error('Failed to send email:', error);
+      }
+    }
+
+    return data({ success: true, licenseKey: plainKey });
+  }
+
   return data({ error: 'Invalid action' }, { status: 400 });
 }
 
-export default function AdminLicenses({ loaderData }: Route.ComponentProps) {
+export default function AdminLicenses({ loaderData, actionData }: Route.ComponentProps) {
   const { licenses, pagination } = loaderData;
   const [searchParams] = useSearchParams();
+  const [showCreateForm, setShowCreateForm] = React.useState(false);
+
+  // Extract figmaUserId from deviceId
+  const extractFigmaUserId = (activations: string) => {
+    try {
+      const acts = JSON.parse(activations || '[]');
+      for (const act of acts) {
+        if (act.deviceId?.startsWith('figma-')) {
+          return act.deviceId.replace('figma-', '');
+        }
+      }
+    } catch {}
+    return null;
+  };
 
   return (
     <div className="space-y-8">
-      <div>
-        <Heading>License Management</Heading>
-        <Text className="mt-1">View and manage all licenses</Text>
+      <div className="flex justify-between items-start">
+        <div>
+          <Heading>License Management</Heading>
+          <Text className="mt-1">View and manage all licenses</Text>
+        </div>
+        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+          Create License
+        </Button>
       </div>
+
+      {/* Success message */}
+      {actionData?.licenseKey && (
+        <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-800">
+          <p className="text-green-800 dark:text-green-200 font-medium">License created successfully!</p>
+          <p className="text-green-700 dark:text-green-300 mt-1 font-mono text-sm">
+            License Key: {actionData.licenseKey}
+          </p>
+        </div>
+      )}
+
+      {/* Create License Form */}
+      {showCreateForm && (
+        <div className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6">
+          <Form method="post" className="space-y-4">
+            <input type="hidden" name="_action" value="create" />
+            
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium mb-2">
+                Customer Email
+              </label>
+              <Input
+                type="email"
+                name="email"
+                id="email"
+                required
+                placeholder="customer@example.com"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="amount" className="block text-sm font-medium mb-2">
+                Amount (USD)
+              </label>
+              <Input
+                type="number"
+                name="amount"
+                id="amount"
+                defaultValue="29"
+                step="0.01"
+                min="0"
+                placeholder="29.00"
+              />
+              <Text className="mt-1 text-sm">Enter 0 for free license</Text>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="sendEmail"
+                id="sendEmail"
+                defaultChecked
+                className="rounded border-zinc-300 dark:border-zinc-700"
+              />
+              <label htmlFor="sendEmail" className="text-sm">
+                Send license key via email
+              </label>
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="submit">Create License</Button>
+              <Button type="button" outline onClick={() => setShowCreateForm(false)}>
+                Cancel
+              </Button>
+            </div>
+          </Form>
+        </div>
+      )}
 
       {/* Search */}
       <div>
@@ -114,6 +249,7 @@ export default function AdminLicenses({ loaderData }: Route.ComponentProps) {
             <TableRow>
               <TableHeader>License Key</TableHeader>
               <TableHeader>Email</TableHeader>
+              <TableHeader>Figma User</TableHeader>
               <TableHeader>Amount</TableHeader>
               <TableHeader>Status</TableHeader>
               <TableHeader>Activations</TableHeader>
@@ -124,12 +260,22 @@ export default function AdminLicenses({ loaderData }: Route.ComponentProps) {
           <TableBody>
             {licenses.map((license) => {
               const activations = JSON.parse(license.activations || '[]');
+              const figmaUserId = extractFigmaUserId(license.activations || '[]');
               return (
                 <TableRow key={license.id}>
                   <TableCell className="font-mono text-sm">
-                    {license.key}
+                    {license.key.substring(0, 16)}...
                   </TableCell>
                   <TableCell>{license.email}</TableCell>
+                  <TableCell>
+                    {figmaUserId ? (
+                      <span className="font-mono text-xs">{figmaUserId}</span>
+                    ) : license.figmaUserId ? (
+                      <span className="font-mono text-xs">{license.figmaUserId}</span>
+                    ) : (
+                      <span className="text-zinc-400">-</span>
+                    )}
+                  </TableCell>
                   <TableCell>${license.amount?.toFixed(2) || '0.00'}</TableCell>
                   <TableCell>
                     <Badge
