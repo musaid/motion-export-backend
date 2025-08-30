@@ -24,7 +24,7 @@ export default function Home({}: Route.ComponentProps) {
             </div>
             <div className="flex gap-8 items-center">
               <a
-                href="https://www.figma.com/community/plugin/motion-export"
+                href="https://www.figma.com/community/plugin/1543550763369836937"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors text-sm"
@@ -87,7 +87,7 @@ export default function Home({}: Route.ComponentProps) {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <a
-                href="https://www.figma.com/community/plugin/motion-export"
+                href="https://www.figma.com/community/plugin/1543550763369836937"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group px-8 py-4 bg-white text-black rounded-full font-medium hover:scale-105 transition-all flex items-center gap-2"
@@ -375,7 +375,7 @@ const AnimatedCard = () => {
               </ul>
 
               <a
-                href="https://www.figma.com/community/plugin/motion-export"
+                href="https://www.figma.com/community/plugin/1543550763369836937"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full text-center px-6 py-3 bg-white/10 text-white rounded-full hover:bg-white/20 transition-all"
@@ -469,7 +469,7 @@ const AnimatedCard = () => {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <a
-                href="https://www.figma.com/community/plugin/motion-export"
+                href="https://www.figma.com/community/plugin/1543550763369836937"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-8 py-4 bg-white text-black rounded-full font-medium hover:scale-105 transition-all"
@@ -506,7 +506,7 @@ const AnimatedCard = () => {
               <ul className="space-y-2 text-sm">
                 <li>
                   <a
-                    href="https://www.figma.com/community/plugin/motion-export"
+                    href="https://www.figma.com/community/plugin/1543550763369836937"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Figma Plugin

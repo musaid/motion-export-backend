@@ -51,7 +51,7 @@ export default function Docs({}: Route.ComponentProps) {
             </div>
             <div className="flex gap-6 items-center">
               <a
-                href="https://www.figma.com/community/plugin/motion-export"
+                href="https://www.figma.com/community/plugin/1543550763369836937"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors text-sm"
@@ -226,7 +226,7 @@ export default function Docs({}: Route.ComponentProps) {
                           <span>
                             Visit the{' '}
                             <a
-                              href="https://www.figma.com/community/plugin/motion-export"
+                              href="https://www.figma.com/community/plugin/1543550763369836937"
                               className="text-blue-400 hover:text-blue-300 underline"
                             >
                               Motion Export plugin page

@@ -87,7 +87,7 @@ export default function Success({}: Route.ComponentProps) {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
-            href="https://www.figma.com/community/plugin/motion-export"
+            href="https://www.figma.com/community/plugin/1543550763369836937"
             target="_blank"
             rel="noopener noreferrer"
             className="px-8 py-3 bg-white text-black rounded-full font-medium hover:bg-gray-200 transition-all"
