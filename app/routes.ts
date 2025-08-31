@@ -27,6 +27,8 @@ export default [
     layout('./routes/admin/layout.tsx', [
       index('./routes/admin/index.tsx'),
       route('licenses', './routes/admin/licenses.tsx'),
+      route('daily-usage', './routes/admin/daily-usage.tsx'),
+      route('usage-analytics', './routes/admin/usage-analytics.tsx'),
     ]),
   ]),
 ] satisfies RouteConfig;

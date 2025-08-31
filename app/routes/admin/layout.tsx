@@ -67,6 +67,18 @@ export default function AdminLayout() {
               >
                 Licenses
               </SidebarItem>
+              <SidebarItem
+                href="/admin/daily-usage"
+                current={location.pathname === '/admin/daily-usage'}
+              >
+                Daily Usage
+              </SidebarItem>
+              <SidebarItem
+                href="/admin/usage-analytics"
+                current={location.pathname === '/admin/usage-analytics'}
+              >
+                Usage Analytics
+              </SidebarItem>
             </SidebarSection>
             <SidebarSection className="mt-auto pb-4">
               <Form method="post" action="/logout">
