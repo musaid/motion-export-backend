@@ -1,4 +1,4 @@
-import { Form, Outlet, useLocation } from 'react-router';
+import { Form, Link, Outlet, useLocation } from 'react-router';
 import { SidebarLayout } from '~/components/sidebar-layout';
 import {
   Sidebar,
@@ -16,17 +16,39 @@ export default function AdminLayout() {
     <SidebarLayout
       navbar={
         <div className="flex items-center justify-between px-4 py-4">
-          <h1 className="text-lg font-semibold text-zinc-900 dark:text-white">
-            Motion Export Admin
-          </h1>
+          <Link to="/admin" className="flex items-center gap-3 group">
+            <img
+              src="/logo.svg"
+              alt="Motion Export"
+              className="w-8 h-8 transition-transform group-hover:scale-110"
+              style={{
+                filter:
+                  'brightness(0) saturate(100%) invert(41%) sepia(84%) saturate(438%) hue-rotate(212deg) brightness(104%) contrast(94%)',
+              }}
+            />
+            <h1 className="text-lg font-semibold text-zinc-900 dark:text-white">
+              Motion Export Admin
+            </h1>
+          </Link>
         </div>
       }
       sidebar={
         <Sidebar>
           <SidebarHeader>
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-              Admin Panel
-            </h2>
+            <div className="flex items-center gap-3 mb-2">
+              <img
+                src="/logo.svg"
+                alt="Motion Export"
+                className="w-6 h-6"
+                style={{
+                  filter:
+                    'brightness(0) saturate(100%) invert(41%) sepia(84%) saturate(438%) hue-rotate(212deg) brightness(104%) contrast(94%)',
+                }}
+              />
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                Admin Panel
+              </h2>
+            </div>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Manage your licenses
             </p>

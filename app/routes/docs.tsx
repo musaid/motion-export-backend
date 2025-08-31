@@ -41,11 +41,14 @@ export default function Docs({}: Route.ComponentProps) {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
               <Link to="/" className="flex items-center gap-3 group">
-                <img 
-                  src="/logo.svg" 
-                  alt="Motion Export" 
+                <img
+                  src="/logo.svg"
+                  alt="Motion Export"
                   className="w-8 h-8 transition-transform group-hover:scale-110"
-                  style={{ filter: 'brightness(0) saturate(100%) invert(59%) sepia(94%) saturate(1165%) hue-rotate(201deg) brightness(101%) contrast(96%)' }}
+                  style={{
+                    filter:
+                      'brightness(0) saturate(100%) invert(59%) sepia(94%) saturate(1165%) hue-rotate(201deg) brightness(101%) contrast(96%)',
+                  }}
                 />
                 <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
                   Motion Export

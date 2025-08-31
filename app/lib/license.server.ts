@@ -97,11 +97,11 @@ export async function validateLicense(
   }
 
   // Extract figmaUserId from deviceId if present and not already stored
-  let updateData: any = {
+  const updateData: Partial<License> = {
     activations: JSON.stringify(activations),
     updatedAt: new Date().toISOString(),
   };
-  
+
   // If deviceId contains figma user ID and license doesn't have it yet, store it
   if (deviceId.startsWith('figma-') && !license.figmaUserId) {
     const figmaUserId = deviceId.replace('figma-', '');

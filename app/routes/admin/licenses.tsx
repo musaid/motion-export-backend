@@ -83,7 +83,7 @@ export async function action({ request }: Route.ActionArgs) {
   if (action === 'create') {
     const email = formData.get('email') as string;
     const amount = parseFloat(formData.get('amount') as string) || 0;
-    
+
     if (!email) {
       return data({ error: 'Email is required' }, { status: 400 });
     }
@@ -91,7 +91,7 @@ export async function action({ request }: Route.ActionArgs) {
     // Import the createLicense function
     const { createLicense } = await import('~/lib/license.server');
     const { sendLicenseEmail } = await import('~/lib/email.server');
-    
+
     // Create the license
     const { license, plainKey } = await createLicense({
       email,
@@ -130,7 +130,10 @@ export async function action({ request }: Route.ActionArgs) {
   return data({ error: 'Invalid action' }, { status: 400 });
 }
 
-export default function AdminLicenses({ loaderData, actionData }: Route.ComponentProps) {
+export default function AdminLicenses({
+  loaderData,
+  actionData,
+}: Route.ComponentProps) {
   const { licenses, pagination } = loaderData;
   const [searchParams] = useSearchParams();
   const [showCreateForm, setShowCreateForm] = React.useState(false);
@@ -144,7 +147,9 @@ export default function AdminLicenses({ loaderData, actionData }: Route.Componen
           return act.deviceId.replace('figma-', '');
         }
       }
-    } catch {}
+    } catch {
+      // Ignore parse errors
+    }
     return null;
   };
 
@@ -160,22 +165,22 @@ export default function AdminLicenses({ loaderData, actionData }: Route.Componen
         </Button>
       </div>
 
-      {/* Success message */}
-      {actionData?.licenseKey && (
+      {actionData && 'licenseKey' in actionData && (
         <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-800">
-          <p className="text-green-800 dark:text-green-200 font-medium">License created successfully!</p>
+          <p className="text-green-800 dark:text-green-200 font-medium">
+            License created successfully!
+          </p>
           <p className="text-green-700 dark:text-green-300 mt-1 font-mono text-sm">
-            License Key: {actionData.licenseKey}
+            License Key: {actionData.licenseKey as string}
           </p>
         </div>
       )}
 
-      {/* Create License Form */}
       {showCreateForm && (
         <div className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6">
           <Form method="post" className="space-y-4">
             <input type="hidden" name="_action" value="create" />
-            
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-2">
                 Customer Email
@@ -190,7 +195,10 @@ export default function AdminLicenses({ loaderData, actionData }: Route.Componen
             </div>
 
             <div>
-              <label htmlFor="amount" className="block text-sm font-medium mb-2">
+              <label
+                htmlFor="amount"
+                className="block text-sm font-medium mb-2"
+              >
                 Amount (USD)
               </label>
               <Input
@@ -220,7 +228,11 @@ export default function AdminLicenses({ loaderData, actionData }: Route.Componen
 
             <div className="flex gap-2">
               <Button type="submit">Create License</Button>
-              <Button type="button" outline onClick={() => setShowCreateForm(false)}>
+              <Button
+                type="button"
+                outline
+                onClick={() => setShowCreateForm(false)}
+              >
                 Cancel
               </Button>
             </div>
@@ -244,111 +256,119 @@ export default function AdminLicenses({ loaderData, actionData }: Route.Componen
 
       {/* Licenses Table */}
       <div className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10">
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableHeader>License Key</TableHeader>
-              <TableHeader>Email</TableHeader>
-              <TableHeader>Figma User</TableHeader>
-              <TableHeader>Amount</TableHeader>
-              <TableHeader>Status</TableHeader>
-              <TableHeader>Activations</TableHeader>
-              <TableHeader>Purchased</TableHeader>
-              <TableHeader>Actions</TableHeader>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {licenses.map((license) => {
-              const activations = JSON.parse(license.activations || '[]');
-              const figmaUserId = extractFigmaUserId(license.activations || '[]');
-              return (
-                <TableRow key={license.id}>
-                  <TableCell className="font-mono text-sm">
-                    {license.key.substring(0, 16)}...
-                  </TableCell>
-                  <TableCell>{license.email}</TableCell>
-                  <TableCell>
-                    {figmaUserId ? (
-                      <span className="font-mono text-xs">{figmaUserId}</span>
-                    ) : license.figmaUserId ? (
-                      <span className="font-mono text-xs">{license.figmaUserId}</span>
-                    ) : (
-                      <span className="text-zinc-400">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>${license.amount?.toFixed(2) || '0.00'}</TableCell>
-                  <TableCell>
-                    <Badge
-                      color={
-                        license.status === 'active'
-                          ? 'green'
-                          : license.status === 'revoked'
-                            ? 'red'
-                            : license.status === 'refunded'
-                              ? 'orange'
-                              : license.status === 'disputed'
-                                ? 'red'
-                                : 'zinc'
-                      }
-                    >
-                      {license.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={
-                        activations.length >= 5
-                          ? 'text-orange-600 dark:text-orange-400'
-                          : ''
-                      }
-                    >
-                      {activations.length} / 5
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {license.purchasedAt
-                      ? new Date(license.purchasedAt).toLocaleDateString()
-                      : 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    <Form method="post" className="inline">
-                      <input
-                        type="hidden"
-                        name="licenseId"
-                        value={license.id}
-                      />
-                      {license.status === 'active' ? (
-                        <Button
-                          type="submit"
-                          name="_action"
-                          value="revoke"
-                          outline
-                          className="text-sm"
-                        >
-                          Revoke
-                        </Button>
-                      ) : license.status === 'revoked' ? (
-                        <Button
-                          type="submit"
-                          name="_action"
-                          value="activate"
-                          outline
-                          className="text-sm"
-                        >
-                          Activate
-                        </Button>
-                      ) : (
-                        <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                          {license.status}
+        <div className="p-6">
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader className="pl-0">License Key</TableHeader>
+                <TableHeader>Email</TableHeader>
+                <TableHeader>Figma User</TableHeader>
+                <TableHeader>Amount</TableHeader>
+                <TableHeader>Status</TableHeader>
+                <TableHeader>Activations</TableHeader>
+                <TableHeader>Purchased</TableHeader>
+                <TableHeader className="pr-0">Actions</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {licenses.map((license) => {
+                const activations = JSON.parse(license.activations || '[]');
+                const figmaUserId = extractFigmaUserId(
+                  license.activations || '[]',
+                );
+                return (
+                  <TableRow key={license.id}>
+                    <TableCell className="font-mono text-sm pl-0">
+                      {license.key.substring(0, 16)}...
+                    </TableCell>
+                    <TableCell>{license.email}</TableCell>
+                    <TableCell>
+                      {figmaUserId ? (
+                        <span className="font-mono text-xs">{figmaUserId}</span>
+                      ) : license.figmaUserId ? (
+                        <span className="font-mono text-xs">
+                          {license.figmaUserId}
                         </span>
+                      ) : (
+                        <span className="text-zinc-400">-</span>
                       )}
-                    </Form>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                    </TableCell>
+                    <TableCell>
+                      ${license.amount?.toFixed(2) || '0.00'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        color={
+                          license.status === 'active'
+                            ? 'green'
+                            : license.status === 'revoked'
+                              ? 'red'
+                              : license.status === 'refunded'
+                                ? 'orange'
+                                : license.status === 'disputed'
+                                  ? 'red'
+                                  : 'zinc'
+                        }
+                      >
+                        {license.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={
+                          activations.length >= 5
+                            ? 'text-orange-600 dark:text-orange-400'
+                            : ''
+                        }
+                      >
+                        {activations.length} / 5
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {license.purchasedAt
+                        ? new Date(license.purchasedAt).toLocaleDateString()
+                        : 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      <Form method="post" className="inline">
+                        <input
+                          type="hidden"
+                          name="licenseId"
+                          value={license.id}
+                        />
+                        {license.status === 'active' ? (
+                          <Button
+                            type="submit"
+                            name="_action"
+                            value="revoke"
+                            outline
+                            className="text-sm"
+                          >
+                            Revoke
+                          </Button>
+                        ) : license.status === 'revoked' ? (
+                          <Button
+                            type="submit"
+                            name="_action"
+                            value="activate"
+                            outline
+                            className="text-sm"
+                          >
+                            Activate
+                          </Button>
+                        ) : (
+                          <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                            {license.status}
+                          </span>
+                        )}
+                      </Form>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Pagination */}

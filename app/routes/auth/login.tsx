@@ -13,7 +13,6 @@ import { Input } from '~/components/input';
 import { Button } from '~/components/button';
 import { Heading } from '~/components/heading';
 import { Text } from '~/components/text';
-import { Alert } from '~/components/alert';
 import { Divider } from '~/components/divider';
 
 const loginSchema = z.object({
@@ -66,29 +65,27 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
       <div className="w-full max-w-md">
         {/* Logo/Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4">
-            <svg
-              className="w-8 h-8 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
+          <div className="flex justify-center mb-6">
+            <img
+              src="/logo.svg"
+              alt="Motion Export"
+              className="w-16 h-16"
+              style={{
+                filter:
+                  'brightness(0) saturate(100%) invert(41%) sepia(84%) saturate(438%) hue-rotate(212deg) brightness(104%) contrast(94%)',
+              }}
+            />
           </div>
           <Heading>Welcome back</Heading>
           <Text className="mt-2">Sign in to your admin account</Text>
         </div>
 
         {setupSuccess && (
-          <Alert className="mb-6" onClose={() => {}}>
-            Admin account created successfully! Please login.
-          </Alert>
+          <div className="mb-6 rounded-lg bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-800">
+            <p className="text-green-800 dark:text-green-200">
+              Admin account created successfully! Please login.
+            </p>
+          </div>
         )}
 
         <Form method="post" className="space-y-6">
@@ -133,9 +130,11 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
           </div>
 
           {actionData?.error && (
-            <Alert color="red" onClose={() => {}}>
-              {actionData.error}
-            </Alert>
+            <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800">
+              <p className="text-red-800 dark:text-red-200">
+                {actionData.error}
+              </p>
+            </div>
           )}
 
           <Button type="submit" className="w-full">
