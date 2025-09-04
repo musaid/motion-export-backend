@@ -22,6 +22,7 @@ export default [
     route('track', './routes/api/track.ts'),
     route('validate', './routes/api/validate.ts'),
     route('webhook', './routes/api/webhook.ts'),
+    route('test-telegram', './routes/api/test-telegram.ts'),
   ]),
   ...prefix('admin', [
     layout('./routes/admin/layout.tsx', [

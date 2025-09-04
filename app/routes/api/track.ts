@@ -7,6 +7,10 @@ import {
   generateSecureDeviceId,
   checkRateLimit,
 } from '~/lib/security.server';
+import {
+  sendPluginOpenedNotification,
+  sendExportCompletedNotification,
+} from '~/lib/telegram.server';
 import { z } from 'zod';
 import type { Route } from './+types/track';
 
@@ -78,6 +82,21 @@ export async function action({ request }: Route.ActionArgs) {
         ip: ip === 'unknown' ? null : ip,
         userAgent: null, // Don't store user agent
       });
+
+    // Send Telegram notifications for specific events (fire-and-forget)
+    if (event === 'plugin_opened') {
+      sendPluginOpenedNotification({
+        figmaUserId,
+        pluginVersion: properties?.pluginVersion,
+      });
+    } else if (event === 'export_completed') {
+      sendExportCompletedNotification({
+        figmaUserId,
+        framework: properties?.framework,
+        animationCount: properties?.animationCount,
+        isPro: properties?.isPro || false,
+      });
+    }
 
     // Update daily usage ONLY for export events from plugins
     if (event === 'export_completed' && validation.clientType === 'plugin') {

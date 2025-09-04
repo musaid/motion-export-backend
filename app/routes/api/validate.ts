@@ -7,6 +7,7 @@ import {
   isValidLicenseKeyFormat,
   sanitizeInput,
 } from '~/lib/security.server';
+import { sendLicenseActivatedNotification } from '~/lib/telegram.server';
 import { z } from 'zod';
 import type { Route } from './+types/validate';
 
@@ -65,6 +66,21 @@ export async function action({ request }: Route.ActionArgs) {
       const result = await validateLicense(sanitizedKey, deviceId);
 
       if (result.valid && result.license) {
+        // Check if this is a new activation
+        const activations = JSON.parse(result.license.activations || '[]');
+        const isNewActivation = !activations.some(
+          (a: { deviceId: string }) => a.deviceId === deviceId,
+        );
+
+        // Send notification for new activations (fire-and-forget)
+        if (isNewActivation) {
+          sendLicenseActivatedNotification({
+            email: result.license.email,
+            deviceId,
+            activationCount: activations.length,
+          });
+        }
+
         return data({
           valid: true,
           isPro: true,

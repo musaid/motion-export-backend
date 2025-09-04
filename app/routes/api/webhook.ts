@@ -1,6 +1,11 @@
 import Stripe from 'stripe';
 import { createLicense } from '~/lib/license.server';
 import { sendLicenseEmail } from '~/lib/email.server';
+import {
+  sendPurchaseNotification,
+  sendRefundNotification,
+  sendDisputeNotification,
+} from '~/lib/telegram.server';
 import type { Route } from './+types/webhook';
 import { database } from '~/database/context';
 import { eq } from 'drizzle-orm';
@@ -95,6 +100,14 @@ export async function action({ request }: Route.ActionArgs) {
         // Send email with plain key
         await sendLicenseEmail(customerEmail, plainKey);
         console.log(`License created for ${customerEmail}`);
+
+        // Send Telegram notification (fire-and-forget)
+        sendPurchaseNotification({
+          email: customerEmail,
+          amount: (session.amount_total || 0) / 100,
+          currency: session.currency || 'usd',
+          licenseKey: plainKey,
+        });
       }
       break;
     }
@@ -163,6 +176,14 @@ export async function action({ request }: Route.ActionArgs) {
           .where(eq(licenses.id, license.id));
 
         console.log(`License refunded: ${license.key}`);
+
+        // Send Telegram notification (fire-and-forget)
+        sendRefundNotification({
+          licenseKey: license.key,
+          email: license.email,
+          amount: charge.amount_refunded / 100,
+          currency: charge.currency || 'usd',
+        });
       }
       break;
     }
@@ -206,6 +227,14 @@ export async function action({ request }: Route.ActionArgs) {
             .where(eq(licenses.id, license.id));
 
           console.log(`License revoked due to dispute: ${license.key}`);
+
+          // Send Telegram notification (fire-and-forget)
+          sendDisputeNotification({
+            type: 'created',
+            licenseKey: license.key,
+            email: license.email,
+            disputeId: dispute.id,
+          });
         }
       }
       break;
@@ -247,6 +276,13 @@ export async function action({ request }: Route.ActionArgs) {
             console.log(
               `License reactivated after winning dispute: ${license.key}`,
             );
+
+            // Send Telegram notification (fire-and-forget)
+            sendDisputeNotification({
+              type: 'won',
+              licenseKey: license.key,
+              email: license.email,
+            });
 
             // Optionally send email to customer about reactivation
             // await sendLicenseReactivatedEmail(license.email);
