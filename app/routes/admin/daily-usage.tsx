@@ -1,5 +1,5 @@
 import { data, useSearchParams, Form } from 'react-router';
-import { dailyUsage } from '~/database/schema';
+import { usage } from '~/database/schema';
 import { requireAdmin } from '~/lib/auth.server';
 import { desc, sql, like } from 'drizzle-orm';
 import type { Route } from './+types/daily-usage';
@@ -32,10 +32,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   // Build query with filters
   const conditions = [];
   if (search) {
-    conditions.push(like(dailyUsage.deviceId, `%${search}%`));
-  }
-  if (date) {
-    conditions.push(like(dailyUsage.date, `${date}%`));
+    conditions.push(like(usage.deviceId, `%${search}%`));
   }
 
   const whereClause =
@@ -45,36 +42,36 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const usageData = await database()
     .select()
-    .from(dailyUsage)
+    .from(usage)
     .where(whereClause)
-    .orderBy(desc(dailyUsage.createdAt))
+    .orderBy(desc(usage.createdAt))
     .limit(limit)
     .offset(offset);
 
   // Get total count
   const [{ count }] = await database()
     .select({ count: sql<number>`count(*)` })
-    .from(dailyUsage)
+    .from(usage)
     .where(whereClause);
 
-  // Get summary stats
+  // Get summary stats (lifetime usage)
   const [stats] = await database()
     .select({
-      totalExports: sql<number>`COALESCE(SUM(${dailyUsage.exportCount}), 0)`,
-      uniqueDevices: sql<number>`COUNT(DISTINCT ${dailyUsage.deviceId})`,
-      avgExportsPerDevice: sql<number>`COALESCE(AVG(${dailyUsage.exportCount}), 0)`,
+      totalExports: sql<number>`COALESCE(SUM(${usage.exportCount}), 0)`,
+      uniqueDevices: sql<number>`COUNT(DISTINCT ${usage.deviceId})`,
+      avgExportsPerDevice: sql<number>`COALESCE(AVG(${usage.exportCount}), 0)`,
     })
-    .from(dailyUsage);
+    .from(usage);
 
-  // Get today's stats
-  const today = new Date().toISOString().split('T')[0];
-  const [todayStats] = await database()
+  // Get recent stats (last 24 hours)
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const [recentStats] = await database()
     .select({
-      todayExports: sql<number>`COALESCE(SUM(${dailyUsage.exportCount}), 0)`,
-      todayDevices: sql<number>`COUNT(DISTINCT ${dailyUsage.deviceId})`,
+      todayExports: sql<number>`COUNT(*)`,
+      todayDevices: sql<number>`COUNT(DISTINCT ${usage.deviceId})`,
     })
-    .from(dailyUsage)
-    .where(sql`${dailyUsage.date} = ${today}`);
+    .from(usage)
+    .where(sql`${usage.createdAt} >= ${yesterday}`);
 
   return data({
     usage: usageData,
@@ -86,8 +83,8 @@ export async function loader({ request }: Route.LoaderArgs) {
     },
     stats: {
       ...stats,
-      todayExports: todayStats?.todayExports || 0,
-      todayDevices: todayStats?.todayDevices || 0,
+      todayExports: recentStats?.todayExports || 0,
+      todayDevices: recentStats?.todayDevices || 0,
     },
   });
 }
@@ -99,9 +96,9 @@ export default function AdminDailyUsage({ loaderData }: Route.ComponentProps) {
   return (
     <div className="space-y-8">
       <div>
-        <Heading>Daily Usage Analytics</Heading>
+        <Heading>Lifetime Usage Analytics</Heading>
         <Text className="mt-1">
-          Track daily export usage across all devices
+          Track lifetime export usage across all devices (5 free exports max per device)
         </Text>
       </div>
 
@@ -125,7 +122,7 @@ export default function AdminDailyUsage({ loaderData }: Route.ComponentProps) {
         </div>
         <div className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6">
           <Text className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            Today's Exports
+            Recent Exports (24h)
           </Text>
           <p className="text-2xl font-semibold text-zinc-900 dark:text-white mt-2">
             {stats.todayExports.toLocaleString()}
@@ -133,7 +130,7 @@ export default function AdminDailyUsage({ loaderData }: Route.ComponentProps) {
         </div>
         <div className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6">
           <Text className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            Today's Active Devices
+            Active Devices (24h)
           </Text>
           <p className="text-2xl font-semibold text-zinc-900 dark:text-white mt-2">
             {stats.todayDevices.toLocaleString()}
@@ -151,15 +148,9 @@ export default function AdminDailyUsage({ loaderData }: Route.ComponentProps) {
             placeholder="Search by device ID..."
             className="flex-1 min-w-0"
           />
-          <Input
-            type="date"
-            name="date"
-            defaultValue={searchParams.get('date') || ''}
-            className="sm:w-48"
-          />
           <div className="flex gap-2">
             <Button type="submit">Filter</Button>
-            {(searchParams.get('search') || searchParams.get('date')) && (
+            {searchParams.get('search') && (
               <Link to="/admin/daily-usage">
                 <Button type="button" outline>
                   Clear
@@ -177,9 +168,9 @@ export default function AdminDailyUsage({ loaderData }: Route.ComponentProps) {
             <TableHead>
               <TableRow>
                 <TableHeader className="pl-0">Device ID</TableHeader>
-                <TableHeader>Date</TableHeader>
-                <TableHeader>Export Count</TableHeader>
-                <TableHeader className="pr-0">Created At</TableHeader>
+                <TableHeader>Lifetime Exports</TableHeader>
+                <TableHeader>Created At</TableHeader>
+                <TableHeader className="pr-0">Last Updated</TableHeader>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -188,21 +179,25 @@ export default function AdminDailyUsage({ loaderData }: Route.ComponentProps) {
                   <TableCell className="font-mono text-sm pl-0">
                     {record.deviceId}
                   </TableCell>
-                  <TableCell>{record.date}</TableCell>
                   <TableCell>
                     <span
                       className={
-                        record.exportCount && record.exportCount > 100
-                          ? 'text-orange-600 dark:text-orange-400 font-semibold'
+                        record.exportCount && record.exportCount >= 5
+                          ? 'text-amber-600 dark:text-amber-400 font-semibold'
                           : ''
                       }
                     >
-                      {record.exportCount || 0}
+                      {record.exportCount || 0} / 5
                     </span>
                   </TableCell>
-                  <TableCell className="pr-0">
+                  <TableCell>
                     {record.createdAt
                       ? new Date(record.createdAt).toLocaleString()
+                      : 'N/A'}
+                  </TableCell>
+                  <TableCell className="pr-0">
+                    {record.updatedAt
+                      ? new Date(record.updatedAt).toLocaleString()
                       : 'N/A'}
                   </TableCell>
                 </TableRow>
@@ -240,7 +235,7 @@ export default function AdminDailyUsage({ loaderData }: Route.ComponentProps) {
                 return (
                   <Link
                     key={pageNum}
-                    to={`?page=${pageNum}${searchParams.get('search') ? `&search=${searchParams.get('search')}` : ''}${searchParams.get('date') ? `&date=${searchParams.get('date')}` : ''}`}
+                    to={`?page=${pageNum}${searchParams.get('search') ? `&search=${searchParams.get('search')}` : ''}`}
                     className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                       pageNum === pagination.page
                         ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'

@@ -1,7 +1,7 @@
 import type { Route } from './+types/index';
 import { requireAdmin } from '~/lib/auth.server';
 import { database } from '~/database/context';
-import { licenses, usageAnalytics, dailyUsage } from '~/database/schema';
+import { licenses, usageAnalytics, usage } from '~/database/schema';
 import { desc, sql, gte, eq } from 'drizzle-orm';
 import { Heading } from '~/components/heading';
 import { Text } from '~/components/text';
@@ -32,21 +32,21 @@ export async function loader({ request }: Route.LoaderArgs) {
     })
     .from(licenses);
 
-  // Get today's and yesterday's usage
+  // Get lifetime usage stats (last 24h for comparison)
   const [todayUsage] = await database()
     .select({
-      exports: sql<number>`COALESCE(sum(export_count), 0)`,
+      exports: sql<number>`count(*)`,
       devices: sql<number>`count(distinct device_id)`,
     })
-    .from(dailyUsage)
-    .where(eq(dailyUsage.date, today));
+    .from(usage)
+    .where(gte(usage.createdAt, new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()));
 
   const [yesterdayUsage] = await database()
     .select({
-      exports: sql<number>`COALESCE(sum(export_count), 0)`,
+      exports: sql<number>`count(*)`,
     })
-    .from(dailyUsage)
-    .where(eq(dailyUsage.date, yesterday));
+    .from(usage)
+    .where(sql`${usage.createdAt} >= ${new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString()} AND ${usage.createdAt} < ${new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()}`);
 
   // Get recent licenses with more details
   const recentLicenses = await database()
