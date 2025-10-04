@@ -1,7 +1,7 @@
 import { data } from 'react-router';
 import { usageAnalytics } from '~/database/schema';
 import { database } from '~/database/context';
-import { incrementDailyUsage } from '~/lib/license.server';
+import { incrementUsage } from '~/lib/license.server';
 import {
   validateRequest,
   generateSecureDeviceId,
@@ -98,9 +98,9 @@ export async function action({ request }: Route.ActionArgs) {
       });
     }
 
-    // Update daily usage ONLY for export events from plugins
+    // Update lifetime usage ONLY for export events from plugins (NO daily resets)
     if (event === 'export_completed' && validation.clientType === 'plugin') {
-      await incrementDailyUsage(deviceId);
+      await incrementUsage(deviceId);
     }
 
     return Response.json({ success: true });

@@ -1,5 +1,5 @@
 import { data } from 'react-router';
-import { validateLicense, checkDailyUsage } from '~/lib/license.server';
+import { validateLicense, checkUsage } from '~/lib/license.server';
 import {
   validateRequest,
   generateSecureDeviceId,
@@ -98,14 +98,14 @@ export async function action({ request }: Route.ActionArgs) {
       });
     }
 
-    // Check daily usage for free tier
-    const usage = await checkDailyUsage(deviceId);
+    // Check lifetime usage for free tier (5 exports max, NEVER resets)
+    const usageResult = await checkUsage(deviceId);
 
     return data({
-      valid: usage.canExport,
+      valid: usageResult.canExport,
       isPro: false,
-      dailyUsageCount: usage.count,
-      dailyLimit: usage.limit,
+      dailyUsageCount: usageResult.count, // Keep name for backwards compat, but it's lifetime count
+      dailyLimit: usageResult.limit,
     });
   } catch (error) {
     console.error('Validation error:', error);

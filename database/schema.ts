@@ -60,20 +60,19 @@ export const usageAnalytics = pgTable(
   ],
 );
 
-export const dailyUsage = pgTable(
-  'daily_usage',
+// Usage tracking - lifetime exports for free tier (5 max, never resets)
+export const usage = pgTable(
+  'usage',
   {
     id: serial('id').primaryKey(),
     deviceId: text('device_id').notNull(),
-    date: text('date').notNull(),
     exportCount: integer('export_count').default(0),
     createdAt: timestamp('created_at', timestampConfig).defaultNow(),
+    updatedAt: timestamp('updated_at', timestampConfig).defaultNow(),
   },
   (tbl) => [
-    uniqueIndex('daily_usage_device_date_idx').on(tbl.deviceId, tbl.date),
-    index('daily_usage_device_idx').on(tbl.deviceId),
-    index('daily_usage_date_idx').on(tbl.date),
-    index('daily_usage_created_at_idx').on(tbl.createdAt),
+    uniqueIndex('usage_device_idx').on(tbl.deviceId),
+    index('usage_created_at_idx').on(tbl.createdAt),
   ],
 );
 
@@ -92,4 +91,4 @@ export const adminUsers = pgTable(
 export type License = InferSelectModel<typeof licenses>;
 export type NewLicense = InferSelectModel<typeof licenses>;
 export type UsageAnalytic = InferSelectModel<typeof usageAnalytics>;
-export type DailyUsage = InferSelectModel<typeof dailyUsage>;
+export type Usage = InferSelectModel<typeof usage>;

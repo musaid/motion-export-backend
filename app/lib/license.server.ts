@@ -1,7 +1,7 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { customAlphabet } from 'nanoid';
 import { database } from '~/database/context';
-import { licenses, dailyUsage, type License } from '~/database/schema';
+import { licenses, usage, type License } from '~/database/schema';
 import { hashLicenseKey } from './security.server';
 
 const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 4);
@@ -123,60 +123,59 @@ export async function validateLicense(
   };
 }
 
-export async function checkDailyUsage(deviceId: string): Promise<{
+// Check lifetime usage (5 exports max for free tier, NEVER resets)
+export async function checkUsage(deviceId: string): Promise<{
   count: number;
   limit: number;
   canExport: boolean;
 }> {
-  const today = new Date().toISOString().split('T')[0];
-  const DAILY_LIMIT = 3;
+  const LIFETIME_LIMIT = 5;
 
-  // Get today's usage
-  const [usage] = await database()
+  // Get lifetime usage (no date filtering - lifetime tracking only)
+  const [userUsage] = await database()
     .select()
-    .from(dailyUsage)
-    .where(and(eq(dailyUsage.deviceId, deviceId), eq(dailyUsage.date, today)))
+    .from(usage)
+    .where(eq(usage.deviceId, deviceId))
     .limit(1);
 
-  if (!usage) {
-    // No usage yet today
+  if (!userUsage) {
+    // No usage yet
     return {
       count: 0,
-      limit: DAILY_LIMIT,
+      limit: LIFETIME_LIMIT,
       canExport: true,
     };
   }
 
   return {
-    count: usage.exportCount || 0,
-    limit: DAILY_LIMIT,
-    canExport: (usage.exportCount || 0) < DAILY_LIMIT,
+    count: userUsage.exportCount || 0,
+    limit: LIFETIME_LIMIT,
+    canExport: (userUsage.exportCount || 0) < LIFETIME_LIMIT,
   };
 }
 
-export async function incrementDailyUsage(deviceId: string): Promise<void> {
-  const today = new Date().toISOString().split('T')[0];
-
+// Increment lifetime usage (NO daily resets, permanent counter)
+export async function incrementUsage(deviceId: string): Promise<void> {
   // Check if record exists
   const [existing] = await database()
     .select()
-    .from(dailyUsage)
-    .where(and(eq(dailyUsage.deviceId, deviceId), eq(dailyUsage.date, today)))
+    .from(usage)
+    .where(eq(usage.deviceId, deviceId))
     .limit(1);
 
   if (existing) {
-    // Update existing record
+    // Update existing record - increment lifetime counter
     await database()
-      .update(dailyUsage)
+      .update(usage)
       .set({
-        exportCount: sql`${dailyUsage.exportCount} + 1`,
+        exportCount: sql`${usage.exportCount} + 1`,
+        updatedAt: new Date().toISOString(),
       })
-      .where(eq(dailyUsage.id, existing.id));
+      .where(eq(usage.id, existing.id));
   } else {
     // Create new record
-    await database().insert(dailyUsage).values({
+    await database().insert(usage).values({
       deviceId,
-      date: today,
       exportCount: 1,
     });
   }
