@@ -122,7 +122,7 @@ export default function Home({}: Route.ComponentProps) {
                 href="/checkout"
                 className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-medium hover:scale-105 transition-all"
               >
-                Unlock Pro - $29
+                Unlock Pro - $9.99
               </a>
             </div>
 
@@ -408,8 +408,10 @@ const AnimatedCard = () => {
               <p className="text-gray-400 mb-6">For professional developers</p>
 
               <div className="mb-8">
-                <span className="text-4xl font-bold">$29</span>
+                <span className="text-2xl font-bold line-through text-gray-500">$29</span>
+                <span className="text-4xl font-bold ml-2">$9.99</span>
                 <span className="text-gray-400">/lifetime</span>
+                <div className="text-sm text-green-400 mt-1">Launch Special 🎉</div>
               </div>
 
               <ul className="space-y-4 mb-8">

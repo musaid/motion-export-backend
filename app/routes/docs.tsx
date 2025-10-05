@@ -323,7 +323,7 @@ export default function Docs({}: Route.ComponentProps) {
                           <span className="px-2 py-0.5 bg-white/10 rounded text-sm">
                             1
                           </span>
-                          <span>Purchase a Pro license for $29</span>
+                          <span>Purchase a Pro license for $9.99</span>
                         </li>
                         <li className="flex items-start gap-3">
                           <span className="px-2 py-0.5 bg-white/10 rounded text-sm">

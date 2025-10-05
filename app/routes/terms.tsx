@@ -110,7 +110,7 @@ export default function TermsOfService({}: Route.ComponentProps) {
                     3.1 Pricing
                   </Heading>
                   <ul className="list-disc list-inside mb-4 space-y-1">
-                    <li>One-time payment of $29 USD</li>
+                    <li>One-time payment of $9.99 USD</li>
                     <li>Lifetime access to current version</li>
                     <li>All payments processed through Stripe</li>
                     <li>Prices subject to change for new purchases</li>
@@ -132,7 +132,7 @@ export default function TermsOfService({}: Route.ComponentProps) {
                   BASICALLY,
                 </Heading>
                 <Text className="text-sm">
-                  $29 one-time payment. Not happy? Get a full refund within 30
+                  $9.99 one-time payment. Not happy? Get a full refund within 30
                   days. After that, all sales are final.
                 </Text>
               </div>
@@ -219,7 +219,7 @@ export default function TermsOfService({}: Route.ComponentProps) {
                     <li>
                       Not responsible for design quality or code output issues
                     </li>
-                    <li>Total liability limited to amount paid ($29)</li>
+                    <li>Total liability limited to amount paid ($9.99)</li>
                     <li>No liability for indirect or consequential damages</li>
                     <li>You indemnify us from claims arising from your use</li>
                     <li>We may experience service interruptions</li>

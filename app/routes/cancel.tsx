@@ -71,7 +71,7 @@ export default function Cancel({}: Route.ComponentProps) {
             </h2>
             <p className="text-gray-300 mb-4">
               Motion Export Pro gives you unlimited exports and lifetime updates
-              for just $29.
+              for just $9.99 (Launch Special 🎉).
             </p>
             <ul className="space-y-2 text-gray-400 text-left">
               <li className="flex items-start gap-3">
