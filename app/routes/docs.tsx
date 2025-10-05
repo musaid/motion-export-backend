@@ -362,7 +362,7 @@ export default function Docs({}: Route.ComponentProps) {
                   </h3>
                   <p className="text-gray-300 m-0">
                     The free version includes all features and frameworks. The
-                    only limitation is the number of daily exports.
+                    only limitation is 5 lifetime exports (never resets).
                   </p>
                 </div>
               </div>
@@ -689,7 +689,7 @@ export default function Docs({}: Route.ComponentProps) {
                               LIMIT_EXCEEDED
                             </td>
                             <td className="px-4 py-3 text-gray-400">
-                              Daily export limit reached (free tier)
+                              Lifetime export limit reached (5 free exports used)
                             </td>
                           </tr>
                           <tr>

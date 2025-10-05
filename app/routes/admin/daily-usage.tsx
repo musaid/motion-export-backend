@@ -151,7 +151,7 @@ export default function AdminDailyUsage({ loaderData }: Route.ComponentProps) {
           <div className="flex gap-2">
             <Button type="submit">Filter</Button>
             {searchParams.get('search') && (
-              <Link to="/admin/daily-usage">
+              <Link to="/admin/usage">
                 <Button type="button" outline>
                   Clear
                 </Button>

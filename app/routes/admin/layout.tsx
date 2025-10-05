@@ -68,10 +68,10 @@ export default function AdminLayout() {
                 Licenses
               </SidebarItem>
               <SidebarItem
-                href="/admin/daily-usage"
-                current={location.pathname === '/admin/daily-usage'}
+                href="/admin/usage"
+                current={location.pathname === '/admin/usage'}
               >
-                Daily Usage
+                Usage
               </SidebarItem>
               <SidebarItem
                 href="/admin/usage-analytics"

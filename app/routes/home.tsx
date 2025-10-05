@@ -127,7 +127,7 @@ export default function Home({}: Route.ComponentProps) {
             </div>
 
             <p className="text-sm text-gray-500 mt-6">
-              Free tier includes 3 daily exports • No credit card required
+              Free tier includes 5 lifetime exports • No credit card required
             </p>
           </div>
 

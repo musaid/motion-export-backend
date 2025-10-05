@@ -410,11 +410,11 @@ export default function AdminDashboard({ loaderData }: Route.ComponentProps) {
             </div>
           </Link>
 
-          <Link to="/admin/daily-usage" className="group">
+          <Link to="/admin/usage" className="group">
             <div className="p-4 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-green-300 dark:hover:border-green-700 transition-all hover:shadow-md">
               <div className="text-2xl mb-2">📊</div>
               <div className="font-medium text-zinc-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400">
-                Daily Usage
+                Lifetime Usage
               </div>
               <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                 View export statistics
