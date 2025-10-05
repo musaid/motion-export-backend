@@ -74,10 +74,10 @@ export default function AdminLayout() {
                 Usage
               </SidebarItem>
               <SidebarItem
-                href="/admin/usage-analytics"
-                current={location.pathname === '/admin/usage-analytics'}
+                href="/admin/analytics"
+                current={location.pathname === '/admin/analytics'}
               >
-                Usage Analytics
+                Analytics
               </SidebarItem>
             </SidebarSection>
             <SidebarSection className="mt-auto pb-4">

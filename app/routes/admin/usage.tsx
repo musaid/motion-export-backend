@@ -2,7 +2,7 @@ import { data, useSearchParams, Form } from 'react-router';
 import { usage } from '~/database/schema';
 import { requireAdmin } from '~/lib/auth.server';
 import { desc, sql, like } from 'drizzle-orm';
-import type { Route } from './+types/daily-usage';
+import type { Route } from './+types/usage';
 import { database } from '~/database/context';
 import { Heading } from '~/components/heading';
 import { Text } from '~/components/text';
@@ -24,7 +24,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const url = new URL(request.url);
   const search = url.searchParams.get('search') || '';
-  const date = url.searchParams.get('date') || '';
   const page = parseInt(url.searchParams.get('page') || '1');
   const limit = 50;
   const offset = (page - 1) * limit;
@@ -89,7 +88,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   });
 }
 
-export default function AdminDailyUsage({ loaderData }: Route.ComponentProps) {
+export default function AdminUsage({ loaderData }: Route.ComponentProps) {
   const { usage, pagination, stats } = loaderData;
   const [searchParams] = useSearchParams();
 

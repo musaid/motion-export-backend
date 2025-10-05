@@ -2,7 +2,7 @@ import { data, useSearchParams, Form } from 'react-router';
 import { analytics } from '~/database/schema';
 import { requireAdmin } from '~/lib/auth.server';
 import { desc, sql, like, eq } from 'drizzle-orm';
-import type { Route } from './+types/usage-analytics';
+import type { Route } from './+types/analytics';
 import { database } from '~/database/context';
 import { Heading } from '~/components/heading';
 import { Text } from '~/components/text';
@@ -102,9 +102,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   });
 }
 
-export default function AdminUsageAnalytics({
-  loaderData,
-}: Route.ComponentProps) {
+export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
   const { analytics, pagination, eventTypes, stats } = loaderData;
   const [searchParams] = useSearchParams();
 
@@ -145,7 +143,7 @@ export default function AdminUsageAnalytics({
   return (
     <div className="space-y-8">
       <div>
-        <Heading>Usage Analytics Events</Heading>
+        <Heading>Analytics Events</Heading>
         <Text className="mt-1">
           Track all plugin events and user interactions
         </Text>
@@ -234,7 +232,7 @@ export default function AdminUsageAnalytics({
             {(searchParams.get('event') ||
               searchParams.get('userId') ||
               searchParams.get('licenseKey')) && (
-              <Link to="/admin/usage-analytics">
+              <Link to="/admin/analytics">
                 <Button type="button" outline>
                   Clear
                 </Button>

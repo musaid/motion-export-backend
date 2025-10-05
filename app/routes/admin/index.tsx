@@ -15,9 +15,6 @@ export async function loader({ request }: Route.LoaderArgs) {
   // Date calculations
   const now = new Date();
   const today = now.toISOString().split('T')[0];
-  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split('T')[0];
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
@@ -429,7 +426,7 @@ export default function AdminDashboard({ loaderData }: Route.ComponentProps) {
             </div>
           </Link>
 
-          <Link to="/admin/usage-analytics" className="group">
+          <Link to="/admin/analytics" className="group">
             <div className="p-4 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-purple-300 dark:hover:border-purple-700 transition-all hover:shadow-md">
               <div className="text-2xl mb-2">📈</div>
               <div className="font-medium text-zinc-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">

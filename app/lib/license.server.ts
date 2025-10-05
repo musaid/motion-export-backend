@@ -1,4 +1,4 @@
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { customAlphabet } from 'nanoid';
 import { database } from '~/database/context';
 import { licenses, usage, type License } from '~/database/schema';
