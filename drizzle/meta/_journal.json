@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1755362124203,
-      "tag": "0000_watery_jazinda",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1759590254054,
-      "tag": "0001_rename_daily_usage_to_usage",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1759590300000,
-      "tag": "0002_convert_to_uuids_and_rename_tables",
+      "when": 1759640518166,
+      "tag": "0000_cosmic_genesis",
       "breakpoints": true
     }
   ]
