@@ -104,8 +104,8 @@ export async function action({ request }: Route.ActionArgs) {
     return data({
       valid: usageResult.canExport,
       isPro: false,
-      dailyUsageCount: usageResult.count, // Keep name for backwards compat, but it's lifetime count
-      dailyLimit: usageResult.limit,
+      lifetimeUsageCount: usageResult.count,
+      lifetimeLimit: usageResult.limit,
     });
   } catch (error) {
     console.error('Validation error:', error);
