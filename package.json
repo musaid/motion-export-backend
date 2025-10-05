@@ -4,8 +4,9 @@
   "type": "module",
   "scripts": {
     "build": "react-router build",
-    "db:generate": "dotenv -- drizzle-kit generate",
-    "db:migrate": "dotenv -- drizzle-kit migrate",
+    "generate": "dotenv -- drizzle-kit generate",
+    "migrate": "dotenv -- drizzle-kit migrate",
+    "push": "dotenv -- drizzle-kit push",
     "dev": "dotenv -- node server.js",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --fix --ext .js,.jsx,.ts,.tsx",

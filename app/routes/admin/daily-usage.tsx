@@ -98,7 +98,8 @@ export default function AdminDailyUsage({ loaderData }: Route.ComponentProps) {
       <div>
         <Heading>Lifetime Usage Analytics</Heading>
         <Text className="mt-1">
-          Track lifetime export usage across all devices (5 free exports max per device)
+          Track lifetime export usage across all devices (5 free exports max per
+          device)
         </Text>
       </div>
 

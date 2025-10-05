@@ -1,7 +1,7 @@
 import { Form, redirect, Link } from 'react-router';
 import type { Route } from './+types/setup';
 import { database } from '~/database/context';
-import { adminUsers } from '~/database/schema';
+import { admins } from '~/database/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { AuthLayout } from '~/components/auth-layout';
@@ -13,9 +13,9 @@ import { Divider } from '~/components/divider';
 
 export async function loader() {
   // Check if any admin exists
-  const admins = await database().select().from(adminUsers).limit(1);
+  const adminList = await database().select().from(admins).limit(1);
 
-  if (admins.length > 0) {
+  if (adminList.length > 0) {
     // If admin exists, redirect to login
     return redirect('/login');
   }
@@ -51,8 +51,8 @@ export async function action({ request }: Route.ActionArgs) {
   // Check if username already exists
   const [existing] = await database()
     .select()
-    .from(adminUsers)
-    .where(eq(adminUsers.username, username))
+    .from(admins)
+    .where(eq(admins.username, username))
     .limit(1);
 
   if (existing) {
@@ -62,7 +62,7 @@ export async function action({ request }: Route.ActionArgs) {
   // Create admin user
   const passwordHash = await bcrypt.hash(password, 10);
 
-  await database().insert(adminUsers).values({
+  await database().insert(admins).values({
     username,
     passwordHash,
   });

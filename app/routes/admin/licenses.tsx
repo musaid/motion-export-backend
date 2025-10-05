@@ -66,7 +66,7 @@ export async function action({ request }: Route.ActionArgs) {
     await database()
       .update(licenses)
       .set({ status: 'revoked', updatedAt: new Date().toISOString() })
-      .where(eq(licenses.id, Number(licenseId)));
+      .where(eq(licenses.id, String(licenseId)));
 
     return data({ success: true });
   }
@@ -75,7 +75,7 @@ export async function action({ request }: Route.ActionArgs) {
     await database()
       .update(licenses)
       .set({ status: 'active', updatedAt: new Date().toISOString() })
-      .where(eq(licenses.id, Number(licenseId)));
+      .where(eq(licenses.id, String(licenseId)));
 
     return data({ success: true });
   }

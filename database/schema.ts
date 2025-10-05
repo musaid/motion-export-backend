@@ -7,7 +7,7 @@ import {
   index,
   uniqueIndex,
   timestamp,
-  serial,
+  uuid,
 } from 'drizzle-orm/pg-core';
 
 const timestampConfig = { mode: 'string' } as const;
@@ -15,7 +15,7 @@ const timestampConfig = { mode: 'string' } as const;
 export const licenses = pgTable(
   'licenses',
   {
-    id: serial('id').primaryKey(),
+    id: uuid('id').defaultRandom().primaryKey(),
     key: text('key').notNull(),
     email: text('email').notNull(),
     stripeCustomerId: text('stripe_customer_id'),
@@ -40,10 +40,10 @@ export const licenses = pgTable(
   ],
 );
 
-export const usageAnalytics = pgTable(
-  'usage_analytics',
+export const analytics = pgTable(
+  'analytics',
   {
-    id: serial('id').primaryKey(),
+    id: uuid('id').defaultRandom().primaryKey(),
     event: text('event').notNull(),
     userId: text('user_id'),
     licenseKey: text('license_key'),
@@ -53,10 +53,10 @@ export const usageAnalytics = pgTable(
     createdAt: timestamp('created_at', timestampConfig).defaultNow(),
   },
   (tbl) => [
-    index('usage_analytics_event_idx').on(tbl.event),
-    index('usage_analytics_user_idx').on(tbl.userId),
-    index('usage_analytics_license_idx').on(tbl.licenseKey),
-    index('usage_analytics_created_at_idx').on(tbl.createdAt),
+    index('analytics_event_idx').on(tbl.event),
+    index('analytics_user_idx').on(tbl.userId),
+    index('analytics_license_idx').on(tbl.licenseKey),
+    index('analytics_created_at_idx').on(tbl.createdAt),
   ],
 );
 
@@ -64,7 +64,7 @@ export const usageAnalytics = pgTable(
 export const usage = pgTable(
   'usage',
   {
-    id: serial('id').primaryKey(),
+    id: uuid('id').defaultRandom().primaryKey(),
     deviceId: text('device_id').notNull(),
     exportCount: integer('export_count').default(0),
     createdAt: timestamp('created_at', timestampConfig).defaultNow(),
@@ -76,19 +76,20 @@ export const usage = pgTable(
   ],
 );
 
-export const adminUsers = pgTable(
-  'admin_users',
+export const admins = pgTable(
+  'admins',
   {
-    id: serial('id').primaryKey(),
+    id: uuid('id').defaultRandom().primaryKey(),
     username: text('username').notNull(),
     passwordHash: text('password_hash').notNull(),
     createdAt: timestamp('created_at', timestampConfig).defaultNow(),
   },
-  (tbl) => [uniqueIndex('admin_users_username_idx').on(tbl.username)],
+  (tbl) => [uniqueIndex('admins_username_idx').on(tbl.username)],
 );
 
 // Types
 export type License = InferSelectModel<typeof licenses>;
 export type NewLicense = InferSelectModel<typeof licenses>;
-export type UsageAnalytic = InferSelectModel<typeof usageAnalytics>;
+export type Analytic = InferSelectModel<typeof analytics>;
 export type Usage = InferSelectModel<typeof usage>;
+export type Admin = InferSelectModel<typeof admins>;

@@ -1,7 +1,7 @@
 import type { Route } from './+types/index';
 import { requireAdmin } from '~/lib/auth.server';
 import { database } from '~/database/context';
-import { licenses, usageAnalytics, usage } from '~/database/schema';
+import { licenses, analytics, usage } from '~/database/schema';
 import { desc, sql, gte, eq } from 'drizzle-orm';
 import { Heading } from '~/components/heading';
 import { Text } from '~/components/text';
@@ -39,14 +39,21 @@ export async function loader({ request }: Route.LoaderArgs) {
       devices: sql<number>`count(distinct device_id)`,
     })
     .from(usage)
-    .where(gte(usage.createdAt, new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()));
+    .where(
+      gte(
+        usage.createdAt,
+        new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+      ),
+    );
 
   const [yesterdayUsage] = await database()
     .select({
       exports: sql<number>`count(*)`,
     })
     .from(usage)
-    .where(sql`${usage.createdAt} >= ${new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString()} AND ${usage.createdAt} < ${new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()}`);
+    .where(
+      sql`${usage.createdAt} >= ${new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString()} AND ${usage.createdAt} < ${new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()}`,
+    );
 
   // Get recent licenses with more details
   const recentLicenses = await database()
@@ -58,12 +65,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   // Get usage stats with event breakdown
   const eventBreakdown = await database()
     .select({
-      event: usageAnalytics.event,
+      event: analytics.event,
       count: sql<number>`count(*)`,
     })
-    .from(usageAnalytics)
-    .where(gte(usageAnalytics.createdAt, sevenDaysAgo.toISOString()))
-    .groupBy(usageAnalytics.event)
+    .from(analytics)
+    .where(gte(analytics.createdAt, sevenDaysAgo.toISOString()))
+    .groupBy(analytics.event)
     .orderBy(desc(sql`count(*)`))
     .limit(5);
 
@@ -73,8 +80,8 @@ export async function loader({ request }: Route.LoaderArgs) {
       hour: sql<number>`EXTRACT(HOUR FROM created_at::timestamp)`,
       count: sql<number>`count(*)`,
     })
-    .from(usageAnalytics)
-    .where(gte(usageAnalytics.createdAt, new Date(today).toISOString()))
+    .from(analytics)
+    .where(gte(analytics.createdAt, new Date(today).toISOString()))
     .groupBy(sql`EXTRACT(HOUR FROM created_at::timestamp)`)
     .orderBy(sql`EXTRACT(HOUR FROM created_at::timestamp)`);
 

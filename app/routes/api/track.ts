@@ -1,5 +1,5 @@
 import { data } from 'react-router';
-import { usageAnalytics } from '~/database/schema';
+import { analytics } from '~/database/schema';
 import { database } from '~/database/context';
 import { incrementUsage } from '~/lib/license.server';
 import {
@@ -69,7 +69,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     // Track event (minimal data)
     await database()
-      .insert(usageAnalytics)
+      .insert(analytics)
       .values({
         event,
         userId: figmaUserId,

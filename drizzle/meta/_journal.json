@@ -15,6 +15,13 @@
       "when": 1759590254054,
       "tag": "0001_rename_daily_usage_to_usage",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759590300000,
+      "tag": "0002_convert_to_uuids_and_rename_tables",
+      "breakpoints": true
     }
   ]
 }

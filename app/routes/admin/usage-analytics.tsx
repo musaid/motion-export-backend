@@ -1,5 +1,5 @@
 import { data, useSearchParams, Form } from 'react-router';
-import { usageAnalytics } from '~/database/schema';
+import { analytics } from '~/database/schema';
 import { requireAdmin } from '~/lib/auth.server';
 import { desc, sql, like, eq } from 'drizzle-orm';
 import type { Route } from './+types/usage-analytics';
@@ -34,13 +34,13 @@ export async function loader({ request }: Route.LoaderArgs) {
   // Build query with filters
   const conditions = [];
   if (event) {
-    conditions.push(eq(usageAnalytics.event, event));
+    conditions.push(eq(analytics.event, event));
   }
   if (userId) {
-    conditions.push(like(usageAnalytics.userId, `%${userId}%`));
+    conditions.push(like(analytics.userId, `%${userId}%`));
   }
   if (licenseKey) {
-    conditions.push(like(usageAnalytics.licenseKey, `%${licenseKey}%`));
+    conditions.push(like(analytics.licenseKey, `%${licenseKey}%`));
   }
 
   const whereClause =
@@ -48,28 +48,28 @@ export async function loader({ request }: Route.LoaderArgs) {
       ? sql`${conditions.map((c) => sql`(${c})`).reduce((acc, curr) => sql`${acc} AND ${curr}`)}`
       : undefined;
 
-  const analytics = await database()
+  const analyticsData = await database()
     .select()
-    .from(usageAnalytics)
+    .from(analytics)
     .where(whereClause)
-    .orderBy(desc(usageAnalytics.createdAt))
+    .orderBy(desc(analytics.createdAt))
     .limit(limit)
     .offset(offset);
 
   // Get total count
   const [{ count }] = await database()
     .select({ count: sql<number>`count(*)` })
-    .from(usageAnalytics)
+    .from(analytics)
     .where(whereClause);
 
   // Get event types
   const eventTypes = await database()
     .select({
-      event: usageAnalytics.event,
+      event: analytics.event,
       count: sql<number>`count(*)`,
     })
-    .from(usageAnalytics)
-    .groupBy(usageAnalytics.event)
+    .from(analytics)
+    .groupBy(analytics.event)
     .orderBy(desc(sql`count(*)`));
 
   // Get stats for last 24 hours
@@ -77,14 +77,14 @@ export async function loader({ request }: Route.LoaderArgs) {
   const [last24hStats] = await database()
     .select({
       totalEvents: sql<number>`count(*)`,
-      uniqueUsers: sql<number>`COUNT(DISTINCT ${usageAnalytics.userId})`,
-      uniqueLicenses: sql<number>`COUNT(DISTINCT ${usageAnalytics.licenseKey})`,
+      uniqueUsers: sql<number>`COUNT(DISTINCT ${analytics.userId})`,
+      uniqueLicenses: sql<number>`COUNT(DISTINCT ${analytics.licenseKey})`,
     })
-    .from(usageAnalytics)
-    .where(sql`${usageAnalytics.createdAt} >= ${oneDayAgo}`);
+    .from(analytics)
+    .where(sql`${analytics.createdAt} >= ${oneDayAgo}`);
 
   return data({
-    analytics,
+    analytics: analyticsData,
     pagination: {
       page,
       limit,

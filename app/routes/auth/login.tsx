@@ -7,7 +7,7 @@ import {
 import { z } from 'zod';
 import type { Route } from './+types/login';
 import { database } from '~/database/context';
-import { adminUsers } from '~/database/schema';
+import { admins } from '~/database/schema';
 import { AuthLayout } from '~/components/auth-layout';
 import { Input } from '~/components/input';
 import { Button } from '~/components/button';
@@ -23,8 +23,8 @@ const loginSchema = z.object({
 
 export async function loader({ request }: Route.LoaderArgs) {
   // Check if any admin exists
-  const admins = await database().select().from(adminUsers).limit(1);
-  if (admins.length === 0) {
+  const adminList = await database().select().from(admins).limit(1);
+  if (adminList.length === 0) {
     // No admin exists, redirect to setup
     return redirect('/setup');
   }

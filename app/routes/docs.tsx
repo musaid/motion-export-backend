@@ -689,7 +689,8 @@ export default function Docs({}: Route.ComponentProps) {
                               LIMIT_EXCEEDED
                             </td>
                             <td className="px-4 py-3 text-gray-400">
-                              Lifetime export limit reached (5 free exports used)
+                              Lifetime export limit reached (5 free exports
+                              used)
                             </td>
                           </tr>
                           <tr>

@@ -1,6 +1,6 @@
 import { redirect, createCookieSessionStorage } from 'react-router';
 import bcrypt from 'bcryptjs';
-import { adminUsers } from '~/database/schema';
+import { admins } from '~/database/schema';
 import { eq } from 'drizzle-orm';
 import { database } from '~/database/context';
 
@@ -22,7 +22,7 @@ const sessionStorage = createCookieSessionStorage({
   },
 });
 
-export async function createUserSession(userId: number, redirectTo: string) {
+export async function createUserSession(userId: string, redirectTo: string) {
   const session = await sessionStorage.getSession();
   session.set('userId', userId);
 
@@ -53,8 +53,8 @@ export async function requireAdmin(request: Request) {
 
   const [admin] = await database()
     .select()
-    .from(adminUsers)
-    .where(eq(adminUsers.id, userId))
+    .from(admins)
+    .where(eq(admins.id, userId))
     .limit(1);
 
   if (!admin) {
@@ -79,8 +79,8 @@ export async function logout(request: Request) {
 export async function verifyLogin(username: string, password: string) {
   const [admin] = await database()
     .select()
-    .from(adminUsers)
-    .where(eq(adminUsers.username, username))
+    .from(admins)
+    .where(eq(admins.username, username))
     .limit(1);
 
   if (!admin) {
@@ -100,8 +100,8 @@ export async function verifyLogin(username: string, password: string) {
 export async function initializeAdmin() {
   const [existingAdmin] = await database()
     .select()
-    .from(adminUsers)
-    .where(eq(adminUsers.username, process.env.ADMIN_USERNAME || 'admin'))
+    .from(admins)
+    .where(eq(admins.username, process.env.ADMIN_USERNAME || 'admin'))
     .limit(1);
 
   if (!existingAdmin) {
@@ -111,7 +111,7 @@ export async function initializeAdmin() {
     );
 
     await database()
-      .insert(adminUsers)
+      .insert(admins)
       .values({
         username: process.env.ADMIN_USERNAME || 'admin',
         passwordHash,
