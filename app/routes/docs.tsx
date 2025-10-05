@@ -17,7 +17,6 @@ type Section =
   | 'quickstart'
   | 'installation'
   | 'usage'
-  | 'api'
   | 'frameworks'
   | 'troubleshooting';
 
@@ -28,7 +27,6 @@ export default function Docs({}: Route.ComponentProps) {
     { id: 'quickstart', label: 'Quick Start', icon: '🚀' },
     { id: 'installation', label: 'Installation', icon: '📦' },
     { id: 'usage', label: 'Usage Guide', icon: '📖' },
-    { id: 'api', label: 'API Reference', icon: '🔧' },
     { id: 'frameworks', label: 'Frameworks', icon: '⚡' },
     { id: 'troubleshooting', label: 'Troubleshooting', icon: '🔍' },
   ];
@@ -570,149 +568,6 @@ export default function Docs({}: Route.ComponentProps) {
                     For complex multi-step animations, create intermediate
                     frames and chain them with "After Delay" triggers.
                   </p>
-                </div>
-              </div>
-            )}
-
-            {activeSection === 'api' && (
-              <div className="prose prose-invert max-w-none">
-                <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                  API Reference
-                </h1>
-
-                <div className="space-y-12">
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
-                      License Validation API
-                    </h2>
-                    <p className="text-gray-400 mb-6">
-                      Validate license keys and check usage limits
-                      programmatically.
-                    </p>
-
-                    <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-                      <div className="px-4 py-3 border-b border-white/10 flex items-center gap-2">
-                        <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded">
-                          POST
-                        </span>
-                        <span className="text-gray-400 font-mono text-sm">
-                          /api/validate
-                        </span>
-                      </div>
-                      <pre className="p-4 text-sm overflow-x-auto">
-                        <code className="text-gray-300">
-                          {`{
-  "licenseKey": "XXXX-XXXX-XXXX-XXXX",
-  "deviceId": "unique-device-identifier"
-}`}
-                        </code>
-                      </pre>
-                    </div>
-
-                    <h3 className="text-xl font-medium mt-6 mb-4 text-gray-300">
-                      Response
-                    </h3>
-                    <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-                      <pre className="p-4 text-sm overflow-x-auto">
-                        <code className="text-gray-300">
-                          {`{
-  "valid": true,
-  "licenseType": "pro",
-  "remainingExports": "unlimited",
-  "expiresAt": null
-}`}
-                        </code>
-                      </pre>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
-                      Tracking API
-                    </h2>
-                    <p className="text-gray-400 mb-6">
-                      Track usage analytics and export events.
-                    </p>
-
-                    <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-                      <div className="px-4 py-3 border-b border-white/10 flex items-center gap-2">
-                        <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded">
-                          POST
-                        </span>
-                        <span className="text-gray-400 font-mono text-sm">
-                          /api/track
-                        </span>
-                      </div>
-                      <pre className="p-4 text-sm overflow-x-auto">
-                        <code className="text-gray-300">
-                          {`{
-  "event": "export_completed",
-  "deviceId": "unique-device-identifier",
-  "properties": {
-    "framework": "react",
-    "animationType": "smart-animate",
-    "duration": 300
-  }
-}`}
-                        </code>
-                      </pre>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
-                      Error Codes
-                    </h2>
-                    <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-white/10">
-                            <th className="px-4 py-3 text-left text-gray-400 font-medium">
-                              Code
-                            </th>
-                            <th className="px-4 py-3 text-left text-gray-400 font-medium">
-                              Description
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/10">
-                          <tr>
-                            <td className="px-4 py-3 font-mono text-sm text-purple-400">
-                              INVALID_LICENSE
-                            </td>
-                            <td className="px-4 py-3 text-gray-400">
-                              License key is invalid or not found
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="px-4 py-3 font-mono text-sm text-purple-400">
-                              LIMIT_EXCEEDED
-                            </td>
-                            <td className="px-4 py-3 text-gray-400">
-                              Lifetime export limit reached (5 free exports
-                              used)
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="px-4 py-3 font-mono text-sm text-purple-400">
-                              LICENSE_REVOKED
-                            </td>
-                            <td className="px-4 py-3 text-gray-400">
-                              License has been revoked
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="px-4 py-3 font-mono text-sm text-purple-400">
-                              MAX_DEVICES
-                            </td>
-                            <td className="px-4 py-3 text-gray-400">
-                              Maximum device activations reached (5)
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
