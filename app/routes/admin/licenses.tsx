@@ -80,6 +80,65 @@ export async function action({ request }: Route.ActionArgs) {
     return data({ success: true });
   }
 
+  if (action === 'resend' && licenseId) {
+    // Get the license
+    const [license] = await database()
+      .select()
+      .from(licenses)
+      .where(eq(licenses.id, String(licenseId)))
+      .limit(1);
+
+    if (!license) {
+      return data({ error: 'License not found' }, { status: 404 });
+    }
+
+    // Since we can't retrieve the original key (it's hashed), we need to generate a new one
+    const { createLicense } = await import('~/lib/license.server');
+    const { sendLicenseEmail } = await import('~/lib/email.server');
+
+    // Create new license with same details
+    const { plainKey } = await createLicense({
+      email: license.email,
+      stripeCustomerId: license.stripeCustomerId,
+      stripeSessionId: license.stripeSessionId,
+      amount: license.amount || 0,
+      currency: license.currency || 'usd',
+    });
+
+    // Revoke old license
+    await database()
+      .update(licenses)
+      .set({
+        status: 'revoked',
+        metadata: JSON.stringify({
+          ...(license.metadata ? JSON.parse(license.metadata) : {}),
+          revokedReason: 'replaced_with_new_key',
+          replacedAt: new Date().toISOString(),
+        }),
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(licenses.id, String(licenseId)));
+
+    // Send email with new key
+    try {
+      await sendLicenseEmail(license.email, plainKey);
+      return data({
+        success: true,
+        message: `New license key sent to ${license.email}`,
+        licenseKey: plainKey,
+      });
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      return data(
+        {
+          error: 'Failed to send email',
+          licenseKey: plainKey,
+        },
+        { status: 500 },
+      );
+    }
+  }
+
   if (action === 'create') {
     const email = formData.get('email') as string;
     const amount = parseFloat(formData.get('amount') as string) || 0;
@@ -168,10 +227,18 @@ export default function AdminLicenses({
       {actionData && 'licenseKey' in actionData && (
         <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-800">
           <p className="text-green-800 dark:text-green-200 font-medium">
-            License created successfully!
+            {actionData.message || 'License created successfully!'}
           </p>
           <p className="text-green-700 dark:text-green-300 mt-1 font-mono text-sm">
             License Key: {actionData.licenseKey as string}
+          </p>
+        </div>
+      )}
+
+      {actionData && 'error' in actionData && !('licenseKey' in actionData) && (
+        <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800">
+          <p className="text-red-800 dark:text-red-200 font-medium">
+            {actionData.error as string}
           </p>
         </div>
       )}
@@ -330,38 +397,52 @@ export default function AdminLicenses({
                         : 'N/A'}
                     </TableCell>
                     <TableCell>
-                      <Form method="post" className="inline">
-                        <input
-                          type="hidden"
-                          name="licenseId"
-                          value={license.id}
-                        />
-                        {license.status === 'active' ? (
-                          <Button
-                            type="submit"
-                            name="_action"
-                            value="revoke"
-                            outline
-                            className="text-sm"
-                          >
-                            Revoke
-                          </Button>
-                        ) : license.status === 'revoked' ? (
-                          <Button
-                            type="submit"
-                            name="_action"
-                            value="activate"
-                            outline
-                            className="text-sm"
-                          >
-                            Activate
-                          </Button>
-                        ) : (
-                          <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                            {license.status}
-                          </span>
-                        )}
-                      </Form>
+                      <div className="flex gap-2">
+                        <Form method="post" className="inline">
+                          <input
+                            type="hidden"
+                            name="licenseId"
+                            value={license.id}
+                          />
+                          {license.status === 'active' ? (
+                            <>
+                              <Button
+                                type="submit"
+                                name="_action"
+                                value="resend"
+                                outline
+                                className="text-sm"
+                                title="Generate new key and email it"
+                              >
+                                Resend
+                              </Button>
+                              <Button
+                                type="submit"
+                                name="_action"
+                                value="revoke"
+                                outline
+                                className="text-sm"
+                              >
+                                Revoke
+                              </Button>
+                            </>
+                          ) : license.status === 'revoked' ? (
+                            <Button
+                              type="submit"
+                              name="_action"
+                              value="activate"
+                              outline
+                              className="text-sm"
+                            >
+                              Activate
+                            </Button>
+                          ) : (
+                            <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                              {license.status}
+                            </span>
+                          )}
+                        </Form>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );

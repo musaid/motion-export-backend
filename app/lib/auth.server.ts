@@ -12,7 +12,7 @@ if (!sessionSecret) {
 
 const sessionStorage = createCookieSessionStorage({
   cookie: {
-    name: '_session',
+    name: '__motion_export',
     sameSite: 'lax',
     path: '/',
     httpOnly: true,
