@@ -34,7 +34,7 @@ export default function Docs({}: Route.ComponentProps) {
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white">
       {/* Navigation */}
-      <nav className="border-b-[3px] border-black dark:border-white">
+      <nav className="border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-6 sm:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center gap-3">
@@ -55,7 +55,7 @@ export default function Docs({}: Route.ComponentProps) {
               </a>
               <a
                 href="/checkout"
-                className="px-8 py-3 bg-plum hover:bg-plum-dark text-white dark:text-black font-bold rounded-full border-[3px] border-black dark:border-white transition-all hover:translate-y-[-2px]"
+                className="px-8 py-3 bg-plum hover:bg-plum-dark text-white dark:text-black font-bold rounded-full border-2 border-black dark:border-white transition-all hover:translate-y-[-2px]"
               >
                 Get Pro
               </a>
@@ -66,16 +66,16 @@ export default function Docs({}: Route.ComponentProps) {
 
       <div className="flex">
         {/* Sidebar Navigation */}
-        <aside className="w-80 min-h-[calc(100vh-5rem)] border-r-[3px] border-black dark:border-white">
+        <aside className="w-80 min-h-[calc(100vh-5rem)] border-r border-gray-200 dark:border-gray-800">
           <nav className="p-8 space-y-3">
             {sections.map((section) => (
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id as Section)}
-                className={`w-full text-left px-6 py-4 rounded-2xl flex items-center gap-4 transition-all font-bold border-[3px] ${
+                className={`w-full text-left px-5 py-3.5 rounded-xl flex items-center gap-3 transition-colors font-semibold border-2 ${
                   activeSection === section.id
                     ? 'bg-plum/10 dark:bg-plum/20 border-plum text-black dark:text-white'
-                    : 'border-black dark:border-white hover:border-plum hover:translate-x-1'
+                    : 'border-transparent hover:border-plum hover:bg-plum/5'
                 }`}
               >
                 <span className="text-2xl">{section.icon}</span>
@@ -90,9 +90,9 @@ export default function Docs({}: Route.ComponentProps) {
           <div className="max-w-4xl mx-auto px-12 py-16">
             {activeSection === 'quickstart' && (
               <div>
-                <h1 className="text-6xl font-black mb-8">Quick Start</h1>
+                <h1 className="text-4xl font-bold mb-8">Quick Start</h1>
 
-                <div className="bg-plum/10 dark:bg-plum/20 rounded-[24px] p-8 mb-12 border-[3px] border-plum">
+                <div className="bg-plum/10 dark:bg-plum/20 rounded-2xl p-8 mb-12 border-2 border-plum">
                   <p className="text-lg font-medium">
                     Get started with Motion Export in less than 2 minutes.
                     Export your first animation from Figma to production-ready
@@ -184,7 +184,7 @@ export default function Docs({}: Route.ComponentProps) {
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-black rounded-[24px] p-8 mt-16 border-[3px] border-plum shadow-[8px_8px_0px_0px_rgba(235,163,237,1)]">
+                <div className="bg-white dark:bg-black rounded-2xl p-8 mt-16 border-2 border-plum shadow-[4px_4px_0px_0px_rgba(235,163,237,1)]">
                   <h3 className="font-black text-plum mb-4 text-2xl">
                     💡 Pro Tip
                   </h3>
@@ -199,7 +199,7 @@ export default function Docs({}: Route.ComponentProps) {
 
             {activeSection === 'installation' && (
               <div>
-                <h1 className="text-6xl font-black mb-8">Installation</h1>
+                <h1 className="text-4xl font-bold mb-8">Installation</h1>
 
                 <div className="space-y-16">
                   <div>
@@ -207,7 +207,7 @@ export default function Docs({}: Route.ComponentProps) {
                       Figma Plugin Installation
                     </h2>
 
-                    <div className="bg-white dark:bg-black rounded-[24px] p-8 mb-8 border-[3px] border-black dark:border-white">
+                    <div className="bg-white dark:bg-black rounded-2xl p-8 mb-8 border-2 border-black dark:border-white">
                       <h3 className="text-2xl font-black mb-6 text-plum">
                         Method 1: Figma Community
                       </h3>
@@ -243,7 +243,7 @@ export default function Docs({}: Route.ComponentProps) {
                       </ol>
                     </div>
 
-                    <div className="bg-white dark:bg-black rounded-[24px] p-8 border-[3px] border-black dark:border-white">
+                    <div className="bg-white dark:bg-black rounded-2xl p-8 border-2 border-black dark:border-white">
                       <h3 className="text-2xl font-black mb-6 text-plum">
                         Method 2: From Within Figma
                       </h3>
@@ -297,7 +297,7 @@ export default function Docs({}: Route.ComponentProps) {
 
             {activeSection === 'usage' && (
               <div>
-                <h1 className="text-6xl font-black mb-8">Usage Guide</h1>
+                <h1 className="text-4xl font-bold mb-8">Usage Guide</h1>
 
                 <div className="space-y-16">
                   <div>
@@ -305,7 +305,7 @@ export default function Docs({}: Route.ComponentProps) {
                       Creating Animations in Figma
                     </h2>
 
-                    <div className="bg-plum/10 dark:bg-plum/20 rounded-[24px] p-8 mb-8 border-[3px] border-plum">
+                    <div className="bg-plum/10 dark:bg-plum/20 rounded-2xl p-8 mb-8 border-2 border-plum">
                       <h3 className="text-3xl font-black mb-6">
                         Smart Animate
                       </h3>
@@ -374,11 +374,11 @@ export default function Docs({}: Route.ComponentProps) {
 
             {activeSection === 'frameworks' && (
               <div>
-                <h1 className="text-6xl font-black mb-8">Framework Support</h1>
+                <h1 className="text-4xl font-bold mb-8">Framework Support</h1>
 
                 <div className="space-y-12">
-                  <div className="bg-white dark:bg-black border-[3px] border-black dark:border-white rounded-[24px] overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
-                    <div className="px-8 py-6 border-b-[3px] border-black dark:border-white">
+                  <div className="bg-white dark:bg-black border-2 border-black dark:border-white rounded-2xl overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                    <div className="px-8 py-6 border-b border-gray-200 dark:border-gray-800">
                       <h2 className="text-3xl font-black">CSS / SCSS</h2>
                     </div>
                     <pre className="p-8 text-sm overflow-x-auto font-mono">
@@ -401,8 +401,8 @@ export default function Docs({}: Route.ComponentProps) {
                     </pre>
                   </div>
 
-                  <div className="bg-white dark:bg-black border-[3px] border-black dark:border-white rounded-[24px] overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
-                    <div className="px-8 py-6 border-b-[3px] border-black dark:border-white">
+                  <div className="bg-white dark:bg-black border-2 border-black dark:border-white rounded-2xl overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                    <div className="px-8 py-6 border-b border-gray-200 dark:border-gray-800">
                       <h2 className="text-3xl font-black">Framer Motion</h2>
                     </div>
                     <pre className="p-8 text-sm overflow-x-auto font-mono">
@@ -427,10 +427,10 @@ export default function Docs({}: Route.ComponentProps) {
 
             {activeSection === 'troubleshooting' && (
               <div>
-                <h1 className="text-6xl font-black mb-8">Troubleshooting</h1>
+                <h1 className="text-4xl font-bold mb-8">Troubleshooting</h1>
 
                 <div className="space-y-8">
-                  <div className="bg-white dark:bg-black rounded-[24px] p-8 border-[3px] border-black dark:border-white">
+                  <div className="bg-white dark:bg-black rounded-2xl p-8 border-2 border-black dark:border-white">
                     <h3 className="text-2xl font-black mb-4 text-plum">
                       No animations detected
                     </h3>
@@ -459,7 +459,7 @@ export default function Docs({}: Route.ComponentProps) {
                     </div>
                   </div>
 
-                  <div className="bg-plum/10 dark:bg-plum/20 rounded-[24px] p-8 border-[3px] border-plum">
+                  <div className="bg-plum/10 dark:bg-plum/20 rounded-2xl p-8 border-2 border-plum">
                     <h3 className="font-black text-2xl mb-4">
                       Need Help?
                     </h3>

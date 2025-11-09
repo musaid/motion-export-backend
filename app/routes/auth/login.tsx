@@ -59,20 +59,20 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
     <AuthLayout>
       <div className="w-full max-w-lg">
         {/* Card Container */}
-        <div className="bg-white dark:bg-black border-[3px] border-black dark:border-white rounded-[24px] p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,1)]">
+        <div className="bg-white dark:bg-black border-2 border-black dark:border-white rounded-2xl p-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
           {/* Logo/Brand */}
           <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-plum rounded-full border-[3px] border-black dark:border-white mb-6">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-plum rounded-full border-2 border-black dark:border-white mb-6">
               <span className="text-4xl">🔐</span>
             </div>
-            <h1 className="text-4xl font-black mb-3">Welcome back</h1>
-            <p className="text-lg font-medium opacity-60">
+            <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
+            <p className="text-base text-gray-600 dark:text-gray-400">
               Sign in to your admin account
             </p>
           </div>
 
           {setupSuccess && (
-            <div className="mb-8 rounded-2xl bg-plum/10 dark:bg-plum/20 p-6 border-[3px] border-plum">
+            <div className="mb-8 rounded-2xl bg-plum/10 dark:bg-plum/20 p-6 border-2 border-plum">
               <p className="font-bold text-center">
                 ✓ Admin account created successfully! Please login.
               </p>
@@ -96,7 +96,7 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
                   type="text"
                   autoComplete="username"
                   required
-                  className="w-full px-6 py-4 text-base font-medium bg-white dark:bg-black border-[3px] border-black dark:border-white rounded-2xl focus:outline-none focus:border-plum transition-colors"
+                  className="w-full px-6 py-4 text-base font-medium bg-white dark:bg-black border-2 border-black dark:border-white rounded-2xl focus:outline-none focus:border-plum transition-colors"
                   placeholder="Enter your username"
                 />
               </div>
@@ -114,14 +114,14 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
                   type="password"
                   autoComplete="current-password"
                   required
-                  className="w-full px-6 py-4 text-base font-medium bg-white dark:bg-black border-[3px] border-black dark:border-white rounded-2xl focus:outline-none focus:border-plum transition-colors"
+                  className="w-full px-6 py-4 text-base font-medium bg-white dark:bg-black border-2 border-black dark:border-white rounded-2xl focus:outline-none focus:border-plum transition-colors"
                   placeholder="Enter your password"
                 />
               </div>
             </div>
 
             {actionData?.error && (
-              <div className="rounded-2xl bg-white dark:bg-black p-6 border-[3px] border-red-500">
+              <div className="rounded-2xl bg-white dark:bg-black p-6 border-2 border-red-500">
                 <p className="font-bold text-red-500 text-center">
                   ✗ {actionData.error}
                 </p>
@@ -130,13 +130,13 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
 
             <button
               type="submit"
-              className="w-full px-8 py-4 bg-plum hover:bg-plum-dark text-white dark:text-black font-bold rounded-full border-[3px] border-black dark:border-white transition-all hover:translate-y-[-2px] text-lg"
+              className="w-full px-8 py-3 bg-plum hover:bg-plum-dark text-white dark:text-black font-bold rounded-full border-2 border-black dark:border-white transition-all hover:translate-y-[-2px] text-base"
             >
               Sign in to dashboard →
             </button>
           </Form>
 
-          <div className="mt-10 pt-8 border-t-[3px] border-black dark:border-white">
+          <div className="mt-10 pt-8 border-t-2 border-black dark:border-white">
             <div className="text-center space-y-3">
               <p className="text-sm font-bold opacity-60">
                 Motion Export Admin Panel
