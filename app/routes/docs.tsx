@@ -32,41 +32,30 @@ export default function Docs({}: Route.ComponentProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Modern Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-lg border-b border-white/10">
-        <div className="container mx-auto px-6">
-          <div className="flex justify-between items-center h-16">
+    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white">
+      {/* Navigation */}
+      <nav className="border-b-[3px] border-black dark:border-white">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8">
+          <div className="flex justify-between items-center h-20">
             <div className="flex items-center gap-3">
-              <Link to="/" className="flex items-center gap-3 group">
-                <img
-                  src="/logo.svg"
-                  alt="Motion Export"
-                  className="w-8 h-8 transition-transform group-hover:scale-110"
-                  style={{
-                    filter:
-                      'brightness(0) saturate(100%) invert(59%) sepia(94%) saturate(1165%) hue-rotate(201deg) brightness(101%) contrast(96%)',
-                  }}
-                />
-                <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
-                  Motion Export
-                </span>
+              <Link to="/" className="flex items-center gap-2">
+                <span className="text-xl font-bold">Motion Export</span>
               </Link>
-              <span className="text-gray-600">/</span>
-              <span className="text-gray-400">Documentation</span>
+              <span className="text-2xl font-black opacity-30">/</span>
+              <span className="font-bold opacity-60">Documentation</span>
             </div>
             <div className="flex gap-6 items-center">
               <a
                 href="https://www.figma.com/community/plugin/1543550763369836937"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors text-sm"
+                className="text-base font-medium hover:text-plum transition-colors"
               >
                 Plugin
               </a>
               <a
                 href="/checkout"
-                className="px-4 py-2 bg-white text-black rounded-full text-sm font-medium hover:bg-gray-200 transition-all"
+                className="px-8 py-3 bg-plum hover:bg-plum-dark text-white dark:text-black font-bold rounded-full border-[3px] border-black dark:border-white transition-all hover:translate-y-[-2px]"
               >
                 Get Pro
               </a>
@@ -75,133 +64,131 @@ export default function Docs({}: Route.ComponentProps) {
         </div>
       </nav>
 
-      <div className="pt-16 flex">
-        {/* Sidebar Navigation - Fixed */}
-        <aside className="w-64 h-[calc(100vh-4rem)] sticky top-16 border-r border-white/10 bg-black/50 backdrop-blur-sm">
-          <nav className="p-4 space-y-1">
+      <div className="flex">
+        {/* Sidebar Navigation */}
+        <aside className="w-80 min-h-[calc(100vh-5rem)] border-r-[3px] border-black dark:border-white">
+          <nav className="p-8 space-y-3">
             {sections.map((section) => (
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id as Section)}
-                className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors outline-none focus:outline-none ${
+                className={`w-full text-left px-6 py-4 rounded-2xl flex items-center gap-4 transition-all font-bold border-[3px] ${
                   activeSection === section.id
-                    ? 'bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-white border border-white/10'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                    ? 'bg-plum/10 dark:bg-plum/20 border-plum text-black dark:text-white'
+                    : 'border-black dark:border-white hover:border-plum hover:translate-x-1'
                 }`}
               >
-                <span className="text-xl">{section.icon}</span>
-                <span className="text-sm font-medium">{section.label}</span>
+                <span className="text-2xl">{section.icon}</span>
+                <span>{section.label}</span>
               </button>
             ))}
           </nav>
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 min-h-[calc(100vh-4rem)]">
-          <div className="max-w-4xl mx-auto px-8 py-12">
+        <main className="flex-1 min-h-[calc(100vh-5rem)]">
+          <div className="max-w-4xl mx-auto px-12 py-16">
             {activeSection === 'quickstart' && (
-              <div className="prose prose-invert max-w-none">
-                <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                  Quick Start
-                </h1>
+              <div>
+                <h1 className="text-6xl font-black mb-8">Quick Start</h1>
 
-                <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm rounded-xl p-6 mb-8 border border-white/10">
-                  <p className="text-gray-300 m-0">
+                <div className="bg-plum/10 dark:bg-plum/20 rounded-[24px] p-8 mb-12 border-[3px] border-plum">
+                  <p className="text-lg font-medium">
                     Get started with Motion Export in less than 2 minutes.
                     Export your first animation from Figma to production-ready
                     code.
                   </p>
                 </div>
 
-                <div className="space-y-12">
+                <div className="space-y-16">
                   <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white flex items-center gap-3">
-                      <span className="text-3xl">1️⃣</span> Install the Plugin
+                    <h2 className="text-4xl font-black mb-8 flex items-center gap-4">
+                      <span className="text-5xl">1️⃣</span> Install the Plugin
                     </h2>
-                    <ol className="space-y-3 text-gray-400 ml-12">
-                      <li className="flex items-start gap-3">
-                        <span className="text-blue-400 mt-1">→</span>
-                        <span>Open Figma and go to the Community tab</span>
+                    <ol className="space-y-4 ml-16">
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">Open Figma and go to the Community tab</span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-blue-400 mt-1">→</span>
-                        <span>Search for "Motion Export"</span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">Search for "Motion Export"</span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-blue-400 mt-1">→</span>
-                        <span>Click "Try it out" to install the plugin</span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">Click "Try it out" to install the plugin</span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-blue-400 mt-1">→</span>
-                        <span>The plugin will appear in your Plugins menu</span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">The plugin will appear in your Plugins menu</span>
                       </li>
                     </ol>
                   </div>
 
                   <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white flex items-center gap-3">
-                      <span className="text-3xl">2️⃣</span> Create Your Animation
+                    <h2 className="text-4xl font-black mb-8 flex items-center gap-4">
+                      <span className="text-5xl">2️⃣</span> Create Your Animation
                     </h2>
-                    <ol className="space-y-3 text-gray-400 ml-12">
-                      <li className="flex items-start gap-3">
-                        <span className="text-purple-400 mt-1">→</span>
-                        <span>
+                    <ol className="space-y-4 ml-16">
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">
                           Design your frames with the elements you want to
                           animate
                         </span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-purple-400 mt-1">→</span>
-                        <span>Connect frames using Prototype mode</span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">Connect frames using Prototype mode</span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-purple-400 mt-1">→</span>
-                        <span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">
                           Choose your animation type (Smart Animate, Dissolve,
                           etc.)
                         </span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-purple-400 mt-1">→</span>
-                        <span>Set duration and easing</span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">Set duration and easing</span>
                       </li>
                     </ol>
                   </div>
 
                   <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white flex items-center gap-3">
-                      <span className="text-3xl">3️⃣</span> Export to Code
+                    <h2 className="text-4xl font-black mb-8 flex items-center gap-4">
+                      <span className="text-5xl">3️⃣</span> Export to Code
                     </h2>
-                    <ol className="space-y-3 text-gray-400 ml-12">
-                      <li className="flex items-start gap-3">
-                        <span className="text-pink-400 mt-1">→</span>
-                        <span>Run Motion Export from Plugins menu</span>
+                    <ol className="space-y-4 ml-16">
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">Run Motion Export from Plugins menu</span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-pink-400 mt-1">→</span>
-                        <span>Click "Scan for Animations"</span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">Click "Scan for Animations"</span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-pink-400 mt-1">→</span>
-                        <span>Select the animations you want to export</span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">Select the animations you want to export</span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-pink-400 mt-1">→</span>
-                        <span>Choose your target framework</span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">Choose your target framework</span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-pink-400 mt-1">→</span>
-                        <span>Click "Export" and copy the generated code</span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">Click "Export" and copy the generated code</span>
                       </li>
                     </ol>
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-r from-green-600/20 to-emerald-600/20 backdrop-blur-sm rounded-xl p-6 mt-12 border border-green-500/20">
-                  <h3 className="font-semibold text-green-400 mb-3 text-lg">
+                <div className="bg-white dark:bg-black rounded-[24px] p-8 mt-16 border-[3px] border-plum shadow-[8px_8px_0px_0px_rgba(235,163,237,1)]">
+                  <h3 className="font-black text-plum mb-4 text-2xl">
                     💡 Pro Tip
                   </h3>
-                  <p className="text-gray-300 m-0">
+                  <p className="font-medium text-lg">
                     Name your layers consistently when using Smart Animate.
                     Motion Export matches elements by name to track property
                     changes.
@@ -211,391 +198,192 @@ export default function Docs({}: Route.ComponentProps) {
             )}
 
             {activeSection === 'installation' && (
-              <div className="prose prose-invert max-w-none">
-                <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                  Installation
-                </h1>
+              <div>
+                <h1 className="text-6xl font-black mb-8">Installation</h1>
 
-                <div className="space-y-12">
+                <div className="space-y-16">
                   <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
+                    <h2 className="text-4xl font-black mb-8">
                       Figma Plugin Installation
                     </h2>
 
-                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 mb-6 border border-white/10">
-                      <h3 className="text-lg font-medium mb-4 text-blue-400">
+                    <div className="bg-white dark:bg-black rounded-[24px] p-8 mb-8 border-[3px] border-black dark:border-white">
+                      <h3 className="text-2xl font-black mb-6 text-plum">
                         Method 1: Figma Community
                       </h3>
-                      <ol className="space-y-3 text-gray-400">
-                        <li className="flex items-start gap-3">
-                          <span className="text-blue-400 mt-1">1.</span>
-                          <span>
+                      <ol className="space-y-4">
+                        <li className="flex items-start gap-4">
+                          <span className="font-black text-plum text-xl">1.</span>
+                          <span className="font-medium text-lg">
                             Visit the{' '}
                             <a
                               href="https://www.figma.com/community/plugin/1543550763369836937"
-                              className="text-blue-400 hover:text-blue-300 underline"
+                              className="text-plum underline hover:no-underline font-bold"
                             >
                               Motion Export plugin page
                             </a>
                           </span>
                         </li>
-                        <li className="flex items-start gap-3">
-                          <span className="text-blue-400 mt-1">2.</span>
-                          <span>Click the "Try it out" button</span>
+                        <li className="flex items-start gap-4">
+                          <span className="font-black text-plum text-xl">2.</span>
+                          <span className="font-medium text-lg">Click the "Try it out" button</span>
                         </li>
-                        <li className="flex items-start gap-3">
-                          <span className="text-blue-400 mt-1">3.</span>
-                          <span>
+                        <li className="flex items-start gap-4">
+                          <span className="font-black text-plum text-xl">3.</span>
+                          <span className="font-medium text-lg">
                             The plugin will be added to your Figma account
                           </span>
                         </li>
-                        <li className="flex items-start gap-3">
-                          <span className="text-blue-400 mt-1">4.</span>
-                          <span>
+                        <li className="flex items-start gap-4">
+                          <span className="font-black text-plum text-xl">4.</span>
+                          <span className="font-medium text-lg">
                             Access it from Plugins → Motion Export in any file
                           </span>
                         </li>
                       </ol>
                     </div>
 
-                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-                      <h3 className="text-lg font-medium mb-4 text-purple-400">
+                    <div className="bg-white dark:bg-black rounded-[24px] p-8 border-[3px] border-black dark:border-white">
+                      <h3 className="text-2xl font-black mb-6 text-plum">
                         Method 2: From Within Figma
                       </h3>
-                      <ol className="space-y-3 text-gray-400">
-                        <li className="flex items-start gap-3">
-                          <span className="text-purple-400 mt-1">1.</span>
-                          <span>Open any Figma file</span>
+                      <ol className="space-y-4">
+                        <li className="flex items-start gap-4">
+                          <span className="font-black text-plum text-xl">1.</span>
+                          <span className="font-medium text-lg">Open any Figma file</span>
                         </li>
-                        <li className="flex items-start gap-3">
-                          <span className="text-purple-400 mt-1">2.</span>
-                          <span>
+                        <li className="flex items-start gap-4">
+                          <span className="font-black text-plum text-xl">2.</span>
+                          <span className="font-medium text-lg">
                             Go to Plugins → Browse plugins in Community
                           </span>
                         </li>
-                        <li className="flex items-start gap-3">
-                          <span className="text-purple-400 mt-1">3.</span>
-                          <span>Search for "Motion Export"</span>
+                        <li className="flex items-start gap-4">
+                          <span className="font-black text-plum text-xl">3.</span>
+                          <span className="font-medium text-lg">Search for "Motion Export"</span>
                         </li>
-                        <li className="flex items-start gap-3">
-                          <span className="text-purple-400 mt-1">4.</span>
-                          <span>Click "Try it out"</span>
+                        <li className="flex items-start gap-4">
+                          <span className="font-black text-plum text-xl">4.</span>
+                          <span className="font-medium text-lg">Click "Try it out"</span>
                         </li>
                       </ol>
                     </div>
                   </div>
 
                   <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
+                    <h2 className="text-4xl font-black mb-8">
                       System Requirements
                     </h2>
-                    <ul className="space-y-3 text-gray-400">
-                      <li className="flex items-start gap-3">
-                        <span className="text-green-400">✓</span>
-                        <span>Figma desktop app or web browser</span>
+                    <ul className="space-y-4">
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum text-2xl font-black">✓</span>
+                        <span className="font-medium text-lg">Figma desktop app or web browser</span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-green-400">✓</span>
-                        <span>Active internet connection</span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum text-2xl font-black">✓</span>
+                        <span className="font-medium text-lg">Active internet connection</span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-green-400">✓</span>
-                        <span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum text-2xl font-black">✓</span>
+                        <span className="font-medium text-lg">
                           At least one frame with prototype connections
                         </span>
                       </li>
                     </ul>
                   </div>
-
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
-                      License Activation
-                    </h2>
-                    <p className="text-gray-400 mb-6">
-                      Motion Export offers 3 free exports per day. To unlock
-                      unlimited exports:
-                    </p>
-                    <div className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-                      <ol className="space-y-3 text-gray-300">
-                        <li className="flex items-start gap-3">
-                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">
-                            1
-                          </span>
-                          <span>Purchase a Pro license for $9.99</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">
-                            2
-                          </span>
-                          <span>You'll receive a license key via email</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">
-                            3
-                          </span>
-                          <span>Open Motion Export in Figma</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">
-                            4
-                          </span>
-                          <span>
-                            Click the settings icon and enter your license key
-                          </span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <span className="px-2 py-0.5 bg-white/10 rounded text-sm">
-                            5
-                          </span>
-                          <span>Enjoy unlimited exports!</span>
-                        </li>
-                      </ol>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-r from-yellow-600/20 to-orange-600/20 backdrop-blur-sm rounded-xl p-6 mt-12 border border-yellow-500/20">
-                  <h3 className="font-semibold text-yellow-400 mb-3 text-lg">
-                    📝 Note
-                  </h3>
-                  <p className="text-gray-300 m-0">
-                    The free version includes all features and frameworks. The
-                    only limitation is 5 lifetime exports (never resets).
-                  </p>
                 </div>
               </div>
             )}
 
             {activeSection === 'usage' && (
-              <div className="prose prose-invert max-w-none">
-                <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                  Usage Guide
-                </h1>
+              <div>
+                <h1 className="text-6xl font-black mb-8">Usage Guide</h1>
 
-                <div className="space-y-12">
+                <div className="space-y-16">
                   <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
+                    <h2 className="text-4xl font-black mb-8">
                       Creating Animations in Figma
                     </h2>
 
-                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 mb-6 border border-white/10">
-                      <h3 className="text-xl font-medium mb-4 text-purple-400">
+                    <div className="bg-plum/10 dark:bg-plum/20 rounded-[24px] p-8 mb-8 border-[3px] border-plum">
+                      <h3 className="text-3xl font-black mb-6">
                         Smart Animate
                       </h3>
-                      <p className="text-gray-400 mb-4">
+                      <p className="font-medium text-lg mb-6">
                         Smart Animate is the most powerful animation type. It
                         automatically animates matching layers between frames.
                       </p>
-                      <ul className="space-y-3 text-gray-400">
-                        <li className="flex items-start gap-3">
-                          <span className="text-purple-400 mt-1">•</span>
-                          <span>
+                      <ul className="space-y-4">
+                        <li className="flex items-start gap-4">
+                          <span className="text-plum font-black text-xl">•</span>
+                          <span className="font-medium text-lg">
                             Use identical layer names for elements you want to
                             animate
                           </span>
                         </li>
-                        <li className="flex items-start gap-3">
-                          <span className="text-purple-400 mt-1">•</span>
-                          <span>
+                        <li className="flex items-start gap-4">
+                          <span className="text-plum font-black text-xl">•</span>
+                          <span className="font-medium text-lg">
                             Motion Export tracks position, size, rotation, and
                             opacity changes
                           </span>
                         </li>
-                        <li className="flex items-start gap-3">
-                          <span className="text-purple-400 mt-1">•</span>
-                          <span>
+                        <li className="flex items-start gap-4">
+                          <span className="text-plum font-black text-xl">•</span>
+                          <span className="font-medium text-lg">
                             Nested elements are fully supported (industry
                             first!)
                           </span>
                         </li>
                       </ul>
                     </div>
-
-                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-                      <h3 className="text-xl font-medium mb-4 text-blue-400">
-                        Supported Transitions
-                      </h3>
-                      <div className="grid gap-3">
-                        {[
-                          {
-                            name: 'Smart Animate',
-                            desc: 'Morphs between matching elements',
-                          },
-                          { name: 'Dissolve', desc: 'Fades between frames' },
-                          {
-                            name: 'Move In/Out',
-                            desc: 'Slides frames in from edges',
-                          },
-                          {
-                            name: 'Push',
-                            desc: 'Pushes one frame out while bringing another in',
-                          },
-                          {
-                            name: 'Slide In/Out',
-                            desc: 'Slides frames over each other',
-                          },
-                        ].map((transition, i) => (
-                          <div key={i} className="flex items-start gap-3">
-                            <span className="text-blue-400 font-semibold min-w-[120px]">
-                              {transition.name}:
-                            </span>
-                            <span className="text-gray-400">
-                              {transition.desc}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
                   </div>
 
                   <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
-                      Using Motion Export
-                    </h2>
-
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-xl font-medium mb-4 text-pink-400">
-                          Scanning for Animations
-                        </h3>
-                        <ol className="space-y-3 text-gray-400">
-                          <li className="flex items-start gap-3">
-                            <span className="text-pink-400">1.</span>
-                            <span>
-                              Open Motion Export from the Plugins menu
-                            </span>
-                          </li>
-                          <li className="flex items-start gap-3">
-                            <span className="text-pink-400">2.</span>
-                            <span>Click "Scan for Animations"</span>
-                          </li>
-                          <li className="flex items-start gap-3">
-                            <span className="text-pink-400">3.</span>
-                            <span>
-                              The plugin will detect all prototype connections
-                            </span>
-                          </li>
-                          <li className="flex items-start gap-3">
-                            <span className="text-pink-400">4.</span>
-                            <span>
-                              Review the detected animations in the list
-                            </span>
-                          </li>
-                        </ol>
-                      </div>
-
-                      <div>
-                        <h3 className="text-xl font-medium mb-4 text-orange-400">
-                          Export Options
-                        </h3>
-                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-                          <div className="grid gap-4">
-                            <div className="flex items-start gap-3">
-                              <span className="text-orange-400 font-semibold min-w-[100px]">
-                                Framework:
-                              </span>
-                              <span className="text-gray-400">
-                                CSS, React, Vue, Vanilla JS, Framer Motion,
-                                React Spring
-                              </span>
-                            </div>
-                            <div className="flex items-start gap-3">
-                              <span className="text-orange-400 font-semibold min-w-[100px]">
-                                Units:
-                              </span>
-                              <span className="text-gray-400">
-                                Pixels (px) or REM
-                              </span>
-                            </div>
-                            <div className="flex items-start gap-3">
-                              <span className="text-orange-400 font-semibold min-w-[100px]">
-                                Variables:
-                              </span>
-                              <span className="text-gray-400">
-                                Enable CSS variables for theming
-                              </span>
-                            </div>
-                            <div className="flex items-start gap-3">
-                              <span className="text-orange-400 font-semibold min-w-[100px]">
-                                Minification:
-                              </span>
-                              <span className="text-gray-400">
-                                Reduce code size
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
+                    <h2 className="text-4xl font-black mb-8">
                       Best Practices
                     </h2>
-                    <ul className="space-y-3 text-gray-400">
-                      <li className="flex items-start gap-3">
-                        <span className="text-green-400">✓</span>
-                        <span>Test animations in Figma before exporting</span>
+                    <ul className="space-y-4">
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum text-2xl font-black">✓</span>
+                        <span className="font-medium text-lg">Test animations in Figma before exporting</span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-green-400">✓</span>
-                        <span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum text-2xl font-black">✓</span>
+                        <span className="font-medium text-lg">
                           Use component variants for reusable micro-interactions
                         </span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-green-400">✓</span>
-                        <span>Group related animations in the same frame</span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum text-2xl font-black">✓</span>
+                        <span className="font-medium text-lg">Group related animations in the same frame</span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-green-400">✓</span>
-                        <span>Keep layer names consistent and descriptive</span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum text-2xl font-black">✓</span>
+                        <span className="font-medium text-lg">Keep layer names consistent and descriptive</span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-green-400">✓</span>
-                        <span>Use Auto Layout for responsive animations</span>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum text-2xl font-black">✓</span>
+                        <span className="font-medium text-lg">Use Auto Layout for responsive animations</span>
                       </li>
                     </ul>
                   </div>
-                </div>
-
-                <div className="bg-gradient-to-r from-blue-600/20 to-indigo-600/20 backdrop-blur-sm rounded-xl p-6 mt-12 border border-blue-500/20">
-                  <h3 className="font-semibold text-blue-400 mb-3 text-lg">
-                    🎯 Advanced Tip
-                  </h3>
-                  <p className="text-gray-300 m-0">
-                    For complex multi-step animations, create intermediate
-                    frames and chain them with "After Delay" triggers.
-                  </p>
                 </div>
               </div>
             )}
 
             {activeSection === 'frameworks' && (
-              <div className="prose prose-invert max-w-none">
-                <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                  Framework Support
-                </h1>
+              <div>
+                <h1 className="text-6xl font-black mb-8">Framework Support</h1>
 
                 <div className="space-y-12">
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
-                      CSS / SCSS
-                    </h2>
-                    <p className="text-gray-400 mb-6">
-                      Pure CSS animations using @keyframes. Perfect for any
-                      project.
-                    </p>
-                    <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-                      <div className="px-4 py-3 border-b border-white/10">
-                        <span className="text-xs text-gray-500">
-                          styles.css
-                        </span>
-                      </div>
-                      <pre className="p-4 text-sm overflow-x-auto">
-                        <code className="text-gray-300">
-                          {`.animated-element {
+                  <div className="bg-white dark:bg-black border-[3px] border-black dark:border-white rounded-[24px] overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
+                    <div className="px-8 py-6 border-b-[3px] border-black dark:border-white">
+                      <h2 className="text-3xl font-black">CSS / SCSS</h2>
+                    </div>
+                    <pre className="p-8 text-sm overflow-x-auto font-mono">
+                      <code className="font-medium">
+                        {`.animated-element {
   animation: fadeIn 0.3s ease-out forwards;
 }
 
@@ -609,104 +397,17 @@ export default function Docs({}: Route.ComponentProps) {
     transform: scale(1);
   }
 }`}
-                        </code>
-                      </pre>
-                    </div>
+                      </code>
+                    </pre>
                   </div>
 
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
-                      React
-                    </h2>
-                    <p className="text-gray-400 mb-6">
-                      React components with inline styles and state management.
-                    </p>
-                    <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-                      <div className="px-4 py-3 border-b border-white/10">
-                        <span className="text-xs text-gray-500">
-                          AnimatedComponent.jsx
-                        </span>
-                      </div>
-                      <pre className="p-4 text-sm overflow-x-auto">
-                        <code className="text-gray-300">
-                          {`const AnimatedComponent = () => {
-  const [isAnimated, setIsAnimated] = useState(false);
-
-  return (
-    <div
-      className="element"
-      style={{
-        transition: 'all 0.3s ease-out',
-        opacity: isAnimated ? 1 : 0,
-        transform: \`scale(\${isAnimated ? 1 : 0.9})\`
-      }}
-      onClick={() => setIsAnimated(!isAnimated)}
-    >
-      Content
-    </div>
-  );
-};`}
-                        </code>
-                      </pre>
+                  <div className="bg-white dark:bg-black border-[3px] border-black dark:border-white rounded-[24px] overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
+                    <div className="px-8 py-6 border-b-[3px] border-black dark:border-white">
+                      <h2 className="text-3xl font-black">Framer Motion</h2>
                     </div>
-                  </div>
-
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
-                      Vue 3
-                    </h2>
-                    <p className="text-gray-400 mb-6">
-                      Vue 3 Composition API with reactive animations.
-                    </p>
-                    <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-                      <div className="px-4 py-3 border-b border-white/10">
-                        <span className="text-xs text-gray-500">
-                          AnimatedComponent.vue
-                        </span>
-                      </div>
-                      <pre className="p-4 text-sm overflow-x-auto">
-                        <code className="text-gray-300">
-                          {`<template>
-  <transition name="fade">
-    <div v-if="show" class="element">
-      Content
-    </div>
-  </transition>
-</template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease-out;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: scale(0.9);
-}
-</style>`}
-                        </code>
-                      </pre>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
-                      Framer Motion
-                    </h2>
-                    <p className="text-gray-400 mb-6">
-                      Advanced React animations with spring physics and
-                      gestures.
-                    </p>
-                    <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-                      <div className="px-4 py-3 border-b border-white/10">
-                        <span className="text-xs text-gray-500">
-                          AnimatedCard.tsx
-                        </span>
-                      </div>
-                      <pre className="p-4 text-sm overflow-x-auto">
-                        <code className="text-gray-300">
-                          {`<motion.div
+                    <pre className="p-8 text-sm overflow-x-auto font-mono">
+                      <code className="font-medium">
+                        {`<motion.div
   initial={{ opacity: 0, scale: 0.9 }}
   animate={{ opacity: 1, scale: 1 }}
   transition={{
@@ -714,233 +415,69 @@ export default function Docs({}: Route.ComponentProps) {
     stiffness: 300,
     damping: 20
   }}
-  whileHover={{ scale: 1.05 }}
-  whileTap={{ scale: 0.95 }}
 >
   Content
 </motion.div>`}
-                        </code>
-                      </pre>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
-                      React Spring
-                    </h2>
-                    <p className="text-gray-400 mb-6">
-                      Physics-based animations with React hooks.
-                    </p>
-                    <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-                      <div className="px-4 py-3 border-b border-white/10">
-                        <span className="text-xs text-gray-500">
-                          SpringAnimation.jsx
-                        </span>
-                      </div>
-                      <pre className="p-4 text-sm overflow-x-auto">
-                        <code className="text-gray-300">
-                          {`const styles = useSpring({
-  from: { opacity: 0, transform: 'scale(0.9)' },
-  to: { opacity: 1, transform: 'scale(1)' },
-  config: { tension: 300, friction: 20 }
-});
-
-return (
-  <animated.div style={styles}>
-    Content
-  </animated.div>
-);`}
-                        </code>
-                      </pre>
-                    </div>
+                      </code>
+                    </pre>
                   </div>
                 </div>
               </div>
             )}
 
             {activeSection === 'troubleshooting' && (
-              <div className="prose prose-invert max-w-none">
-                <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                  Troubleshooting
-                </h1>
+              <div>
+                <h1 className="text-6xl font-black mb-8">Troubleshooting</h1>
 
-                <div className="space-y-12">
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
-                      Common Issues
-                    </h2>
-
-                    <div className="space-y-6">
-                      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-                        <h3 className="text-xl font-medium mb-3 text-red-400">
-                          No animations detected
-                        </h3>
-                        <p className="text-gray-400 mb-4">
-                          <span className="text-gray-500">Problem:</span> The
-                          plugin doesn't find any animations after scanning.
-                        </p>
-                        <div>
-                          <p className="text-gray-500 mb-2">Solution:</p>
-                          <ul className="space-y-2 text-gray-400">
-                            <li className="flex items-start gap-3">
-                              <span className="text-green-400 mt-1">→</span>
-                              <span>
-                                Ensure frames are connected with prototype
-                                connections
-                              </span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <span className="text-green-400 mt-1">→</span>
-                              <span>
-                                Check that you're in a file with prototypes, not
-                                a library
-                              </span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <span className="text-green-400 mt-1">→</span>
-                              <span>
-                                Verify that frames contain actual content to
-                                animate
-                              </span>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-
-                      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-                        <h3 className="text-xl font-medium mb-3 text-yellow-400">
-                          Smart Animate not working correctly
-                        </h3>
-                        <p className="text-gray-400 mb-4">
-                          <span className="text-gray-500">Problem:</span>{' '}
-                          Elements aren't animating smoothly between frames.
-                        </p>
-                        <div>
-                          <p className="text-gray-500 mb-2">Solution:</p>
-                          <ul className="space-y-2 text-gray-400">
-                            <li className="flex items-start gap-3">
-                              <span className="text-green-400 mt-1">→</span>
-                              <span>
-                                Ensure layer names match exactly between frames
-                              </span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <span className="text-green-400 mt-1">→</span>
-                              <span>
-                                Check that layer structure is consistent
-                              </span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <span className="text-green-400 mt-1">→</span>
-                              <span>
-                                Avoid changing layer types (e.g., frame to
-                                group)
-                              </span>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-
-                      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-                        <h3 className="text-xl font-medium mb-3 text-orange-400">
-                          License key not working
-                        </h3>
-                        <p className="text-gray-400 mb-4">
-                          <span className="text-gray-500">Problem:</span> Pro
-                          license key is rejected.
-                        </p>
-                        <div>
-                          <p className="text-gray-500 mb-2">Solution:</p>
-                          <ul className="space-y-2 text-gray-400">
-                            <li className="flex items-start gap-3">
-                              <span className="text-green-400 mt-1">→</span>
-                              <span>Copy the entire key including dashes</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <span className="text-green-400 mt-1">→</span>
-                              <span>
-                                Check for extra spaces before or after the key
-                              </span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <span className="text-green-400 mt-1">→</span>
-                              <span>
-                                Verify you're using the key from your purchase
-                                email
-                              </span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <span className="text-green-400 mt-1">→</span>
-                              <span>Contact support if issue persists</span>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
+                <div className="space-y-8">
+                  <div className="bg-white dark:bg-black rounded-[24px] p-8 border-[3px] border-black dark:border-white">
+                    <h3 className="text-2xl font-black mb-4 text-plum">
+                      No animations detected
+                    </h3>
+                    <div className="space-y-4">
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">
+                          Ensure frames are connected with prototype
+                          connections
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">
+                          Check that you're in a file with prototypes, not
+                          a library
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="font-medium text-lg">
+                          Verify that frames contain actual content to
+                          animate
+                        </span>
+                      </li>
                     </div>
                   </div>
 
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
-                      Performance Tips
-                    </h2>
-                    <ul className="space-y-3 text-gray-400">
-                      <li className="flex items-start gap-3">
-                        <span className="text-blue-400">💡</span>
-                        <span>
-                          Limit the number of elements in complex animations
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-blue-400">💡</span>
-                        <span>
-                          Use transform properties instead of position changes
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-blue-400">💡</span>
-                        <span>
-                          Enable hardware acceleration with will-change CSS
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-blue-400">💡</span>
-                        <span>
-                          Avoid animating box-shadow and filters on mobile
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-blue-400">💡</span>
-                        <span>
-                          Test on actual devices, not just desktop browsers
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-6 text-white">
-                      Getting Help
-                    </h2>
-                    <div className="bg-gradient-to-r from-indigo-600/20 to-purple-600/20 backdrop-blur-sm rounded-xl p-6 border border-indigo-500/20">
-                      <h3 className="font-semibold text-indigo-400 mb-4 text-lg">
-                        Support Channels
-                      </h3>
-                      <div className="space-y-3">
-                        <a
-                          href="mailto:support@motionexport.com"
-                          className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors"
-                        >
-                          <span className="text-2xl">📧</span>
-                          <span>support@motionexport.com</span>
-                        </a>
-                        <a
-                          href="https://discord.gg/U9JxpKnBhe"
-                          className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors"
-                        >
-                          <span className="text-2xl">💬</span>
-                          <span>Join our Discord</span>
-                        </a>
-                      </div>
+                  <div className="bg-plum/10 dark:bg-plum/20 rounded-[24px] p-8 border-[3px] border-plum">
+                    <h3 className="font-black text-2xl mb-4">
+                      Need Help?
+                    </h3>
+                    <div className="space-y-4">
+                      <a
+                        href="mailto:support@motionexport.com"
+                        className="flex items-center gap-4 font-bold text-lg hover:text-plum transition-colors"
+                      >
+                        <span className="text-3xl">📧</span>
+                        <span>support@motionexport.com</span>
+                      </a>
+                      <a
+                        href="https://discord.gg/U9JxpKnBhe"
+                        className="flex items-center gap-4 font-bold text-lg hover:text-plum transition-colors"
+                      >
+                        <span className="text-3xl">💬</span>
+                        <span>Join our Discord</span>
+                      </a>
                     </div>
                   </div>
                 </div>

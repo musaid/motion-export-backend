@@ -3,6 +3,22 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  /* Plum Color Palette */
+  --color-plum-50: #fdf4ff;
+  --color-plum-100: #fae8ff;
+  --color-plum-200: #f5d0fe;
+  --color-plum-300: #f5c9f6;
+  --color-plum-400: #f0abfc;
+  --color-plum-500: #eba3ed;
+  --color-plum-600: #d88cdb;
+  --color-plum-700: #c026d3;
+  --color-plum-800: #a21caf;
+  --color-plum-900: #86198f;
+  --color-plum-950: #701a75;
+  --color-plum: #eba3ed;
+  --color-plum-dark: #d88cdb;
+  --color-plum-light: #f5c9f6;
 }
 
 html,

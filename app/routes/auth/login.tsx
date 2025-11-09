@@ -9,11 +9,6 @@ import type { Route } from './+types/login';
 import { database } from '~/database/context';
 import { admins } from '~/database/schema';
 import { AuthLayout } from '~/components/auth-layout';
-import { Input } from '~/components/input';
-import { Button } from '~/components/button';
-import { Heading } from '~/components/heading';
-import { Text } from '~/components/text';
-import { Divider } from '~/components/divider';
 
 const loginSchema = z.object({
   username: z.string().min(1),
@@ -62,96 +57,98 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
 
   return (
     <AuthLayout>
-      <div className="w-full max-w-md">
-        {/* Logo/Brand */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-6">
-            <img
-              src="/logo.svg"
-              alt="Motion Export"
-              className="w-16 h-16"
-              style={{
-                filter:
-                  'brightness(0) saturate(100%) invert(41%) sepia(84%) saturate(438%) hue-rotate(212deg) brightness(104%) contrast(94%)',
-              }}
-            />
-          </div>
-          <Heading>Welcome back</Heading>
-          <Text className="mt-2">Sign in to your admin account</Text>
-        </div>
-
-        {setupSuccess && (
-          <div className="mb-6 rounded-lg bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-800">
-            <p className="text-green-800 dark:text-green-200">
-              Admin account created successfully! Please login.
+      <div className="w-full max-w-lg">
+        {/* Card Container */}
+        <div className="bg-white dark:bg-black border-[3px] border-black dark:border-white rounded-[24px] p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,1)]">
+          {/* Logo/Brand */}
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-plum rounded-full border-[3px] border-black dark:border-white mb-6">
+              <span className="text-4xl">🔐</span>
+            </div>
+            <h1 className="text-4xl font-black mb-3">Welcome back</h1>
+            <p className="text-lg font-medium opacity-60">
+              Sign in to your admin account
             </p>
           </div>
-        )}
 
-        <Form method="post" className="space-y-6">
-          <input type="hidden" name="redirectTo" value={redirectTo} />
-
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"
-              >
-                Username
-              </label>
-              <Input
-                id="username"
-                name="username"
-                type="text"
-                autoComplete="username"
-                required
-                className="w-full"
-                placeholder="Enter your username"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"
-              >
-                Password
-              </label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="w-full"
-                placeholder="Enter your password"
-              />
-            </div>
-          </div>
-
-          {actionData?.error && (
-            <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800">
-              <p className="text-red-800 dark:text-red-200">
-                {actionData.error}
+          {setupSuccess && (
+            <div className="mb-8 rounded-2xl bg-plum/10 dark:bg-plum/20 p-6 border-[3px] border-plum">
+              <p className="font-bold text-center">
+                ✓ Admin account created successfully! Please login.
               </p>
             </div>
           )}
 
-          <Button type="submit" className="w-full">
-            Sign in to dashboard
-          </Button>
-        </Form>
+          <Form method="post" className="space-y-6">
+            <input type="hidden" name="redirectTo" value={redirectTo} />
 
-        <Divider className="my-8" />
+            <div className="space-y-6">
+              <div>
+                <label
+                  htmlFor="username"
+                  className="block text-base font-bold mb-3"
+                >
+                  Username
+                </label>
+                <input
+                  id="username"
+                  name="username"
+                  type="text"
+                  autoComplete="username"
+                  required
+                  className="w-full px-6 py-4 text-base font-medium bg-white dark:bg-black border-[3px] border-black dark:border-white rounded-2xl focus:outline-none focus:border-plum transition-colors"
+                  placeholder="Enter your username"
+                />
+              </div>
 
-        <div className="text-center">
-          <Text className="text-sm">Motion Export Admin Panel</Text>
-          <Link
-            to="/"
-            className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors mt-2 inline-block"
-          >
-            ← Back to website
-          </Link>
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-base font-bold mb-3"
+                >
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="w-full px-6 py-4 text-base font-medium bg-white dark:bg-black border-[3px] border-black dark:border-white rounded-2xl focus:outline-none focus:border-plum transition-colors"
+                  placeholder="Enter your password"
+                />
+              </div>
+            </div>
+
+            {actionData?.error && (
+              <div className="rounded-2xl bg-white dark:bg-black p-6 border-[3px] border-red-500">
+                <p className="font-bold text-red-500 text-center">
+                  ✗ {actionData.error}
+                </p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full px-8 py-4 bg-plum hover:bg-plum-dark text-white dark:text-black font-bold rounded-full border-[3px] border-black dark:border-white transition-all hover:translate-y-[-2px] text-lg"
+            >
+              Sign in to dashboard →
+            </button>
+          </Form>
+
+          <div className="mt-10 pt-8 border-t-[3px] border-black dark:border-white">
+            <div className="text-center space-y-3">
+              <p className="text-sm font-bold opacity-60">
+                Motion Export Admin Panel
+              </p>
+              <Link
+                to="/"
+                className="text-base font-bold text-plum hover:opacity-70 transition-opacity inline-block"
+              >
+                ← Back to website
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </AuthLayout>

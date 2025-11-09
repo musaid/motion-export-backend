@@ -135,6 +135,10 @@ const colors = {
     '[--switch-bg-ring:var(--color-rose-600)]/90 [--switch-bg:var(--color-rose-500)] dark:[--switch-bg-ring:transparent]',
     '[--switch:white] [--switch-ring:var(--color-rose-600)]/90 [--switch-shadow:var(--color-rose-900)]/20',
   ],
+  plum: [
+    '[--switch-bg-ring:var(--color-plum-600)]/90 [--switch-bg:var(--color-plum-500)] dark:[--switch-bg-ring:transparent]',
+    '[--switch:white] [--switch-ring:var(--color-plum-600)]/90 [--switch-shadow:var(--color-plum-900)]/20',
+  ],
 };
 
 type Color = keyof typeof colors;
@@ -164,7 +168,7 @@ export function Switch({
         // Checked
         'data-checked:bg-(--switch-bg) data-checked:ring-(--switch-bg-ring) dark:data-checked:bg-(--switch-bg) dark:data-checked:ring-(--switch-bg-ring)',
         // Focus
-        'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
+        'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-plum-500',
         // Hover
         'data-hover:ring-black/15 data-hover:data-checked:ring-(--switch-bg-ring)',
         'dark:data-hover:ring-white/25 dark:data-hover:data-checked:ring-(--switch-bg-ring)',

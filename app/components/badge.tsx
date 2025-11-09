@@ -32,6 +32,7 @@ const colors = {
   pink: 'bg-pink-400/15 text-pink-700 group-data-hover:bg-pink-400/25 dark:bg-pink-400/10 dark:text-pink-400 dark:group-data-hover:bg-pink-400/20',
   rose: 'bg-rose-400/15 text-rose-700 group-data-hover:bg-rose-400/25 dark:bg-rose-400/10 dark:text-rose-400 dark:group-data-hover:bg-rose-400/20',
   zinc: 'bg-zinc-600/10 text-zinc-700 group-data-hover:bg-zinc-600/20 dark:bg-white/5 dark:text-zinc-400 dark:group-data-hover:bg-white/10',
+  plum: 'bg-plum-500/15 text-plum-700 group-data-hover:bg-plum-500/25 dark:bg-plum-500/10 dark:text-plum-400 dark:group-data-hover:bg-plum-500/20',
 };
 
 type BadgeProps = { color?: keyof typeof colors };
@@ -67,7 +68,7 @@ export const BadgeButton = forwardRef(function BadgeButton(
 ) {
   const classes = clsx(
     className,
-    'group relative inline-flex rounded-md focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
+    'group relative inline-flex rounded-md focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-plum-500',
   );
 
   return 'href' in props ? (

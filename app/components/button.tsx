@@ -10,7 +10,7 @@ const styles = {
     // Sizing
     'px-[calc(--spacing(3.5)-1px)] py-[calc(--spacing(2.5)-1px)] sm:px-[calc(--spacing(3)-1px)] sm:py-[calc(--spacing(1.5)-1px)] sm:text-sm/6',
     // Focus
-    'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
+    'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-plum-500',
     // Disabled
     'data-disabled:opacity-50',
     // Icon
@@ -154,6 +154,10 @@ const styles = {
     rose: [
       'text-white [--btn-hover-overlay:var(--color-white)]/10 [--btn-bg:var(--color-rose-500)] [--btn-border:var(--color-rose-600)]/90',
       '[--btn-icon:var(--color-rose-300)] data-active:[--btn-icon:var(--color-rose-200)] data-hover:[--btn-icon:var(--color-rose-200)]',
+    ],
+    plum: [
+      'text-white [--btn-hover-overlay:var(--color-white)]/10 [--btn-bg:var(--color-plum-500)] [--btn-border:var(--color-plum-600)]/90',
+      '[--btn-icon:var(--color-plum-300)] data-active:[--btn-icon:var(--color-plum-200)] data-hover:[--btn-icon:var(--color-plum-200)]',
     ],
   },
 };
