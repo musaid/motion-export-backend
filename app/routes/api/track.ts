@@ -8,8 +8,13 @@ import {
   checkRateLimit,
 } from '~/lib/security.server';
 import {
-  sendPluginOpenedNotification,
-  sendExportCompletedNotification,
+  isCriticalEvent,
+  sendScanCompletedNotification,
+  sendLicenseActivationSuccessNotification,
+  sendExportBlockedFreeLimitNotification,
+  sendExportBlockedProFeatureNotification,
+  sendPurchaseButtonClickedNotification,
+  sendLicenseActivationFailedNotification,
 } from '~/lib/telegram.server';
 import { z } from 'zod';
 import type { Route } from './+types/track';
@@ -56,46 +61,80 @@ export async function action({ request }: Route.ActionArgs) {
     // Generate secure device ID
     const deviceId = generateSecureDeviceId(figmaUserId, ip);
 
-    // Only track essential events
-    const essentialEvents = [
-      'export_completed',
-      'plugin_opened',
-      'license_activated',
-    ];
-
-    if (!essentialEvents.includes(event)) {
-      return Response.json({ success: true }); // Silently ignore non-essential events
-    }
-
-    // Track event (minimal data)
+    // Track all events (no whitelist)
+    // Store all properties sent by the plugin along with clientType
     await database()
       .insert(analytics)
       .values({
         event,
         userId: figmaUserId,
         properties: JSON.stringify({
-          framework: properties?.framework,
-          count: properties?.animationCount,
-          version: properties?.pluginVersion,
+          ...properties,
           clientType: validation.clientType,
         }),
         ip: ip === 'unknown' ? null : ip,
         userAgent: null, // Don't store user agent
       });
 
-    // Send Telegram notifications for specific events (fire-and-forget)
-    if (event === 'plugin_opened') {
-      sendPluginOpenedNotification({
-        figmaUserId,
-        pluginVersion: properties?.pluginVersion,
-      });
-    } else if (event === 'export_completed') {
-      sendExportCompletedNotification({
-        figmaUserId,
-        framework: properties?.framework,
-        animationCount: properties?.animationCount,
-        isPro: properties?.isPro || false,
-      });
+    // Send Telegram notifications ONLY for critical events (fire-and-forget)
+    if (isCriticalEvent(event)) {
+      switch (event) {
+        case 'scan_completed':
+          sendScanCompletedNotification({
+            figmaUserId,
+            sessionId: properties?.sessionId,
+            animationsCount: properties?.animationsCount,
+            animationTypes: properties?.animationTypes,
+            scanDuration: properties?.scanDuration,
+            hasAnimations: properties?.hasAnimations,
+            isFirstScan: properties?.isFirstScan,
+          });
+          break;
+
+        case 'license_activation_success':
+          sendLicenseActivationSuccessNotification({
+            figmaUserId,
+            sessionId: properties?.sessionId,
+            activationMethod: properties?.activationMethod,
+            timeToActivate: properties?.timeToActivate,
+          });
+          break;
+
+        case 'export_blocked_free_limit':
+          sendExportBlockedFreeLimitNotification({
+            figmaUserId,
+            lifetimeUsageCount: properties?.lifetimeUsageCount,
+            lifetimeLimit: properties?.lifetimeLimit,
+            attemptedFramework: properties?.attemptedFramework,
+          });
+          break;
+
+        case 'export_blocked_pro_feature':
+          sendExportBlockedProFeatureNotification({
+            figmaUserId,
+            featureName: properties?.featureName,
+            animationsCount: properties?.animationsCount,
+          });
+          break;
+
+        case 'purchase_button_clicked':
+          sendPurchaseButtonClickedNotification({
+            figmaUserId,
+            currentPrice: properties?.currentPrice,
+            originalPrice: properties?.originalPrice,
+            discountPercentage: properties?.discountPercentage,
+            triggerSource: properties?.triggerSource,
+          });
+          break;
+
+        case 'license_activation_failed':
+          sendLicenseActivationFailedNotification({
+            figmaUserId,
+            errorType: properties?.errorType,
+            keyFormatValid: properties?.keyFormatValid,
+          });
+          break;
+      }
     }
 
     // Update lifetime usage ONLY for export events from plugins (NO daily resets)

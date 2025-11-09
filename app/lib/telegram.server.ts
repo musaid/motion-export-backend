@@ -17,6 +17,22 @@ if (BOT_TOKEN && CHAT_ID && NOTIFICATIONS_ENABLED) {
   }
 }
 
+// Critical events that trigger Telegram notifications
+// Only extremely important business events are included
+const CRITICAL_EVENTS = new Set([
+  'scan_completed', // Track user engagement and animation discovery
+  'license_activation_success', // User successfully activated Pro license
+  'export_blocked_free_limit', // User hit free tier limit (conversion opportunity)
+  'export_blocked_pro_feature', // User tried Pro feature (conversion opportunity)
+  'purchase_button_clicked', // User clicked purchase button (conversion funnel)
+  'license_activation_failed', // User had trouble activating (support needed)
+]);
+
+// Helper to check if an event should trigger Telegram notification
+export function isCriticalEvent(event: string): boolean {
+  return CRITICAL_EVENTS.has(event);
+}
+
 // Helper function to format currency
 function formatCurrency(amount: number, currency: string): string {
   return new Intl.NumberFormat('en-US', {
@@ -190,6 +206,163 @@ ${emoji} *${escapeMarkdown(title)}*
 📧 Email: \`${escapeMarkdown(data.email)}\`
 🔑 License: \\*\\*\\*\\*\\-${escapeMarkdown(data.licenseKey.slice(-4))}
 ${data.disputeId ? `📝 Dispute ID: \`${escapeMarkdown(data.disputeId)}\`\n` : ''}🕐 Time: ${escapeMarkdown(getTimestamp())}
+  `.trim();
+
+  sendNotification(message);
+}
+
+// Scan completed notification (track engagement and drop-off)
+export function sendScanCompletedNotification(data: {
+  figmaUserId?: string;
+  sessionId?: string;
+  animationsCount?: number;
+  animationTypes?: string[];
+  scanDuration?: number;
+  hasAnimations?: boolean;
+  isFirstScan?: boolean;
+}): void {
+  const userId = data.figmaUserId || 'anonymous';
+  const count = data.animationsCount || 0;
+  const types = data.animationTypes?.join(', ') || 'none';
+  const duration = data.scanDuration ? `${(data.scanDuration / 1000).toFixed(1)}s` : 'N/A';
+  const firstScan = data.isFirstScan ? '✨ FIRST SCAN' : 'Repeat scan';
+
+  const message = `
+📊 *Scan Completed*
+
+👤 User: \`${escapeMarkdown(userId)}\`
+${data.isFirstScan ? '✨ *First scan \\- new user\\!*\n' : ''}🎬 Animations found: *${count}*
+${count > 0 ? `🎨 Types: ${escapeMarkdown(types)}\n` : ''}⏱ Duration: ${escapeMarkdown(duration)}
+${data.sessionId ? `📊 Session: \`${escapeMarkdown(data.sessionId)}\`\n` : ''}🕐 Time: ${escapeMarkdown(getTimestamp())}
+
+${count === 0 ? '⚠️ No animations found \\- user may leave\\!' : count > 5 ? '💡 Many animations \\- good conversion potential\\!' : ''}
+  `.trim();
+
+  sendNotification(message);
+}
+
+// License activation success notification (CRITICAL - upgrade user to Pro)
+export function sendLicenseActivationSuccessNotification(data: {
+  figmaUserId?: string;
+  sessionId?: string;
+  activationMethod?: string;
+  timeToActivate?: number;
+}): void {
+  const userId = data.figmaUserId || 'anonymous';
+  const method = data.activationMethod || 'unknown';
+  const time = data.timeToActivate ? `${(data.timeToActivate / 1000).toFixed(1)}s` : 'N/A';
+
+  const message = `
+🎉 *LICENSE ACTIVATED \\- UPGRADE USER TO PRO\\!*
+
+👤 User: \`${escapeMarkdown(userId)}\`
+🔑 Method: ${escapeMarkdown(method)}
+⏱ Time to activate: ${escapeMarkdown(time)}
+${data.sessionId ? `📊 Session: \`${escapeMarkdown(data.sessionId)}\`\n` : ''}🕐 Time: ${escapeMarkdown(getTimestamp())}
+
+⚠️ *ACTION REQUIRED: Upgrade this user to Pro in database*
+  `.trim();
+
+  sendNotification(message);
+}
+
+// Export blocked by free limit (conversion opportunity)
+export function sendExportBlockedFreeLimitNotification(data: {
+  figmaUserId?: string;
+  lifetimeUsageCount?: number;
+  lifetimeLimit?: number;
+  attemptedFramework?: string;
+}): void {
+  const userId = data.figmaUserId || 'anonymous';
+  const usage = data.lifetimeUsageCount || 0;
+  const limit = data.lifetimeLimit || 0;
+  const framework = data.attemptedFramework || 'unknown';
+
+  const message = `
+🚫 *Free Limit Reached \\- Conversion Opportunity\\!*
+
+👤 User: \`${escapeMarkdown(userId)}\`
+📊 Usage: ${usage}/${limit}
+🛠 Framework: ${escapeMarkdown(framework)}
+🕐 Time: ${escapeMarkdown(getTimestamp())}
+
+💡 User is likely to upgrade\\!
+  `.trim();
+
+  sendNotification(message);
+}
+
+// Export blocked by Pro feature (conversion opportunity)
+export function sendExportBlockedProFeatureNotification(data: {
+  figmaUserId?: string;
+  featureName?: string;
+  animationsCount?: number;
+}): void {
+  const userId = data.figmaUserId || 'anonymous';
+  const feature = data.featureName || 'unknown';
+  const count = data.animationsCount || 0;
+
+  const message = `
+💎 *Pro Feature Attempted \\- Conversion Opportunity\\!*
+
+👤 User: \`${escapeMarkdown(userId)}\`
+✨ Feature: ${escapeMarkdown(feature)}
+📊 Animations: ${count}
+🕐 Time: ${escapeMarkdown(getTimestamp())}
+
+💡 User wants Pro features\\!
+  `.trim();
+
+  sendNotification(message);
+}
+
+// Purchase button clicked (conversion funnel tracking)
+export function sendPurchaseButtonClickedNotification(data: {
+  figmaUserId?: string;
+  currentPrice?: number;
+  originalPrice?: number;
+  discountPercentage?: number;
+  triggerSource?: string;
+}): void {
+  const userId = data.figmaUserId || 'anonymous';
+  const current = data.currentPrice ? `$${data.currentPrice.toFixed(2)}` : 'N/A';
+  const original = data.originalPrice ? `$${data.originalPrice.toFixed(2)}` : 'N/A';
+  const discount = data.discountPercentage || 0;
+  const source = data.triggerSource || 'unknown';
+
+  const message = `
+💳 *Purchase Button Clicked\\!*
+
+👤 User: \`${escapeMarkdown(userId)}\`
+💰 Price: ${escapeMarkdown(current)} ${discount > 0 ? `\\(was ${escapeMarkdown(original)}, ${discount}% off\\)` : ''}
+📍 Source: ${escapeMarkdown(source)}
+🕐 Time: ${escapeMarkdown(getTimestamp())}
+
+🎯 User is in conversion funnel\\!
+  `.trim();
+
+  sendNotification(message);
+}
+
+// License activation failed (support opportunity)
+export function sendLicenseActivationFailedNotification(data: {
+  figmaUserId?: string;
+  errorType?: string;
+  keyFormatValid?: boolean;
+}): void {
+  const userId = data.figmaUserId || 'anonymous';
+  const error = data.errorType || 'unknown';
+  const formatValid = data.keyFormatValid ? 'Yes' : 'No';
+
+  const message = `
+❌ *License Activation Failed \\- Support Needed\\!*
+
+👤 User: \`${escapeMarkdown(userId)}\`
+⚠️ Error: ${escapeMarkdown(error)}
+🔍 Valid format: ${escapeMarkdown(formatValid)}
+🕐 Time: ${escapeMarkdown(getTimestamp())}
+
+🆘 User may need support\\!
   `.trim();
 
   sendNotification(message);
