@@ -18,6 +18,7 @@ import {
 } from '~/components/table';
 import { Pagination } from '~/components/pagination';
 import { Link } from 'react-router';
+import { formatDate } from '~/lib/format';
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireAdmin(request);
@@ -191,14 +192,10 @@ export default function AdminUsage({ loaderData }: Route.ComponentProps) {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {record.createdAt
-                      ? new Date(record.createdAt).toLocaleString()
-                      : 'N/A'}
+                    {formatDate(record.createdAt)}
                   </TableCell>
                   <TableCell className="pr-0">
-                    {record.updatedAt
-                      ? new Date(record.updatedAt).toLocaleString()
-                      : 'N/A'}
+                    {formatDate(record.updatedAt)}
                   </TableCell>
                 </TableRow>
               ))}

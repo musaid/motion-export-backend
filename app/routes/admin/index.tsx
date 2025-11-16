@@ -8,6 +8,7 @@ import { Text } from '~/components/text';
 import { Button } from '~/components/button';
 import { Badge } from '~/components/badge';
 import { Link } from 'react-router';
+import { formatDateOnly } from '~/lib/format';
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireAdmin(request);
@@ -333,9 +334,7 @@ export default function AdminDashboard({ loaderData }: Route.ComponentProps) {
                       {formatCurrency(license.amount || 0)}
                     </div>
                     <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {license.purchasedAt
-                        ? new Date(license.purchasedAt).toLocaleDateString()
-                        : 'N/A'}
+                      {formatDateOnly(license.purchasedAt)}
                     </div>
                   </div>
                 </div>
