@@ -21,6 +21,18 @@ import { Pagination } from '~/components/pagination';
 import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { formatDate } from '~/lib/format';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireAdmin(request);
@@ -95,17 +107,36 @@ export async function loader({ request }: Route.LoaderArgs) {
     .from(analytics)
     .where(whereClause);
 
-  // Get hourly breakdown for last 24h (for time-series chart)
-  const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const hourlyData = await database()
+  // Get time-series data based on selected time range
+  // For 24h: hourly, for 7d/30d: daily, for 90d+: weekly
+  let timeSeriesData;
+  let groupByFormat;
+  let dateFormat;
+
+  if (timeRange === '24h') {
+    groupByFormat = 'hour';
+    dateFormat = 'YYYY-MM-DD HH24:00';
+  } else if (timeRange === '7d' || timeRange === '30d') {
+    groupByFormat = 'day';
+    dateFormat = 'YYYY-MM-DD';
+  } else {
+    groupByFormat = 'week';
+    dateFormat = 'IYYY-IW'; // ISO year and week
+  }
+
+  timeSeriesData = await database()
     .select({
-      hour: sql<string>`to_char(date_trunc('hour', ${analytics.createdAt}), 'YYYY-MM-DD HH24:00')`,
-      count: sql<number>`count(*)`,
+      period: sql<string>`to_char(date_trunc('${sql.raw(groupByFormat)}', ${analytics.createdAt}), '${sql.raw(dateFormat)}')`,
+      events: sql<number>`count(*)`,
+      uniqueUsers: sql<number>`COUNT(DISTINCT ${analytics.userId})`,
+      scans: sql<number>`COUNT(*) FILTER (WHERE ${analytics.event} = 'scan_completed')`,
+      exports: sql<number>`COUNT(*) FILTER (WHERE ${analytics.event} = 'export_completed')`,
+      codeCopies: sql<number>`COUNT(*) FILTER (WHERE ${analytics.event} = 'code_copied')`,
     })
     .from(analytics)
-    .where(gte(analytics.createdAt, last24h.toISOString()))
-    .groupBy(sql`date_trunc('hour', ${analytics.createdAt})`)
-    .orderBy(sql`date_trunc('hour', ${analytics.createdAt})`);
+    .where(whereClause)
+    .groupBy(sql`date_trunc('${sql.raw(groupByFormat)}', ${analytics.createdAt})`)
+    .orderBy(sql`date_trunc('${sql.raw(groupByFormat)}', ${analytics.createdAt})`);
 
   // Get framework breakdown from code_copied and code_downloaded events
   const frameworkData = await database()
@@ -223,7 +254,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       },
     },
     timeRange,
-    hourlyData,
+    timeSeriesData,
     frameworkData,
     funnelStages,
     animationTypes,
@@ -235,70 +266,151 @@ export async function loader({ request }: Route.LoaderArgs) {
   });
 }
 
-function TimeSeriesChart({ data }: { data: Array<{ hour: string; count: number }> }) {
+// Clean Modern Area Chart
+function TrendChart({
+  data,
+}: {
+  data: Array<{
+    period: string;
+    events: number;
+    uniqueUsers: number;
+  }>;
+}) {
   if (!data || data.length === 0) {
     return (
-      <div className="h-48 flex items-center justify-center text-sm text-zinc-400">
-        No data available for the last 24 hours
+      <div className="h-72 flex items-center justify-center text-sm text-zinc-400">
+        No data available
       </div>
     );
   }
 
-  // Fill in missing hours for the last 24 hours
-  const now = new Date();
-  const hours24 = Array.from({ length: 24 }, (_, i) => {
-    const time = new Date(now.getTime() - (23 - i) * 60 * 60 * 1000);
-    time.setMinutes(0, 0, 0);
-    return time;
-  });
-
-  const dataMap = new Map(
-    data.map((item) => [new Date(item.hour).getTime(), item.count])
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id="events" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="rgb(59 130 246)" stopOpacity={0.1} />
+            <stop offset="95%" stopColor="rgb(59 130 246)" stopOpacity={0} />
+          </linearGradient>
+          <linearGradient id="users" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="rgb(168 85 247)" stopOpacity={0.1} />
+            <stop offset="95%" stopColor="rgb(168 85 247)" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgb(228 228 231)" opacity={0.3} vertical={false} />
+        <XAxis
+          dataKey="period"
+          tick={{ fill: 'rgb(113 113 122)', fontSize: 11 }}
+          tickLine={false}
+          axisLine={false}
+        />
+        <YAxis
+          tick={{ fill: 'rgb(113 113 122)', fontSize: 11 }}
+          tickLine={false}
+          axisLine={false}
+          width={40}
+        />
+        <Tooltip
+          content={({ active, payload }) => {
+            if (!active || !payload?.length) return null;
+            return (
+              <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2 shadow-lg">
+                <div className="text-xs font-medium text-zinc-900 dark:text-zinc-100 mb-1">
+                  {payload[0].payload.period}
+                </div>
+                {payload.map((entry: any) => (
+                  <div key={entry.name} className="flex items-center gap-2 text-xs">
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: entry.color }}
+                    />
+                    <span className="text-zinc-600 dark:text-zinc-400">{entry.name}:</span>
+                    <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                      {entry.value.toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            );
+          }}
+        />
+        <Area
+          type="monotone"
+          dataKey="events"
+          stroke="rgb(59 130 246)"
+          strokeWidth={1.5}
+          fill="url(#events)"
+          name="Events"
+        />
+        <Area
+          type="monotone"
+          dataKey="uniqueUsers"
+          stroke="rgb(168 85 247)"
+          strokeWidth={1.5}
+          fill="url(#users)"
+          name="Users"
+        />
+      </AreaChart>
+    </ResponsiveContainer>
   );
+}
 
-  const filledData = hours24.map((time) => ({
-    hour: time.toISOString(),
-    count: dataMap.get(time.getTime()) || 0,
-    hourLabel: time.getHours(),
-  }));
+// Compact Donut Chart
+function DonutChart({ data }: { data: Array<{ framework: string; count: number }> }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-64 flex items-center justify-center text-sm text-zinc-400">
+        No data available
+      </div>
+    );
+  }
 
-  const maxCount = Math.max(...filledData.map((d) => d.count), 1);
-  const minCount = 0;
-  const range = maxCount || 1;
+  const COLORS = [
+    'rgb(59 130 246)',
+    'rgb(168 85 247)',
+    'rgb(16 185 129)',
+    'rgb(245 158 11)',
+    'rgb(239 68 68)',
+    'rgb(236 72 153)',
+  ];
+
+  const total = data.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <div className="relative h-48 flex items-end gap-1 px-2 pb-6">
-      {filledData.map((item, index) => {
-        const height = (item.count / range) * 100;
-
-        return (
-          <motion.div
-            key={item.hour}
-            className="group relative flex-1 flex flex-col items-center min-w-0"
-            initial={{ opacity: 0, scaleY: 0 }}
-            animate={{ opacity: 1, scaleY: 1 }}
-            transition={{ delay: index * 0.015, duration: 0.3 }}
-          >
-            <div
-              className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-sm hover:from-blue-600 hover:to-blue-500 transition-colors relative"
-              style={{ height: `${Math.max(height, item.count > 0 ? 3 : 1)}%` }}
-            >
-              {item.count > 0 && (
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-2 py-1 rounded text-xs whitespace-nowrap pointer-events-none z-10 shadow-lg">
-                  <div className="font-semibold">{item.count} events</div>
-                  <div className="text-[10px] opacity-75">{item.hourLabel}:00</div>
+    <ResponsiveContainer width="100%" height={240}>
+      <PieChart>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          innerRadius={60}
+          outerRadius={80}
+          paddingAngle={2}
+          dataKey="count"
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        <Tooltip
+          content={({ active, payload }) => {
+            if (!active || !payload?.length) return null;
+            const data = payload[0].payload;
+            const percentage = ((data.count / total) * 100).toFixed(1);
+            return (
+              <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2 shadow-lg">
+                <div className="text-xs font-medium text-zinc-900 dark:text-zinc-100">
+                  {data.framework}
                 </div>
-              )}
-            </div>
-            {index % 4 === 0 && (
-              <div className="text-[10px] text-zinc-400 mt-1 absolute -bottom-5">
-                {item.hourLabel}h
+                <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
+                  {data.count.toLocaleString()} ({percentage}%)
+                </div>
               </div>
-            )}
-          </motion.div>
-        );
-      })}
-    </div>
+            );
+          }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
   );
 }
 
@@ -509,7 +621,7 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
     eventTypes,
     stats,
     timeRange,
-    hourlyData,
+    timeSeriesData,
     frameworkData,
     funnelStages,
     animationTypes,
@@ -561,33 +673,9 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
       </div>
 
       {/* Time Range Selector */}
-      <div className="flex flex-wrap gap-2 items-center">
-        {isNavigating && (
-          <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-            <svg
-              className="animate-spin h-4 w-4"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            Loading...
-          </div>
-        )}
-        {[
+      <div className="flex flex-wrap gap-2 items-center justify-between w-full">
+        <div className="flex flex-wrap gap-2">
+          {[
           { value: '24h', label: 'Last 24 Hours' },
           { value: '7d', label: 'Last 7 Days' },
           { value: '30d', label: 'Last 30 Days' },
@@ -606,6 +694,38 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
             )}
           </Link>
         ))}
+        </div>
+
+        {/* Loading indicator - fixed position on right */}
+        <div className="ml-auto">
+          {isNavigating ? (
+            <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+              <svg
+                className="animate-spin h-4 w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              Loading...
+            </div>
+          ) : (
+            <div className="h-6 w-24" />
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -660,17 +780,24 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
         </motion.div>
       </div>
 
-      {/* Hourly Activity Chart */}
+      {/* Analytics Trend Chart */}
       <motion.div
         className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.3 }}
       >
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-6">
-          Activity Over Last 24 Hours
-        </h3>
-        <TimeSeriesChart data={hourlyData} />
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
+              Activity Trends
+            </h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              Events and user engagement over time
+            </p>
+          </div>
+        </div>
+        <TrendChart data={timeSeriesData} />
       </motion.div>
 
       {/* User Journey Funnel */}
@@ -700,7 +827,7 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4">
             Framework Preference
           </h3>
-          <FrameworkChart data={frameworkData} />
+          <DonutChart data={frameworkData} />
         </motion.div>
 
         {/* Scan Performance */}
