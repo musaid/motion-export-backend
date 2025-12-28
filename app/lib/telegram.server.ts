@@ -150,15 +150,14 @@ export function sendExportCompletedNotification(data: {
 // License activated notification
 export function sendLicenseActivatedNotification(data: {
   email: string;
-  deviceId: string;
-  activationCount: number;
+  figmaUserId: string;
+  isFirstActivation: boolean;
 }): void {
   const message = `
-🔓 *License Activated*
+🔓 *License ${data.isFirstActivation ? 'Activated' : 'Re-validated'}*
 
 📧 Email: \`${escapeMarkdown(data.email)}\`
-🖥 Device: \`${escapeMarkdown(data.deviceId.slice(0, 8))}\\.\\.\\.\`
-📊 Total Activations: ${data.activationCount}/5
+👤 Figma User: \`${escapeMarkdown(data.figmaUserId.slice(0, 8))}\\.\\.\\.\`
 🕐 Time: ${escapeMarkdown(getTimestamp())}
   `.trim();
 

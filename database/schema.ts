@@ -16,7 +16,8 @@ export const licenses = pgTable(
   'licenses',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    key: text('key').notNull(),
+    key: text('key').notNull(), // Hashed for validation
+    encryptedKey: text('encrypted_key'), // Encrypted for recovery (AES-256-GCM)
     email: text('email').notNull(),
     stripeCustomerId: text('stripe_customer_id'),
     stripeSessionId: text('stripe_session_id'),
@@ -25,7 +26,9 @@ export const licenses = pgTable(
     currency: text('currency'),
     status: text('status').default('active'),
     purchasedAt: timestamp('purchased_at', timestampConfig).defaultNow(),
-    activations: text('activations').default('[]'),
+    activations: text('activations').default('[]'), // JSON: [{figmaUserId, activatedAt, lastChecked}]
+    recoveryCodes: text('recovery_codes').default('[]'), // JSON: [{code: hashed, createdAt}]
+    recoveryCodesUsed: text('recovery_codes_used').default('[]'), // JSON: [{code: hashed, usedAt}]
     metadata: text('metadata').default('{}'),
     createdAt: timestamp('created_at', timestampConfig).defaultNow(),
     updatedAt: timestamp('updated_at', timestampConfig).defaultNow(),
@@ -65,13 +68,13 @@ export const usage = pgTable(
   'usage',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    deviceId: text('device_id').notNull(),
+    figmaUserId: text('figma_user_id').notNull(), // Figma user ID (not device-based)
     exportCount: integer('export_count').default(0),
     createdAt: timestamp('created_at', timestampConfig).defaultNow(),
     updatedAt: timestamp('updated_at', timestampConfig).defaultNow(),
   },
   (tbl) => [
-    uniqueIndex('usage_device_idx').on(tbl.deviceId),
+    uniqueIndex('usage_figma_user_idx').on(tbl.figmaUserId),
     index('usage_created_at_idx').on(tbl.createdAt),
   ],
 );

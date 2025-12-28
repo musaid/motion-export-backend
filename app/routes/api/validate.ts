@@ -2,7 +2,7 @@ import { data } from 'react-router';
 import { validateLicense, checkUsage } from '~/lib/license.server';
 import {
   validateRequest,
-  generateSecureDeviceId,
+  getFigmaUserId,
   checkRateLimit,
   isValidLicenseKeyFormat,
   sanitizeInput,
@@ -23,7 +23,7 @@ export async function action({ request }: Route.ActionArgs) {
     return data({ valid: false, error: validation.error }, { status: 403 });
   }
 
-  // Get IP for rate limiting and device ID generation
+  // Get IP for rate limiting fallback
   const ip =
     request.headers.get('x-forwarded-for') ||
     request.headers.get('x-real-ip') ||
@@ -34,8 +34,17 @@ export async function action({ request }: Route.ActionArgs) {
     const parsed = validateSchema.parse(body);
 
     // Get Figma user ID from header or body
-    const figmaUserId =
-      request.headers.get('x-figma-user-id') || parsed.figmaUserId || undefined;
+    const figmaUserIdRaw =
+      request.headers.get('x-figma-user-id') || parsed.figmaUserId;
+    const figmaUserId = getFigmaUserId(figmaUserIdRaw);
+
+    // Figma plugins should always have a user ID
+    if (!figmaUserId && validation.clientType === 'plugin') {
+      return data(
+        { valid: false, error: 'User identification required' },
+        { status: 400 },
+      );
+    }
 
     // Generate identifier for rate limiting
     const rateLimitId = figmaUserId || ip;
@@ -48,11 +57,8 @@ export async function action({ request }: Route.ActionArgs) {
       );
     }
 
-    // Generate secure device ID server-side
-    const deviceId = generateSecureDeviceId(figmaUserId, ip);
-
     // Check for pro license
-    if (parsed.licenseKey) {
+    if (parsed.licenseKey && figmaUserId) {
       // Validate license key format
       const sanitizedKey = sanitizeInput(parsed.licenseKey);
       if (!isValidLicenseKeyFormat(sanitizedKey)) {
@@ -63,21 +69,15 @@ export async function action({ request }: Route.ActionArgs) {
         });
       }
 
-      const result = await validateLicense(sanitizedKey, deviceId);
+      const result = await validateLicense(sanitizedKey, figmaUserId);
 
       if (result.valid && result.license) {
-        // Check if this is a new activation
-        const activations = JSON.parse(result.license.activations || '[]');
-        const isNewActivation = !activations.some(
-          (a: { deviceId: string }) => a.deviceId === deviceId,
-        );
-
         // Send notification for new activations (fire-and-forget)
-        if (isNewActivation) {
+        if (result.isFirstActivation) {
           sendLicenseActivatedNotification({
             email: result.license.email,
-            deviceId,
-            activationCount: activations.length,
+            figmaUserId,
+            isFirstActivation: true,
           });
         }
 
@@ -99,7 +99,16 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     // Check lifetime usage for free tier (5 exports max, NEVER resets)
-    const usageResult = await checkUsage(deviceId);
+    if (!figmaUserId) {
+      // Can't track usage without user ID
+      return data({
+        valid: false,
+        isPro: false,
+        error: 'User identification required for free tier',
+      });
+    }
+
+    const usageResult = await checkUsage(figmaUserId);
 
     return data({
       valid: usageResult.canExport,

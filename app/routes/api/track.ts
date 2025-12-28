@@ -4,7 +4,7 @@ import { database } from '~/database/context';
 import { incrementUsage } from '~/lib/license.server';
 import {
   validateRequest,
-  generateSecureDeviceId,
+  getFigmaUserId,
   checkRateLimit,
 } from '~/lib/security.server';
 import {
@@ -58,8 +58,8 @@ export async function action({ request }: Route.ActionArgs) {
       return data({ error: 'Rate limit exceeded' }, { status: 429 });
     }
 
-    // Generate secure device ID
-    const deviceId = generateSecureDeviceId(figmaUserId, ip);
+    // Get Figma user ID
+    const userId = getFigmaUserId(figmaUserId);
 
     // Track all events (no whitelist)
     // Store all properties sent by the plugin along with clientType
@@ -138,8 +138,8 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     // Update lifetime usage ONLY for export events from plugins (NO daily resets)
-    if (event === 'export_completed' && validation.clientType === 'plugin') {
-      await incrementUsage(deviceId);
+    if (event === 'export_completed' && validation.clientType === 'plugin' && userId) {
+      await incrementUsage(userId);
     }
 
     return Response.json({ success: true });

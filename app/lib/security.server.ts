@@ -41,12 +41,8 @@ export function validateRequest(request: Request): {
       return { valid: false, error: 'Invalid origin for plugin' };
     }
 
-    // Require Figma user ID for plugin requests
-    if (!figmaUserId || figmaUserId === 'anonymous') {
-      // Allow anonymous for some operations but track differently
-      console.warn('Anonymous plugin request');
-    }
-
+    // Figma plugins always have a logged-in user
+    // The 'anonymous' case should never happen in practice
     return { valid: true, clientType: 'plugin' };
   }
 
@@ -61,26 +57,13 @@ export function validateRequest(request: Request): {
   return { valid: false, error: 'Unauthorized request source' };
 }
 
-// Generate secure device ID from user data
-export function generateSecureDeviceId(
-  figmaUserId?: string,
-  ip?: string,
-): string {
-  // Use Figma user ID as primary identifier
-  if (figmaUserId && figmaUserId !== 'anonymous') {
-    return `figma-${figmaUserId}`;
+// Get Figma user ID (plugins always have logged-in users)
+// Returns null only if userId is explicitly missing (shouldn't happen)
+export function getFigmaUserId(figmaUserId?: string): string | null {
+  if (!figmaUserId) {
+    return null;
   }
-
-  // Fallback to IP-based device ID for anonymous users
-  if (ip && ip !== 'unknown') {
-    const hash = crypto.createHash('sha256');
-    hash.update(ip);
-    hash.update(process.env.DEVICE_SALT || 'motion-export-device');
-    return `ip-${hash.digest('hex').substring(0, 16)}`;
-  }
-
-  // Generate a temporary ID for edge cases
-  return `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  return figmaUserId;
 }
 
 // Hash license key for storage

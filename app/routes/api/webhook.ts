@@ -89,7 +89,7 @@ export async function action({ request }: Route.ActionArgs) {
         }
 
         // Create license
-        const { plainKey } = await createLicense({
+        const { plainKey, recoveryCodes } = await createLicense({
           email: customerEmail,
           stripeCustomerId: (session.customer as string) || null,
           stripeSessionId: session.id,
@@ -97,8 +97,8 @@ export async function action({ request }: Route.ActionArgs) {
           currency: session.currency || 'usd',
         });
 
-        // Send email with plain key
-        await sendLicenseEmail(customerEmail, plainKey);
+        // Send email with plain key and recovery codes
+        await sendLicenseEmail(customerEmail, plainKey, recoveryCodes);
         console.log(`License created for ${customerEmail}`);
 
         // Send Telegram notification (fire-and-forget)
