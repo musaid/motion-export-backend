@@ -1,34 +1,30 @@
 import { data } from 'react-router';
-import { validateRecoveryCode } from '~/lib/recovery-codes.server';
-import {
-  validateRequest,
-  checkRateLimit,
-  sanitizeInput,
-} from '~/lib/security.server';
+import { eq } from 'drizzle-orm';
+import { database } from '~/database/context';
+import { licenses } from '~/database/schema';
+import { validateRequest, checkRateLimit, sanitizeInput } from '~/lib/security.server';
+import { sendLicenseEmail } from '~/lib/email.server';
 import { z } from 'zod';
 import type { Route } from './+types/recover';
 
 const recoverSchema = z.object({
-  recoveryCode: z.string().min(1),
+  email: z.string().email(),
 });
 
 export async function action({ request }: Route.ActionArgs) {
-  // Validate request source
   const validation = validateRequest(request);
   if (!validation.valid) {
-    return data({ valid: false, error: validation.error }, { status: 403 });
+    return data({ success: false, error: validation.error }, { status: 403 });
   }
 
-  // Get IP for rate limiting
   const ip =
     request.headers.get('x-forwarded-for') ||
     request.headers.get('x-real-ip') ||
     'unknown';
 
-  // Strict rate limiting for recovery (prevent brute force)
   if (!checkRateLimit(ip, validation.clientType, 'recover')) {
     return data(
-      { valid: false, error: 'Too many recovery attempts. Please try again later.' },
+      { success: false, error: 'Too many recovery attempts. Please try again later.' },
       { status: 429 },
     );
   }
@@ -36,39 +32,37 @@ export async function action({ request }: Route.ActionArgs) {
   try {
     const body = await request.json();
     const parsed = recoverSchema.parse(body);
+    const email = sanitizeInput(parsed.email.toLowerCase());
 
-    // Sanitize recovery code
-    const sanitizedCode = sanitizeInput(parsed.recoveryCode.toUpperCase());
+    const userLicenses = await database()
+      .select()
+      .from(licenses)
+      .where(eq(licenses.email, email));
 
-    // Validate format (RC-XXXX-XXXX-XXXX)
-    const codePattern = /^RC-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
-    if (!codePattern.test(sanitizedCode)) {
+    if (userLicenses.length === 0) {
       return data({
-        valid: false,
-        error: 'Invalid recovery code format',
+        success: false,
+        error: 'No licenses found for this email address',
       });
     }
 
-    // Validate recovery code and get license key
-    const result = await validateRecoveryCode(sanitizedCode);
+    const activeLicenses = userLicenses.filter((l) => l.status === 'active');
 
-    if (result.valid) {
+    if (activeLicenses.length === 0) {
       return data({
-        valid: true,
-        licenseKey: result.licenseKey,
-        email: result.email,
+        success: false,
+        error: 'No active licenses found for this email address',
       });
     }
+
+    await sendLicenseEmail(email, activeLicenses[0].licenseKey);
 
     return data({
-      valid: false,
-      error: result.error || 'Invalid recovery code',
+      success: true,
+      message: 'License key sent to your email address',
     });
   } catch (error) {
     console.error('Recovery error:', error);
-    return data(
-      { valid: false, error: 'Recovery failed' },
-      { status: 500 },
-    );
+    return data({ success: false, error: 'Recovery failed' }, { status: 500 });
   }
 }

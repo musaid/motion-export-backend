@@ -59,31 +59,45 @@ export default function Cancel({}: Route.ComponentProps) {
                 Still interested?
               </h2>
               <p className="font-medium text-lg mb-6">
-                Motion Export Pro gives you unlimited exports and lifetime updates
-                for just $9.99 (Launch Special 🎉).
+                Motion Export Pro gives you unlimited exports and lifetime
+                updates for just $9.99 (Launch Special 🎉).
               </p>
               <ul className="space-y-4">
                 <li className="flex items-start gap-4">
-                  <span className="text-plum font-black text-xl flex-shrink-0">•</span>
-                  <span className="font-medium text-lg">Unlimited animation exports</span>
+                  <span className="text-plum font-black text-xl flex-shrink-0">
+                    •
+                  </span>
+                  <span className="font-medium text-lg">
+                    Unlimited animation exports
+                  </span>
                 </li>
                 <li className="flex items-start gap-4">
-                  <span className="text-plum font-black text-xl flex-shrink-0">•</span>
-                  <span className="font-medium text-lg">All 6 framework exports</span>
+                  <span className="text-plum font-black text-xl flex-shrink-0">
+                    •
+                  </span>
+                  <span className="font-medium text-lg">
+                    All 6 framework exports
+                  </span>
                 </li>
                 <li className="flex items-start gap-4">
-                  <span className="text-plum font-black text-xl flex-shrink-0">•</span>
+                  <span className="text-plum font-black text-xl flex-shrink-0">
+                    •
+                  </span>
                   <span className="font-medium text-lg">Lifetime updates</span>
                 </li>
                 <li className="flex items-start gap-4">
-                  <span className="text-plum font-black text-xl flex-shrink-0">•</span>
+                  <span className="text-plum font-black text-xl flex-shrink-0">
+                    •
+                  </span>
                   <span className="font-medium text-lg">Priority support</span>
                 </li>
               </ul>
             </div>
 
             <div className="bg-white dark:bg-black rounded-2xl p-8 mb-8 border-2 border-black dark:border-white">
-              <p className="font-bold mb-2 text-center">Questions about pricing?</p>
+              <p className="font-bold mb-2 text-center">
+                Questions about pricing?
+              </p>
               <p className="font-medium text-center opacity-70">
                 Contact us at{' '}
                 <a

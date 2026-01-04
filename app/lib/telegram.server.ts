@@ -223,7 +223,9 @@ export function sendScanCompletedNotification(data: {
   const userId = data.figmaUserId || 'anonymous';
   const count = data.animationsCount || 0;
   const types = data.animationTypes?.join(', ') || 'none';
-  const duration = data.scanDuration ? `${(data.scanDuration / 1000).toFixed(1)}s` : 'N/A';
+  const duration = data.scanDuration
+    ? `${(data.scanDuration / 1000).toFixed(1)}s`
+    : 'N/A';
   const firstScan = data.isFirstScan ? '✨ FIRST SCAN' : 'Repeat scan';
 
   const message = `
@@ -249,7 +251,9 @@ export function sendLicenseActivationSuccessNotification(data: {
 }): void {
   const userId = data.figmaUserId || 'anonymous';
   const method = data.activationMethod || 'unknown';
-  const time = data.timeToActivate ? `${(data.timeToActivate / 1000).toFixed(1)}s` : 'N/A';
+  const time = data.timeToActivate
+    ? `${(data.timeToActivate / 1000).toFixed(1)}s`
+    : 'N/A';
 
   const message = `
 🎉 *LICENSE ACTIVATED \\- UPGRADE USER TO PRO\\!*
@@ -324,8 +328,12 @@ export function sendPurchaseButtonClickedNotification(data: {
   triggerSource?: string;
 }): void {
   const userId = data.figmaUserId || 'anonymous';
-  const current = data.currentPrice ? `$${data.currentPrice.toFixed(2)}` : 'N/A';
-  const original = data.originalPrice ? `$${data.originalPrice.toFixed(2)}` : 'N/A';
+  const current = data.currentPrice
+    ? `$${data.currentPrice.toFixed(2)}`
+    : 'N/A';
+  const original = data.originalPrice
+    ? `$${data.originalPrice.toFixed(2)}`
+    : 'N/A';
   const discount = data.discountPercentage || 0;
   const source = data.triggerSource || 'unknown';
 

@@ -16,8 +16,7 @@ export const licenses = pgTable(
   'licenses',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    key: text('key').notNull(), // Hashed for validation
-    encryptedKey: text('encrypted_key'), // Encrypted for recovery (AES-256-GCM)
+    licenseKey: text('license_key').notNull(),
     email: text('email').notNull(),
     stripeCustomerId: text('stripe_customer_id'),
     stripeSessionId: text('stripe_session_id'),
@@ -26,15 +25,13 @@ export const licenses = pgTable(
     currency: text('currency'),
     status: text('status').default('active'),
     purchasedAt: timestamp('purchased_at', timestampConfig).defaultNow(),
-    activations: text('activations').default('[]'), // JSON: [{figmaUserId, activatedAt, lastChecked}]
-    recoveryCodes: text('recovery_codes').default('[]'), // JSON: [{code: hashed, createdAt}]
-    recoveryCodesUsed: text('recovery_codes_used').default('[]'), // JSON: [{code: hashed, usedAt}]
+    activations: text('activations').default('[]'),
     metadata: text('metadata').default('{}'),
     createdAt: timestamp('created_at', timestampConfig).defaultNow(),
     updatedAt: timestamp('updated_at', timestampConfig).defaultNow(),
   },
   (tbl) => [
-    uniqueIndex('licenses_key_idx').on(tbl.key),
+    uniqueIndex('licenses_license_key_idx').on(tbl.licenseKey),
     index('licenses_email_idx').on(tbl.email),
     index('licenses_stripe_customer_idx').on(tbl.stripeCustomerId),
     index('licenses_figma_user_idx').on(tbl.figmaUserId),
@@ -68,7 +65,7 @@ export const usage = pgTable(
   'usage',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    figmaUserId: text('figma_user_id').notNull(), // Figma user ID (not device-based)
+    figmaUserId: text('figma_user_id').notNull(),
     exportCount: integer('export_count').default(0),
     createdAt: timestamp('created_at', timestampConfig).defaultNow(),
     updatedAt: timestamp('updated_at', timestampConfig).defaultNow(),

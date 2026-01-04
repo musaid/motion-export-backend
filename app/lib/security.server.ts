@@ -57,26 +57,11 @@ export function validateRequest(request: Request): {
   return { valid: false, error: 'Unauthorized request source' };
 }
 
-// Get Figma user ID (plugins always have logged-in users)
-// Returns null only if userId is explicitly missing (shouldn't happen)
 export function getFigmaUserId(figmaUserId?: string): string | null {
   if (!figmaUserId) {
     return null;
   }
   return figmaUserId;
-}
-
-// Hash license key for storage
-export function hashLicenseKey(key: string): string {
-  const hash = crypto.createHash('sha256');
-  hash.update(key);
-  hash.update(process.env.LICENSE_SALT || 'motion-export-salt');
-  return hash.digest('hex');
-}
-
-// Verify license key against hash
-export function verifyLicenseKey(key: string, hash: string): boolean {
-  return hashLicenseKey(key) === hash;
 }
 
 // Enhanced rate limiting with different limits per client type
@@ -104,11 +89,13 @@ export function checkRateLimit(
     plugin: {
       validate: { requests: 30, windowMs: 60000 }, // 30 per minute
       track: { requests: 100, windowMs: 60000 }, // 100 per minute
+      recover: { requests: 5, windowMs: 60000 }, // 5 per minute (strict for security)
       default: { requests: 50, windowMs: 60000 }, // 50 per minute
     },
     web: {
       validate: { requests: 10, windowMs: 60000 }, // 10 per minute
       track: { requests: 50, windowMs: 60000 }, // 50 per minute
+      recover: { requests: 5, windowMs: 60000 }, // 5 per minute (strict for security)
       default: { requests: 20, windowMs: 60000 }, // 20 per minute
     },
   };

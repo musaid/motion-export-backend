@@ -89,7 +89,7 @@ export async function action({ request }: Route.ActionArgs) {
         }
 
         // Create license
-        const { plainKey, recoveryCodes } = await createLicense({
+        const { licenseKey } = await createLicense({
           email: customerEmail,
           stripeCustomerId: (session.customer as string) || null,
           stripeSessionId: session.id,
@@ -97,8 +97,8 @@ export async function action({ request }: Route.ActionArgs) {
           currency: session.currency || 'usd',
         });
 
-        // Send email with plain key and recovery codes
-        await sendLicenseEmail(customerEmail, plainKey, recoveryCodes);
+        // Send email with license key
+        await sendLicenseEmail(customerEmail, licenseKey);
         console.log(`License created for ${customerEmail}`);
 
         // Send Telegram notification (fire-and-forget)
@@ -106,7 +106,7 @@ export async function action({ request }: Route.ActionArgs) {
           email: customerEmail,
           amount: (session.amount_total || 0) / 100,
           currency: session.currency || 'usd',
-          licenseKey: plainKey,
+          licenseKey,
         });
       }
       break;
@@ -175,11 +175,11 @@ export async function action({ request }: Route.ActionArgs) {
           })
           .where(eq(licenses.id, license.id));
 
-        console.log(`License refunded: ${license.key}`);
+        console.log(`License refunded: ${license.licenseKey}`);
 
         // Send Telegram notification (fire-and-forget)
         sendRefundNotification({
-          licenseKey: license.key,
+          licenseKey: license.licenseKey,
           email: license.email,
           amount: charge.amount_refunded / 100,
           currency: charge.currency || 'usd',
@@ -226,12 +226,12 @@ export async function action({ request }: Route.ActionArgs) {
             })
             .where(eq(licenses.id, license.id));
 
-          console.log(`License revoked due to dispute: ${license.key}`);
+          console.log(`License revoked due to dispute: ${license.licenseKey}`);
 
           // Send Telegram notification (fire-and-forget)
           sendDisputeNotification({
             type: 'created',
-            licenseKey: license.key,
+            licenseKey: license.licenseKey,
             email: license.email,
             disputeId: dispute.id,
           });
@@ -274,13 +274,13 @@ export async function action({ request }: Route.ActionArgs) {
               .where(eq(licenses.id, license.id));
 
             console.log(
-              `License reactivated after winning dispute: ${license.key}`,
+              `License reactivated after winning dispute: ${license.licenseKey}`,
             );
 
             // Send Telegram notification (fire-and-forget)
             sendDisputeNotification({
               type: 'won',
-              licenseKey: license.key,
+              licenseKey: license.licenseKey,
               email: license.email,
             });
 

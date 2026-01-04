@@ -531,6 +531,14 @@ const AnimatedCard = () => {
               <h4 className="font-black mb-4">Support</h4>
               <ul className="space-y-3">
                 <li>
+                  <Link
+                    to="/recover"
+                    className="font-medium opacity-70 hover:opacity-100 hover:text-plum transition-all"
+                  >
+                    Recover License
+                  </Link>
+                </li>
+                <li>
                   <a
                     href="mailto:support@motionexport.com"
                     className="font-medium opacity-70 hover:opacity-100 hover:text-plum transition-all"

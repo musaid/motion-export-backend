@@ -2,11 +2,7 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function sendLicenseEmail(
-  email: string,
-  licenseKey: string,
-  recoveryCodes: string[],
-) {
+export async function sendLicenseEmail(email: string, licenseKey: string) {
   try {
     await resend.emails.send({
       from: 'Motion Export <noreply@motionexport.com>',
@@ -45,23 +41,9 @@ export async function sendLicenseEmail(
           </div>
 
           <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;">
-            <h3 style="color: #92400e; font-size: 18px; margin-top: 0;">🔐 Recovery Codes</h3>
+            <h3 style="color: #92400e; font-size: 18px; margin-top: 0;">Lost your license key?</h3>
             <p style="color: #78350f; line-height: 1.6; margin-bottom: 12px;">
-              <strong>Important:</strong> Save these recovery codes in a safe place. You can use them to recover your license key if you lose access to this email.
-            </p>
-            <div style="background: white; border-radius: 6px; padding: 16px; margin-top: 12px;">
-              ${recoveryCodes
-                .map(
-                  (code) => `
-                <code style="display: block; font-family: 'Courier New', monospace; font-size: 14px; color: #1f2937; padding: 8px; margin: 4px 0; background: #f9fafb; border-radius: 4px;">
-                  ${code}
-                </code>
-              `,
-                )
-                .join('')}
-            </div>
-            <p style="color: #78350f; font-size: 14px; margin-top: 12px; margin-bottom: 0;">
-              Each recovery code can only be used once. Visit <a href="https://motionexport.com/recover" style="color: #f59e0b; text-decoration: none;"><strong>motionexport.com/recover</strong></a> to use them.
+              Save this email! If you ever lose your license key, you can recover it by visiting <a href="https://motionexport.com/recover" style="color: #f59e0b; text-decoration: none;"><strong>motionexport.com/recover</strong></a> and entering your email address.
             </p>
           </div>
 
@@ -69,7 +51,7 @@ export async function sendLicenseEmail(
             <p style="color: #4b5563; line-height: 1.6; margin: 0;">
               <strong>Your Pro license includes:</strong><br>
               ✓ Unlimited exports<br>
-              ✓ Unlimited devices (per Figma user)<br>
+              ✓ Works on all your devices<br>
               ✓ Lifetime updates<br>
               ✓ Priority support
             </p>

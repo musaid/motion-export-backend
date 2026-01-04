@@ -107,20 +107,36 @@ export default function Docs({}: Route.ComponentProps) {
                     </h2>
                     <ol className="space-y-4 ml-16">
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
-                        <span className="font-medium text-lg">Open Figma and go to the Community tab</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
+                        <span className="font-medium text-lg">
+                          Open Figma and go to the Community tab
+                        </span>
                       </li>
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
-                        <span className="font-medium text-lg">Search for "Motion Export"</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
+                        <span className="font-medium text-lg">
+                          Search for "Motion Export"
+                        </span>
                       </li>
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
-                        <span className="font-medium text-lg">Click "Try it out" to install the plugin</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
+                        <span className="font-medium text-lg">
+                          Click "Try it out" to install the plugin
+                        </span>
                       </li>
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
-                        <span className="font-medium text-lg">The plugin will appear in your Plugins menu</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
+                        <span className="font-medium text-lg">
+                          The plugin will appear in your Plugins menu
+                        </span>
                       </li>
                     </ol>
                   </div>
@@ -131,26 +147,38 @@ export default function Docs({}: Route.ComponentProps) {
                     </h2>
                     <ol className="space-y-4 ml-16">
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
                         <span className="font-medium text-lg">
                           Design your frames with the elements you want to
                           animate
                         </span>
                       </li>
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
-                        <span className="font-medium text-lg">Connect frames using Prototype mode</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
+                        <span className="font-medium text-lg">
+                          Connect frames using Prototype mode
+                        </span>
                       </li>
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
                         <span className="font-medium text-lg">
                           Choose your animation type (Smart Animate, Dissolve,
                           etc.)
                         </span>
                       </li>
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
-                        <span className="font-medium text-lg">Set duration and easing</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
+                        <span className="font-medium text-lg">
+                          Set duration and easing
+                        </span>
                       </li>
                     </ol>
                   </div>
@@ -161,24 +189,44 @@ export default function Docs({}: Route.ComponentProps) {
                     </h2>
                     <ol className="space-y-4 ml-16">
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
-                        <span className="font-medium text-lg">Run Motion Export from Plugins menu</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
+                        <span className="font-medium text-lg">
+                          Run Motion Export from Plugins menu
+                        </span>
                       </li>
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
-                        <span className="font-medium text-lg">Click "Scan for Animations"</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
+                        <span className="font-medium text-lg">
+                          Click "Scan for Animations"
+                        </span>
                       </li>
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
-                        <span className="font-medium text-lg">Select the animations you want to export</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
+                        <span className="font-medium text-lg">
+                          Select the animations you want to export
+                        </span>
                       </li>
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
-                        <span className="font-medium text-lg">Choose your target framework</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
+                        <span className="font-medium text-lg">
+                          Choose your target framework
+                        </span>
                       </li>
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
-                        <span className="font-medium text-lg">Click "Export" and copy the generated code</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
+                        <span className="font-medium text-lg">
+                          Click "Export" and copy the generated code
+                        </span>
                       </li>
                     </ol>
                   </div>
@@ -213,7 +261,9 @@ export default function Docs({}: Route.ComponentProps) {
                       </h3>
                       <ol className="space-y-4">
                         <li className="flex items-start gap-4">
-                          <span className="font-black text-plum text-xl">1.</span>
+                          <span className="font-black text-plum text-xl">
+                            1.
+                          </span>
                           <span className="font-medium text-lg">
                             Visit the{' '}
                             <a
@@ -225,17 +275,25 @@ export default function Docs({}: Route.ComponentProps) {
                           </span>
                         </li>
                         <li className="flex items-start gap-4">
-                          <span className="font-black text-plum text-xl">2.</span>
-                          <span className="font-medium text-lg">Click the "Try it out" button</span>
+                          <span className="font-black text-plum text-xl">
+                            2.
+                          </span>
+                          <span className="font-medium text-lg">
+                            Click the "Try it out" button
+                          </span>
                         </li>
                         <li className="flex items-start gap-4">
-                          <span className="font-black text-plum text-xl">3.</span>
+                          <span className="font-black text-plum text-xl">
+                            3.
+                          </span>
                           <span className="font-medium text-lg">
                             The plugin will be added to your Figma account
                           </span>
                         </li>
                         <li className="flex items-start gap-4">
-                          <span className="font-black text-plum text-xl">4.</span>
+                          <span className="font-black text-plum text-xl">
+                            4.
+                          </span>
                           <span className="font-medium text-lg">
                             Access it from Plugins → Motion Export in any file
                           </span>
@@ -249,22 +307,36 @@ export default function Docs({}: Route.ComponentProps) {
                       </h3>
                       <ol className="space-y-4">
                         <li className="flex items-start gap-4">
-                          <span className="font-black text-plum text-xl">1.</span>
-                          <span className="font-medium text-lg">Open any Figma file</span>
+                          <span className="font-black text-plum text-xl">
+                            1.
+                          </span>
+                          <span className="font-medium text-lg">
+                            Open any Figma file
+                          </span>
                         </li>
                         <li className="flex items-start gap-4">
-                          <span className="font-black text-plum text-xl">2.</span>
+                          <span className="font-black text-plum text-xl">
+                            2.
+                          </span>
                           <span className="font-medium text-lg">
                             Go to Plugins → Browse plugins in Community
                           </span>
                         </li>
                         <li className="flex items-start gap-4">
-                          <span className="font-black text-plum text-xl">3.</span>
-                          <span className="font-medium text-lg">Search for "Motion Export"</span>
+                          <span className="font-black text-plum text-xl">
+                            3.
+                          </span>
+                          <span className="font-medium text-lg">
+                            Search for "Motion Export"
+                          </span>
                         </li>
                         <li className="flex items-start gap-4">
-                          <span className="font-black text-plum text-xl">4.</span>
-                          <span className="font-medium text-lg">Click "Try it out"</span>
+                          <span className="font-black text-plum text-xl">
+                            4.
+                          </span>
+                          <span className="font-medium text-lg">
+                            Click "Try it out"
+                          </span>
                         </li>
                       </ol>
                     </div>
@@ -277,11 +349,15 @@ export default function Docs({}: Route.ComponentProps) {
                     <ul className="space-y-4">
                       <li className="flex items-start gap-4">
                         <span className="text-plum text-2xl font-black">✓</span>
-                        <span className="font-medium text-lg">Figma desktop app or web browser</span>
+                        <span className="font-medium text-lg">
+                          Figma desktop app or web browser
+                        </span>
                       </li>
                       <li className="flex items-start gap-4">
                         <span className="text-plum text-2xl font-black">✓</span>
-                        <span className="font-medium text-lg">Active internet connection</span>
+                        <span className="font-medium text-lg">
+                          Active internet connection
+                        </span>
                       </li>
                       <li className="flex items-start gap-4">
                         <span className="text-plum text-2xl font-black">✓</span>
@@ -315,21 +391,27 @@ export default function Docs({}: Route.ComponentProps) {
                       </p>
                       <ul className="space-y-4">
                         <li className="flex items-start gap-4">
-                          <span className="text-plum font-black text-xl">•</span>
+                          <span className="text-plum font-black text-xl">
+                            •
+                          </span>
                           <span className="font-medium text-lg">
                             Use identical layer names for elements you want to
                             animate
                           </span>
                         </li>
                         <li className="flex items-start gap-4">
-                          <span className="text-plum font-black text-xl">•</span>
+                          <span className="text-plum font-black text-xl">
+                            •
+                          </span>
                           <span className="font-medium text-lg">
                             Motion Export tracks position, size, rotation, and
                             opacity changes
                           </span>
                         </li>
                         <li className="flex items-start gap-4">
-                          <span className="text-plum font-black text-xl">•</span>
+                          <span className="text-plum font-black text-xl">
+                            •
+                          </span>
                           <span className="font-medium text-lg">
                             Nested elements are fully supported (industry
                             first!)
@@ -340,13 +422,13 @@ export default function Docs({}: Route.ComponentProps) {
                   </div>
 
                   <div>
-                    <h2 className="text-4xl font-black mb-8">
-                      Best Practices
-                    </h2>
+                    <h2 className="text-4xl font-black mb-8">Best Practices</h2>
                     <ul className="space-y-4">
                       <li className="flex items-start gap-4">
                         <span className="text-plum text-2xl font-black">✓</span>
-                        <span className="font-medium text-lg">Test animations in Figma before exporting</span>
+                        <span className="font-medium text-lg">
+                          Test animations in Figma before exporting
+                        </span>
                       </li>
                       <li className="flex items-start gap-4">
                         <span className="text-plum text-2xl font-black">✓</span>
@@ -356,15 +438,21 @@ export default function Docs({}: Route.ComponentProps) {
                       </li>
                       <li className="flex items-start gap-4">
                         <span className="text-plum text-2xl font-black">✓</span>
-                        <span className="font-medium text-lg">Group related animations in the same frame</span>
+                        <span className="font-medium text-lg">
+                          Group related animations in the same frame
+                        </span>
                       </li>
                       <li className="flex items-start gap-4">
                         <span className="text-plum text-2xl font-black">✓</span>
-                        <span className="font-medium text-lg">Keep layer names consistent and descriptive</span>
+                        <span className="font-medium text-lg">
+                          Keep layer names consistent and descriptive
+                        </span>
                       </li>
                       <li className="flex items-start gap-4">
                         <span className="text-plum text-2xl font-black">✓</span>
-                        <span className="font-medium text-lg">Use Auto Layout for responsive animations</span>
+                        <span className="font-medium text-lg">
+                          Use Auto Layout for responsive animations
+                        </span>
                       </li>
                     </ul>
                   </div>
@@ -436,33 +524,35 @@ export default function Docs({}: Route.ComponentProps) {
                     </h3>
                     <div className="space-y-4">
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
                         <span className="font-medium text-lg">
-                          Ensure frames are connected with prototype
-                          connections
+                          Ensure frames are connected with prototype connections
                         </span>
                       </li>
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
                         <span className="font-medium text-lg">
-                          Check that you're in a file with prototypes, not
-                          a library
+                          Check that you're in a file with prototypes, not a
+                          library
                         </span>
                       </li>
                       <li className="flex items-start gap-4">
-                        <span className="text-plum mt-1 font-black text-xl">→</span>
+                        <span className="text-plum mt-1 font-black text-xl">
+                          →
+                        </span>
                         <span className="font-medium text-lg">
-                          Verify that frames contain actual content to
-                          animate
+                          Verify that frames contain actual content to animate
                         </span>
                       </li>
                     </div>
                   </div>
 
                   <div className="bg-plum/10 dark:bg-plum/20 rounded-2xl p-8 border-2 border-plum">
-                    <h3 className="font-black text-2xl mb-4">
-                      Need Help?
-                    </h3>
+                    <h3 className="font-black text-2xl mb-4">Need Help?</h3>
                     <div className="space-y-4">
                       <a
                         href="mailto:support@motionexport.com"

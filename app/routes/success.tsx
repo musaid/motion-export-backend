@@ -60,33 +60,46 @@ export default function Success({}: Route.ComponentProps) {
               </h2>
               <ul className="space-y-4">
                 <li className="flex items-start gap-4">
-                  <span className="text-plum font-black text-2xl flex-shrink-0">✓</span>
+                  <span className="text-plum font-black text-2xl flex-shrink-0">
+                    ✓
+                  </span>
                   <span className="font-medium text-lg">
-                    You'll receive your license key via email within a few minutes
+                    You'll receive your license key via email within a few
+                    minutes
                   </span>
                 </li>
                 <li className="flex items-start gap-4">
-                  <span className="text-plum font-black text-2xl flex-shrink-0">✓</span>
+                  <span className="text-plum font-black text-2xl flex-shrink-0">
+                    ✓
+                  </span>
                   <span className="font-medium text-lg">
                     The email includes instructions on how to activate your
                     license
                   </span>
                 </li>
                 <li className="flex items-start gap-4">
-                  <span className="text-plum font-black text-2xl flex-shrink-0">✓</span>
+                  <span className="text-plum font-black text-2xl flex-shrink-0">
+                    ✓
+                  </span>
                   <span className="font-medium text-lg">
                     Your license works on up to 5 devices with lifetime updates
                   </span>
                 </li>
                 <li className="flex items-start gap-4">
-                  <span className="text-plum font-black text-2xl flex-shrink-0">✓</span>
-                  <span className="font-medium text-lg">Unlimited exports are now unlocked for your account</span>
+                  <span className="text-plum font-black text-2xl flex-shrink-0">
+                    ✓
+                  </span>
+                  <span className="font-medium text-lg">
+                    Unlimited exports are now unlocked for your account
+                  </span>
                 </li>
               </ul>
             </div>
 
             <div className="bg-white dark:bg-black rounded-2xl p-8 mb-8 border-2 border-black dark:border-white">
-              <p className="font-bold mb-2 text-center">Didn't receive your email?</p>
+              <p className="font-bold mb-2 text-center">
+                Didn't receive your email?
+              </p>
               <p className="font-medium text-center opacity-70">
                 Check your spam folder or contact{' '}
                 <a

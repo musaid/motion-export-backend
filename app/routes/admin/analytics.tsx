@@ -53,7 +53,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     '7d': new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
     '30d': new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
     '90d': new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
-    'all': new Date(0),
+    all: new Date(0),
   };
   const timeRangeDate =
     timeRanges[timeRange as keyof typeof timeRanges] || timeRanges['7d'];
@@ -135,8 +135,12 @@ export async function loader({ request }: Route.LoaderArgs) {
     })
     .from(analytics)
     .where(whereClause)
-    .groupBy(sql`date_trunc('${sql.raw(groupByFormat)}', ${analytics.createdAt})`)
-    .orderBy(sql`date_trunc('${sql.raw(groupByFormat)}', ${analytics.createdAt})`);
+    .groupBy(
+      sql`date_trunc('${sql.raw(groupByFormat)}', ${analytics.createdAt})`,
+    )
+    .orderBy(
+      sql`date_trunc('${sql.raw(groupByFormat)}', ${analytics.createdAt})`,
+    );
 
   // Get framework breakdown from code_copied and code_downloaded events
   const frameworkData = await database()
@@ -197,9 +201,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       properties: analytics.properties,
     })
     .from(analytics)
-    .where(
-      and(whereClause, eq(analytics.event, 'scan_completed')),
-    )
+    .where(and(whereClause, eq(analytics.event, 'scan_completed')))
     .limit(1000);
 
   const animationTypeCount: Record<string, number> = {};
@@ -286,7 +288,10 @@ function TrendChart({
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <AreaChart
+        data={data}
+        margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+      >
         <defs>
           <linearGradient id="events" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="rgb(59 130 246)" stopOpacity={0.1} />
@@ -297,7 +302,12 @@ function TrendChart({
             <stop offset="95%" stopColor="rgb(168 85 247)" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgb(228 228 231)" opacity={0.3} vertical={false} />
+        <CartesianGrid
+          strokeDasharray="3 3"
+          stroke="rgb(228 228 231)"
+          opacity={0.3}
+          vertical={false}
+        />
         <XAxis
           dataKey="period"
           tick={{ fill: 'rgb(113 113 122)', fontSize: 11 }}
@@ -319,12 +329,17 @@ function TrendChart({
                   {payload[0].payload.period}
                 </div>
                 {payload.map((entry: any) => (
-                  <div key={entry.name} className="flex items-center gap-2 text-xs">
+                  <div
+                    key={entry.name}
+                    className="flex items-center gap-2 text-xs"
+                  >
                     <div
                       className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: entry.color }}
                     />
-                    <span className="text-zinc-600 dark:text-zinc-400">{entry.name}:</span>
+                    <span className="text-zinc-600 dark:text-zinc-400">
+                      {entry.name}:
+                    </span>
                     <span className="font-medium text-zinc-900 dark:text-zinc-100">
                       {entry.value.toLocaleString()}
                     </span>
@@ -356,7 +371,11 @@ function TrendChart({
 }
 
 // Compact Donut Chart
-function DonutChart({ data }: { data: Array<{ framework: string; count: number }> }) {
+function DonutChart({
+  data,
+}: {
+  data: Array<{ framework: string; count: number }>;
+}) {
   if (!data || data.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-sm text-zinc-400">
@@ -414,7 +433,11 @@ function DonutChart({ data }: { data: Array<{ framework: string; count: number }
   );
 }
 
-function FrameworkChart({ data }: { data: Array<{ framework: string; count: number }> }) {
+function FrameworkChart({
+  data,
+}: {
+  data: Array<{ framework: string; count: number }>;
+}) {
   if (!data || data.length === 0) {
     return (
       <div className="h-48 flex items-center justify-center text-sm text-zinc-400">
@@ -491,14 +514,26 @@ function FunnelChart({
   };
 }) {
   const stages = [
-    { name: 'Plugin Opened', value: data.plugin_opened, color: 'from-blue-500 to-blue-400' },
-    { name: 'Scan Completed', value: data.scan_completed, color: 'from-green-500 to-green-400' },
+    {
+      name: 'Plugin Opened',
+      value: data.plugin_opened,
+      color: 'from-blue-500 to-blue-400',
+    },
+    {
+      name: 'Scan Completed',
+      value: data.scan_completed,
+      color: 'from-green-500 to-green-400',
+    },
     {
       name: 'Export Completed',
       value: data.export_completed,
       color: 'from-purple-500 to-purple-400',
     },
-    { name: 'Code Copied', value: data.code_copied, color: 'from-amber-500 to-amber-400' },
+    {
+      name: 'Code Copied',
+      value: data.code_copied,
+      color: 'from-amber-500 to-amber-400',
+    },
     {
       name: 'License Modal',
       value: data.license_modal_opened,
@@ -563,7 +598,11 @@ function FunnelChart({
   );
 }
 
-function AnimationTypesChart({ data }: { data: Array<{ type: string; count: number }> }) {
+function AnimationTypesChart({
+  data,
+}: {
+  data: Array<{ type: string; count: number }>;
+}) {
   if (!data || data.length === 0) {
     return (
       <div className="h-8 flex items-center justify-center text-sm text-zinc-400">
@@ -650,9 +689,13 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
         <div className="text-xs space-y-1">
           {Object.entries(parsed).map(([key, value]) => (
             <div key={key}>
-              <span className="font-medium text-zinc-600 dark:text-zinc-400">{key}:</span>{' '}
+              <span className="font-medium text-zinc-600 dark:text-zinc-400">
+                {key}:
+              </span>{' '}
               <span className="text-zinc-900 dark:text-zinc-100">
-                {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                {typeof value === 'object'
+                  ? JSON.stringify(value)
+                  : String(value)}
               </span>
             </div>
           ))}
@@ -668,7 +711,8 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
       <div>
         <Heading>Analytics Dashboard</Heading>
         <Text className="mt-1">
-          Comprehensive insights into user behavior, engagement, and conversion metrics
+          Comprehensive insights into user behavior, engagement, and conversion
+          metrics
         </Text>
       </div>
 
@@ -676,24 +720,28 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
       <div className="flex flex-wrap gap-2 items-center justify-between w-full">
         <div className="flex flex-wrap gap-2">
           {[
-          { value: '24h', label: 'Last 24 Hours' },
-          { value: '7d', label: 'Last 7 Days' },
-          { value: '30d', label: 'Last 30 Days' },
-          { value: '90d', label: 'Last 90 Days' },
-          { value: 'all', label: 'All Time' },
-        ].map((range) => (
-          <Link key={range.value} to={`?timeRange=${range.value}`} prefetch="intent">
-            {timeRange === range.value ? (
-              <Button color="zinc" className="transition-all">
-                {range.label}
-              </Button>
-            ) : (
-              <Button outline className="transition-all">
-                {range.label}
-              </Button>
-            )}
-          </Link>
-        ))}
+            { value: '24h', label: 'Last 24 Hours' },
+            { value: '7d', label: 'Last 7 Days' },
+            { value: '30d', label: 'Last 30 Days' },
+            { value: '90d', label: 'Last 90 Days' },
+            { value: 'all', label: 'All Time' },
+          ].map((range) => (
+            <Link
+              key={range.value}
+              to={`?timeRange=${range.value}`}
+              prefetch="intent"
+            >
+              {timeRange === range.value ? (
+                <Button color="zinc" className="transition-all">
+                  {range.label}
+                </Button>
+              ) : (
+                <Button outline className="transition-all">
+                  {range.label}
+                </Button>
+              )}
+            </Link>
+          ))}
         </div>
 
         {/* Loading indicator - fixed position on right */}
@@ -736,7 +784,9 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <Text className="text-sm font-medium text-blue-100">Total Events</Text>
+          <Text className="text-sm font-medium text-blue-100">
+            Total Events
+          </Text>
           <motion.p
             className="text-3xl font-bold mt-2"
             initial={{ scale: 0.5 }}
@@ -752,7 +802,9 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
         >
-          <Text className="text-sm font-medium text-green-100">Active Users</Text>
+          <Text className="text-sm font-medium text-green-100">
+            Active Users
+          </Text>
           <motion.p
             className="text-3xl font-bold mt-2"
             initial={{ scale: 0.5 }}
@@ -768,7 +820,9 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
-          <Text className="text-sm font-medium text-purple-100">Active Licenses</Text>
+          <Text className="text-sm font-medium text-purple-100">
+            Active Licenses
+          </Text>
           <motion.p
             className="text-3xl font-bold mt-2"
             initial={{ scale: 0.5 }}
@@ -846,19 +900,29 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
                 Average Duration
               </span>
               <span className="text-lg font-bold text-zinc-900 dark:text-white">
-                {scanDurations.avgDuration ? `${Math.round(scanDurations.avgDuration)}ms` : 'N/A'}
+                {scanDurations.avgDuration
+                  ? `${Math.round(scanDurations.avgDuration)}ms`
+                  : 'N/A'}
               </span>
             </div>
             <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">Fastest Scan</span>
+              <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                Fastest Scan
+              </span>
               <span className="text-lg font-bold text-green-600 dark:text-green-400">
-                {scanDurations.minDuration ? `${Math.round(scanDurations.minDuration)}ms` : 'N/A'}
+                {scanDurations.minDuration
+                  ? `${Math.round(scanDurations.minDuration)}ms`
+                  : 'N/A'}
               </span>
             </div>
             <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">Slowest Scan</span>
+              <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                Slowest Scan
+              </span>
               <span className="text-lg font-bold text-red-600 dark:text-red-400">
-                {scanDurations.maxDuration ? `${Math.round(scanDurations.maxDuration)}ms` : 'N/A'}
+                {scanDurations.maxDuration
+                  ? `${Math.round(scanDurations.maxDuration)}ms`
+                  : 'N/A'}
               </span>
             </div>
           </div>
@@ -922,10 +986,15 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
                 to={`?timeRange=${timeRange}&event=${type.event}`}
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
               >
-                <Badge color={getEventColor(type.event || '')} className="text-xs">
+                <Badge
+                  color={getEventColor(type.event || '')}
+                  className="text-xs"
+                >
                   {type.event}
                 </Badge>
-                <span className="text-xs text-zinc-600 dark:text-zinc-400">{type.count}</span>
+                <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                  {type.count}
+                </span>
               </Link>
             </motion.div>
           ))}
@@ -1011,13 +1080,18 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
                     className="border-b border-zinc-950/5 dark:border-white/5 last:border-0"
                   >
                     <TableCell className="pl-0">
-                      <Badge color={getEventColor(record.event)} className="text-xs">
+                      <Badge
+                        color={getEventColor(record.event)}
+                        className="text-xs"
+                      >
                         {record.event}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       {record.userId ? (
-                        <span className="font-mono text-xs">{record.userId}</span>
+                        <span className="font-mono text-xs">
+                          {record.userId}
+                        </span>
                       ) : (
                         <span className="text-zinc-400">-</span>
                       )}
@@ -1031,7 +1105,9 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
                         <span className="text-zinc-400">-</span>
                       )}
                     </TableCell>
-                    <TableCell className="max-w-xs">{formatProperties(record.properties)}</TableCell>
+                    <TableCell className="max-w-xs">
+                      {formatProperties(record.properties)}
+                    </TableCell>
                     <TableCell>
                       {record.ip ? (
                         <span className="font-mono text-xs">{record.ip}</span>
@@ -1050,7 +1126,9 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
 
           {analytics.length === 0 && (
             <div className="text-center py-8">
-              <Text className="text-zinc-500 dark:text-zinc-400">No analytics events found</Text>
+              <Text className="text-zinc-500 dark:text-zinc-400">
+                No analytics events found
+              </Text>
             </div>
           )}
         </div>
@@ -1060,31 +1138,34 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
       {pagination.totalPages > 1 && (
         <div className="flex justify-center">
           <Pagination>
-            {Array.from({ length: Math.min(pagination.totalPages, 10) }, (_, i) => {
-              const pageNum =
-                pagination.page <= 5
-                  ? i + 1
-                  : Math.min(
-                      Math.max(i + pagination.page - 4, 1),
-                      pagination.totalPages - 9 + i,
-                    );
+            {Array.from(
+              { length: Math.min(pagination.totalPages, 10) },
+              (_, i) => {
+                const pageNum =
+                  pagination.page <= 5
+                    ? i + 1
+                    : Math.min(
+                        Math.max(i + pagination.page - 4, 1),
+                        pagination.totalPages - 9 + i,
+                      );
 
-              if (pageNum > pagination.totalPages) return null;
+                if (pageNum > pagination.totalPages) return null;
 
-              return (
-                <Link
-                  key={pageNum}
-                  to={`?page=${pageNum}&timeRange=${timeRange}${searchParams.get('event') ? `&event=${searchParams.get('event')}` : ''}${searchParams.get('userId') ? `&userId=${searchParams.get('userId')}` : ''}${searchParams.get('licenseKey') ? `&licenseKey=${searchParams.get('licenseKey')}` : ''}`}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                    pageNum === pagination.page
-                      ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
-                      : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800'
-                  }`}
-                >
-                  {pageNum}
-                </Link>
-              );
-            }).filter(Boolean)}
+                return (
+                  <Link
+                    key={pageNum}
+                    to={`?page=${pageNum}&timeRange=${timeRange}${searchParams.get('event') ? `&event=${searchParams.get('event')}` : ''}${searchParams.get('userId') ? `&userId=${searchParams.get('userId')}` : ''}${searchParams.get('licenseKey') ? `&licenseKey=${searchParams.get('licenseKey')}` : ''}`}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                      pageNum === pagination.page
+                        ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+                        : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    {pageNum}
+                  </Link>
+                );
+              },
+            ).filter(Boolean)}
           </Pagination>
         </div>
       )}

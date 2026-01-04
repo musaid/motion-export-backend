@@ -320,7 +320,7 @@ export default function AdminDashboard({ loaderData }: Route.ComponentProps) {
                     </div>
                     <div className="flex items-center gap-4 text-sm text-zinc-600 dark:text-zinc-400">
                       <span className="font-mono text-xs">
-                        {license.key.substring(0, 16)}...
+                        {license.licenseKey.substring(0, 16)}...
                       </span>
                       {license.figmaUserId && (
                         <span className="text-xs">

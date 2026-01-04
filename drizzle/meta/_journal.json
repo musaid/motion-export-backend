@@ -12,8 +12,8 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1767500187886,
-      "tag": "0001_figma_user_cleanup",
+      "when": 1767541911999,
+      "tag": "0001_simplify_to_email_recovery",
       "breakpoints": true
     }
   ]

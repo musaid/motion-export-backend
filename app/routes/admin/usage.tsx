@@ -32,7 +32,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   // Build query with filters
   const conditions = [];
   if (search) {
-    conditions.push(like(usage.deviceId, `%${search}%`));
+    conditions.push(like(usage.figmaUserId, `%${search}%`));
   }
 
   const whereClause =
@@ -58,7 +58,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const [stats] = await database()
     .select({
       totalExports: sql<number>`COALESCE(SUM(${usage.exportCount}), 0)`,
-      uniqueDevices: sql<number>`COUNT(DISTINCT ${usage.deviceId})`,
+      uniqueDevices: sql<number>`COUNT(DISTINCT ${usage.figmaUserId})`,
       avgExportsPerDevice: sql<number>`COALESCE(AVG(${usage.exportCount}), 0)`,
     })
     .from(usage);
@@ -68,7 +68,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const [recentStats] = await database()
     .select({
       todayExports: sql<number>`COUNT(*)`,
-      todayDevices: sql<number>`COUNT(DISTINCT ${usage.deviceId})`,
+      todayDevices: sql<number>`COUNT(DISTINCT ${usage.figmaUserId})`,
     })
     .from(usage)
     .where(sql`${usage.createdAt} >= ${yesterday}`);
@@ -98,8 +98,8 @@ export default function AdminUsage({ loaderData }: Route.ComponentProps) {
       <div>
         <Heading>Lifetime Usage Analytics</Heading>
         <Text className="mt-1">
-          Track lifetime export usage across all devices (5 free exports max per
-          device)
+          Track lifetime export usage across all Figma users (5 free exports max
+          per user)
         </Text>
       </div>
 
@@ -115,7 +115,7 @@ export default function AdminUsage({ loaderData }: Route.ComponentProps) {
         </div>
         <div className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6">
           <Text className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            Unique Devices
+            Unique Users
           </Text>
           <p className="text-2xl font-semibold text-zinc-900 dark:text-white mt-2">
             {stats.uniqueDevices.toLocaleString()}
@@ -131,7 +131,7 @@ export default function AdminUsage({ loaderData }: Route.ComponentProps) {
         </div>
         <div className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6">
           <Text className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            Active Devices (24h)
+            Active Users (24h)
           </Text>
           <p className="text-2xl font-semibold text-zinc-900 dark:text-white mt-2">
             {stats.todayDevices.toLocaleString()}
@@ -146,7 +146,7 @@ export default function AdminUsage({ loaderData }: Route.ComponentProps) {
             type="text"
             name="search"
             defaultValue={searchParams.get('search') || ''}
-            placeholder="Search by device ID..."
+            placeholder="Search by Figma user ID..."
             className="flex-1 min-w-0"
           />
           <div className="flex gap-2">
@@ -168,7 +168,7 @@ export default function AdminUsage({ loaderData }: Route.ComponentProps) {
           <Table>
             <TableHead>
               <TableRow>
-                <TableHeader className="pl-0">Device ID</TableHeader>
+                <TableHeader className="pl-0">Figma User ID</TableHeader>
                 <TableHeader>Lifetime Exports</TableHeader>
                 <TableHeader>Created At</TableHeader>
                 <TableHeader className="pr-0">Last Updated</TableHeader>
@@ -178,7 +178,7 @@ export default function AdminUsage({ loaderData }: Route.ComponentProps) {
               {usage.map((record) => (
                 <TableRow key={record.id}>
                   <TableCell className="font-mono text-sm pl-0">
-                    {record.deviceId}
+                    {record.figmaUserId}
                   </TableCell>
                   <TableCell>
                     <span
@@ -191,9 +191,7 @@ export default function AdminUsage({ loaderData }: Route.ComponentProps) {
                       {record.exportCount || 0} / 5
                     </span>
                   </TableCell>
-                  <TableCell>
-                    {formatDate(record.createdAt)}
-                  </TableCell>
+                  <TableCell>{formatDate(record.createdAt)}</TableCell>
                   <TableCell className="pr-0">
                     {formatDate(record.updatedAt)}
                   </TableCell>

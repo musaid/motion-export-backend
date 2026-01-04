@@ -97,7 +97,7 @@ export async function action({ request }: Route.ActionArgs) {
     const { sendLicenseEmail } = await import('~/lib/email.server');
 
     // Create new license with same details
-    const { plainKey } = await createLicense({
+    const { licenseKey } = await createLicense({
       email: license.email,
       stripeCustomerId: license.stripeCustomerId,
       stripeSessionId: license.stripeSessionId,
@@ -121,18 +121,18 @@ export async function action({ request }: Route.ActionArgs) {
 
     // Send email with new key
     try {
-      await sendLicenseEmail(license.email, plainKey);
+      await sendLicenseEmail(license.email, licenseKey);
       return data({
         success: true,
         message: `New license key sent to ${license.email}`,
-        licenseKey: plainKey,
+        licenseKey,
       });
     } catch (error) {
       console.error('Failed to send email:', error);
       return data(
         {
           error: 'Failed to send email',
-          licenseKey: plainKey,
+          licenseKey,
         },
         { status: 500 },
       );
@@ -152,7 +152,7 @@ export async function action({ request }: Route.ActionArgs) {
     const { sendLicenseEmail } = await import('~/lib/email.server');
 
     // Create the license
-    const { license, plainKey } = await createLicense({
+    const { license, licenseKey } = await createLicense({
       email,
       stripeCustomerId: null,
       stripeSessionId: null,
@@ -177,13 +177,13 @@ export async function action({ request }: Route.ActionArgs) {
     const sendEmail = formData.get('sendEmail') === 'on';
     if (sendEmail) {
       try {
-        await sendLicenseEmail(email, plainKey);
+        await sendLicenseEmail(email, licenseKey);
       } catch (error) {
         console.error('Failed to send email:', error);
       }
     }
 
-    return data({ success: true, licenseKey: plainKey });
+    return data({ success: true, licenseKey });
   }
 
   return data({ error: 'Invalid action' }, { status: 400 });
@@ -227,7 +227,7 @@ export default function AdminLicenses({
       {actionData && 'licenseKey' in actionData && (
         <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-800">
           <p className="text-green-800 dark:text-green-200 font-medium">
-            {actionData.message || 'License created successfully!'}
+            {'message' in actionData ? String(actionData.message) : 'License created successfully!'}
           </p>
           <p className="text-green-700 dark:text-green-300 mt-1 font-mono text-sm">
             License Key: {actionData.licenseKey as string}
@@ -346,7 +346,7 @@ export default function AdminLicenses({
                 return (
                   <TableRow key={license.id}>
                     <TableCell className="font-mono text-sm pl-0">
-                      {license.key.substring(0, 16)}...
+                      {license.licenseKey.substring(0, 16)}...
                     </TableCell>
                     <TableCell>{license.email}</TableCell>
                     <TableCell>

@@ -138,7 +138,11 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     // Update lifetime usage ONLY for export events from plugins (NO daily resets)
-    if (event === 'export_completed' && validation.clientType === 'plugin' && userId) {
+    if (
+      event === 'export_completed' &&
+      validation.clientType === 'plugin' &&
+      userId
+    ) {
       await incrementUsage(userId);
     }
 

@@ -1,15 +1,19 @@
 import { eq, sql } from 'drizzle-orm';
 import { customAlphabet } from 'nanoid';
+import crypto from 'crypto';
 import { database } from '~/database/context';
 import { licenses, usage, type License } from '~/database/schema';
-import { hashLicenseKey } from './security.server';
-import { encryptLicenseKey } from './encryption.server';
-import { generateRecoveryCodes } from './recovery-codes.server';
 
 const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 4);
 
+function hashLicenseKey(key: string): string {
+  const hash = crypto.createHash('sha256');
+  hash.update(key);
+  hash.update(process.env.LICENSE_SALT || 'motion-export-salt');
+  return hash.digest('hex');
+}
+
 export function generateLicenseKey(): string {
-  // Format: XXXX-XXXX-XXXX-XXXX
   return Array(4)
     .fill(0)
     .map(() => nanoid())
@@ -24,22 +28,14 @@ export async function createLicense(data: {
   currency: string;
 }): Promise<{
   license: License;
-  plainKey: string;
-  recoveryCodes: string[];
+  licenseKey: string;
 }> {
-  const plainKey = generateLicenseKey();
-  const hashedKey = hashLicenseKey(plainKey);
-  const encryptedKey = encryptLicenseKey(plainKey);
-
-  // Generate recovery codes (GitHub/Google standard)
-  const { plain: recoveryCodesPlain, hashed: recoveryCodesHashed } =
-    generateRecoveryCodes(3);
+  const licenseKey = generateLicenseKey();
 
   const [license] = await database()
     .insert(licenses)
     .values({
-      key: hashedKey, // For validation
-      encryptedKey, // For recovery
+      licenseKey,
       email: data.email,
       stripeCustomerId: data.stripeCustomerId,
       stripeSessionId: data.stripeSessionId,
@@ -47,8 +43,6 @@ export async function createLicense(data: {
       currency: data.currency,
       status: 'active',
       activations: '[]',
-      recoveryCodes: JSON.stringify(recoveryCodesHashed),
-      recoveryCodesUsed: '[]',
       metadata: JSON.stringify({
         createdVia: 'stripe_checkout',
         timestamp: new Date().toISOString(),
@@ -58,13 +52,12 @@ export async function createLicense(data: {
 
   return {
     license,
-    plainKey,
-    recoveryCodes: recoveryCodesPlain,
+    licenseKey,
   };
 }
 
 export async function validateLicense(
-  plainKey: string,
+  licenseKey: string,
   figmaUserId: string,
 ): Promise<{
   valid: boolean;
@@ -72,14 +65,22 @@ export async function validateLicense(
   license?: License;
   isFirstActivation?: boolean;
 }> {
-  const hashedKey = hashLicenseKey(plainKey);
-
-  // Get license by hashed key
-  const [license] = await database()
+  let license = await database()
     .select()
     .from(licenses)
-    .where(eq(licenses.key, hashedKey))
-    .limit(1);
+    .where(eq(licenses.licenseKey, licenseKey))
+    .limit(1)
+    .then((rows) => rows[0]);
+
+  if (!license) {
+    const hashedKey = hashLicenseKey(licenseKey);
+    license = await database()
+      .select()
+      .from(licenses)
+      .where(eq(licenses.licenseKey, hashedKey))
+      .limit(1)
+      .then((rows) => rows[0]);
+  }
 
   if (!license) {
     return { valid: false, error: 'Invalid license key' };
@@ -89,7 +90,6 @@ export async function validateLicense(
     return { valid: false, error: `License is ${license.status}` };
   }
 
-  // Parse activations (now stores figmaUserId instead of deviceId)
   const activations = JSON.parse(license.activations || '[]') as Array<{
     figmaUserId: string;
     activatedAt: string;
@@ -103,7 +103,6 @@ export async function validateLicense(
   let isFirstActivation = false;
 
   if (!existingActivation) {
-    // New activation for this Figma user
     isFirstActivation = true;
     activations.push({
       figmaUserId,
@@ -111,19 +110,20 @@ export async function validateLicense(
       lastChecked: new Date().toISOString(),
     });
   } else {
-    // Existing activation - just update last checked timestamp
     existingActivation.lastChecked = new Date().toISOString();
   }
 
-  // Update license
   const updateData: Partial<License> = {
     activations: JSON.stringify(activations),
     updatedAt: new Date().toISOString(),
   };
 
-  // Store figmaUserId if not already stored
   if (!license.figmaUserId) {
     updateData.figmaUserId = figmaUserId;
+  }
+
+  if (license.licenseKey !== licenseKey) {
+    updateData.licenseKey = licenseKey;
   }
 
   await database()
@@ -141,7 +141,6 @@ export async function validateLicense(
   };
 }
 
-// Check lifetime usage (5 exports max for free tier, NEVER resets)
 export async function checkUsage(figmaUserId: string): Promise<{
   count: number;
   limit: number;
@@ -149,7 +148,6 @@ export async function checkUsage(figmaUserId: string): Promise<{
 }> {
   const LIFETIME_LIMIT = 5;
 
-  // Get lifetime usage for this Figma user
   const [userUsage] = await database()
     .select()
     .from(usage)
@@ -157,7 +155,6 @@ export async function checkUsage(figmaUserId: string): Promise<{
     .limit(1);
 
   if (!userUsage) {
-    // No usage yet
     return {
       count: 0,
       limit: LIFETIME_LIMIT,
@@ -172,9 +169,7 @@ export async function checkUsage(figmaUserId: string): Promise<{
   };
 }
 
-// Increment lifetime usage (NO daily resets, permanent counter)
 export async function incrementUsage(figmaUserId: string): Promise<void> {
-  // Check if record exists
   const [existing] = await database()
     .select()
     .from(usage)
@@ -182,7 +177,6 @@ export async function incrementUsage(figmaUserId: string): Promise<void> {
     .limit(1);
 
   if (existing) {
-    // Update existing record - increment lifetime counter
     await database()
       .update(usage)
       .set({
@@ -191,7 +185,6 @@ export async function incrementUsage(figmaUserId: string): Promise<void> {
       })
       .where(eq(usage.id, existing.id));
   } else {
-    // Create new record
     await database().insert(usage).values({
       figmaUserId,
       exportCount: 1,
