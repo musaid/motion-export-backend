@@ -34,7 +34,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const [todayUsage] = await database()
     .select({
       exports: sql<number>`count(*)`,
-      devices: sql<number>`count(distinct device_id)`,
+      devices: sql<number>`count(distinct figma_user_id)`,
     })
     .from(usage)
     .where(
