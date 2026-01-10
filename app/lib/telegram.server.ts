@@ -215,14 +215,18 @@ export function sendScanCompletedNotification(data: {
   figmaUserId?: string;
   sessionId?: string;
   animationsCount?: number;
-  animationTypes?: string[];
+  animationTypes?: string;
   scanDuration?: number;
   hasAnimations?: boolean;
   isFirstScan?: boolean;
 }): void {
   const userId = data.figmaUserId || 'anonymous';
   const count = data.animationsCount || 0;
-  const types = data.animationTypes?.join(', ') || 'none';
+  // Plugin sends comma-separated string like "transition,spring"
+  // Replace comma with comma+space for better readability
+  const types = data.animationTypes
+    ? data.animationTypes.replace(/,/g, ', ')
+    : 'none';
   const duration = data.scanDuration
     ? `${(data.scanDuration / 1000).toFixed(1)}s`
     : 'N/A';
