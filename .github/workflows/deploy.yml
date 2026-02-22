@@ -6,9 +6,13 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  packages: write
+
 env:
-  DOCKER_IMAGE_NAME: musaid/motion-export-backend
-  REGISTRY: docker.io
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
 
 jobs:
   build-and-push:
@@ -21,18 +25,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.DOCKER_IMAGE_NAME }}
+          images: ${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -48,7 +52,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
 
   deploy:
     needs: build-and-push
@@ -58,7 +62,7 @@ jobs:
     steps:
       - name: Deploy notification
         run: |
-          echo "🚀 Docker image pushed to: ${{ env.DOCKER_IMAGE_NAME }}:latest"
+          echo "🚀 Docker image pushed to: ${{ env.IMAGE_NAME }}:latest"
           echo "👉 Manually deploy in Coolify or set up webhook"
 
       # Optional: Use webhook if you have the URL
