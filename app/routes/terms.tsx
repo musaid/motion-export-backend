@@ -44,10 +44,11 @@ export default function TermsOfService({}: Route.ComponentProps) {
                   1. INTRODUCTION
                 </Heading>
                 <Text className="text-sm">
-                  Welcome to Motion Export. We provide a premium Figma-to-code
-                  export service that converts your designs into
-                  production-ready code. By purchasing and using our service,
-                  you agree to these Terms of Service ("Terms").
+                  Welcome to Motion Export, a product operated by DOTMV. We
+                  provide a premium Figma-to-code export service that converts
+                  your designs into production-ready code. By purchasing and
+                  using our service, you agree to these Terms of Service
+                  ("Terms").
                 </Text>
               </div>
               <div>
