@@ -74,7 +74,7 @@ const RELEASES: Release[] = [
       },
       {
         tag: 'Improved',
-        text: 'Smart Animate now composites per layer with real spring physics — overshoot and bounce match Figma.',
+        text: 'Smart Animate now composites per layer with real spring physics — overshoot and bounce are reproduced exactly in Framer Motion and video, and closely approximated in CSS.',
       },
       {
         tag: 'Fixed',

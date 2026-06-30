@@ -50,10 +50,10 @@ export async function sendLicenseEmail(email: string, licenseKey: string) {
           <div style="border-left: 4px solid #6366f1; padding-left: 20px; margin: 30px 0;">
             <p style="color: #4b5563; line-height: 1.6; margin: 0;">
               <strong>Your Pro license includes:</strong><br>
-              ✓ Unlimited exports<br>
+              ✓ Unlimited code exports<br>
+              ✓ Unlimited GIF &amp; WebM video exports<br>
               ✓ Works on all your devices<br>
-              ✓ Lifetime updates<br>
-              ✓ Priority support
+              ✓ Lifetime updates
             </p>
           </div>
 

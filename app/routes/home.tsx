@@ -251,8 +251,9 @@ export default function Home({}: Route.ComponentProps) {
               <div className="text-4xl mb-5">🎬</div>
               <h3 className="text-xl font-bold mb-3">GIF &amp; WebM</h3>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Render any animation to video, including a transparent WebM for
-                overlaying on top of other content.
+                Render a single animation to video, including a transparent WebM
+                for overlaying on other content. Sequences and full boards are a
+                Pro upgrade.
               </p>
             </div>
 

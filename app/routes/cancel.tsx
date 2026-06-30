@@ -59,8 +59,8 @@ export default function Cancel({}: Route.ComponentProps) {
                 Still interested?
               </h2>
               <p className="font-medium text-lg mb-6">
-                Motion Export Pro gives you unlimited exports and lifetime
-                updates for just $9.99 (Launch Special 🎉).
+                Motion Export Pro gives you unlimited code and video exports and
+                lifetime updates for just $9.99, once.
               </p>
               <ul className="space-y-4">
                 <li className="flex items-start gap-4">
@@ -76,6 +76,14 @@ export default function Cancel({}: Route.ComponentProps) {
                     •
                   </span>
                   <span className="font-medium text-lg">
+                    Unlimited GIF &amp; WebM video exports
+                  </span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <span className="text-plum font-black text-xl flex-shrink-0">
+                    •
+                  </span>
+                  <span className="font-medium text-lg">
                     All 6 framework exports
                   </span>
                 </li>
@@ -84,12 +92,6 @@ export default function Cancel({}: Route.ComponentProps) {
                     •
                   </span>
                   <span className="font-medium text-lg">Lifetime updates</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <span className="text-plum font-black text-xl flex-shrink-0">
-                    •
-                  </span>
-                  <span className="font-medium text-lg">Priority support</span>
                 </li>
               </ul>
             </div>

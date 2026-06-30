@@ -156,7 +156,6 @@ export default function TermsOfService({}: Route.ComponentProps) {
                     <li>Creating competing products</li>
                     <li>Circumventing license validation</li>
                     <li>Using one license for multiple users</li>
-                    <li>Abusing the refund policy</li>
                     <li>Automated or bot usage</li>
                   </ul>
                   <Text className="mt-2 font-semibold">
@@ -284,7 +283,6 @@ export default function TermsOfService({}: Route.ComponentProps) {
                     <li>Violate these terms</li>
                     <li>Engage in fraudulent activity</li>
                     <li>Share or sell your license</li>
-                    <li>Abuse the refund policy</li>
                   </ul>
                   <Text className="mt-2">
                     Termination results in immediate license revocation without
