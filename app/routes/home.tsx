@@ -428,7 +428,7 @@ const AnimatedCard = () => {
                 {[
                   'Unlimited code exports',
                   'Unlimited GIF & WebM exports',
-                  'Export all animations at once',
+                  'Export All Code — a whole design system in one pass',
                   'Export sequences & full boards',
                   'Lifetime updates — pay once',
                 ].map((feature, i) => (
