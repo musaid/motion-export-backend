@@ -1,0 +1,1 @@
+ALTER TABLE "usage" ADD COLUMN "media_export_count" integer DEFAULT 0;

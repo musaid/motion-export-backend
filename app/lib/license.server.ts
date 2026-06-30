@@ -141,31 +141,33 @@ export async function validateLicense(
   };
 }
 
+const CODE_LIFETIME_LIMIT = 5;
+const MEDIA_LIFETIME_LIMIT = 2;
+
 export async function checkUsage(figmaUserId: string): Promise<{
   count: number;
   limit: number;
   canExport: boolean;
+  mediaCount: number;
+  mediaLimit: number;
+  canExportMedia: boolean;
 }> {
-  const LIFETIME_LIMIT = 5;
-
   const [userUsage] = await database()
     .select()
     .from(usage)
     .where(eq(usage.figmaUserId, figmaUserId))
     .limit(1);
 
-  if (!userUsage) {
-    return {
-      count: 0,
-      limit: LIFETIME_LIMIT,
-      canExport: true,
-    };
-  }
+  const exportCount = userUsage?.exportCount || 0;
+  const mediaExportCount = userUsage?.mediaExportCount || 0;
 
   return {
-    count: userUsage.exportCount || 0,
-    limit: LIFETIME_LIMIT,
-    canExport: (userUsage.exportCount || 0) < LIFETIME_LIMIT,
+    count: exportCount,
+    limit: CODE_LIFETIME_LIMIT,
+    canExport: exportCount < CODE_LIFETIME_LIMIT,
+    mediaCount: mediaExportCount,
+    mediaLimit: MEDIA_LIFETIME_LIMIT,
+    canExportMedia: mediaExportCount < MEDIA_LIFETIME_LIMIT,
   };
 }
 
@@ -188,6 +190,29 @@ export async function incrementUsage(figmaUserId: string): Promise<void> {
     await database().insert(usage).values({
       figmaUserId,
       exportCount: 1,
+    });
+  }
+}
+
+export async function incrementMediaUsage(figmaUserId: string): Promise<void> {
+  const [existing] = await database()
+    .select()
+    .from(usage)
+    .where(eq(usage.figmaUserId, figmaUserId))
+    .limit(1);
+
+  if (existing) {
+    await database()
+      .update(usage)
+      .set({
+        mediaExportCount: sql`${usage.mediaExportCount} + 1`,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(usage.id, existing.id));
+  } else {
+    await database().insert(usage).values({
+      figmaUserId,
+      mediaExportCount: 1,
     });
   }
 }

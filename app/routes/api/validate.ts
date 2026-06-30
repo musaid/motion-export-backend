@@ -115,6 +115,10 @@ export async function action({ request }: Route.ActionArgs) {
       isPro: false,
       lifetimeUsageCount: usageResult.count,
       lifetimeLimit: usageResult.limit,
+      // Separate free media pool (single-animation GIF/WebM). Independent of
+      // the code pool above — the plugin's canExportMedia('single') gates on these.
+      mediaUsageCount: usageResult.mediaCount,
+      mediaLimit: usageResult.mediaLimit,
     });
   } catch (error) {
     console.error('Validation error:', error);

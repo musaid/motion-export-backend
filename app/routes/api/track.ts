@@ -1,7 +1,7 @@
 import { data } from 'react-router';
 import { analytics } from '~/database/schema';
 import { database } from '~/database/context';
-import { incrementUsage } from '~/lib/license.server';
+import { incrementUsage, incrementMediaUsage } from '~/lib/license.server';
 import {
   validateRequest,
   getFigmaUserId,
@@ -144,6 +144,19 @@ export async function action({ request }: Route.ActionArgs) {
       userId
     ) {
       await incrementUsage(userId);
+    }
+
+    // Consume the SEPARATE free media pool only for single-animation media
+    // exports. Sequence/board media are Pro and must not touch the free pool,
+    // so we require scope === 'single' (the plugin only sends that for free
+    // single exports). Missing scope never increments.
+    if (
+      event === 'media_export_completed' &&
+      properties?.scope === 'single' &&
+      validation.clientType === 'plugin' &&
+      userId
+    ) {
+      await incrementMediaUsage(userId);
     }
 
     return Response.json({ success: true });

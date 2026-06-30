@@ -60,13 +60,16 @@ export const analytics = pgTable(
   ],
 );
 
-// Usage tracking - lifetime exports for free tier (5 max, never resets)
+// Usage tracking - lifetime exports for free tier (never resets).
+// Two SEPARATE pools: code exports (5 max) and single-animation media
+// exports (GIF/WebM, 2 max). Sequence/board media stay Pro-only.
 export const usage = pgTable(
   'usage',
   {
     id: uuid('id').defaultRandom().primaryKey(),
     figmaUserId: text('figma_user_id').notNull(),
     exportCount: integer('export_count').default(0),
+    mediaExportCount: integer('media_export_count').default(0),
     createdAt: timestamp('created_at', timestampConfig).defaultNow(),
     updatedAt: timestamp('updated_at', timestampConfig).defaultNow(),
   },

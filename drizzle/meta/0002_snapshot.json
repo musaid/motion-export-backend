@@ -1,6 +1,6 @@
 {
-  "id": "10fc50f6-839e-41a1-9856-5e930da85302",
-  "prevId": "07e0d99c-ccce-4547-80ba-a6fc39420709",
+  "id": "058abc56-7599-4d6f-bed3-8abc646be5fa",
+  "prevId": "10fc50f6-839e-41a1-9856-5e930da85302",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -47,9 +47,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -126,9 +126,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "analytics_user_idx": {
           "name": "analytics_user_idx",
@@ -141,9 +141,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "analytics_license_idx": {
           "name": "analytics_license_idx",
@@ -156,9 +156,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "analytics_created_at_idx": {
           "name": "analytics_created_at_idx",
@@ -171,9 +171,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -291,9 +291,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "licenses_email_idx": {
           "name": "licenses_email_idx",
@@ -306,9 +306,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "licenses_stripe_customer_idx": {
           "name": "licenses_stripe_customer_idx",
@@ -321,9 +321,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "licenses_figma_user_idx": {
           "name": "licenses_figma_user_idx",
@@ -336,9 +336,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "licenses_status_idx": {
           "name": "licenses_status_idx",
@@ -351,9 +351,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "licenses_created_at_idx": {
           "name": "licenses_created_at_idx",
@@ -366,9 +366,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -402,6 +402,13 @@
           "notNull": false,
           "default": 0
         },
+        "media_export_count": {
+          "name": "media_export_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -429,9 +436,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "usage_created_at_idx": {
           "name": "usage_created_at_idx",
@@ -444,9 +451,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -459,10 +466,10 @@
   },
   "enums": {},
   "schemas": {},
-  "views": {},
   "sequences": {},
   "roles": {},
   "policies": {},
+  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},

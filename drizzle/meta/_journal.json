@@ -15,6 +15,13 @@
       "when": 1767541911999,
       "tag": "0001_simplify_to_email_recovery",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782827992111,
+      "tag": "0002_daily_piledriver",
+      "breakpoints": true
     }
   ]
 }
