@@ -171,48 +171,32 @@ export async function checkUsage(figmaUserId: string): Promise<{
   };
 }
 
+// Atomic upsert on the unique figma_user_id index. A single statement avoids the
+// select-then-insert race where two concurrent first-time exports (e.g. a code
+// export and a media export) both insert and the second throws on the unique
+// constraint — silently losing one increment.
 export async function incrementUsage(figmaUserId: string): Promise<void> {
-  const [existing] = await database()
-    .select()
-    .from(usage)
-    .where(eq(usage.figmaUserId, figmaUserId))
-    .limit(1);
-
-  if (existing) {
-    await database()
-      .update(usage)
-      .set({
+  await database()
+    .insert(usage)
+    .values({ figmaUserId, exportCount: 1 })
+    .onConflictDoUpdate({
+      target: usage.figmaUserId,
+      set: {
         exportCount: sql`${usage.exportCount} + 1`,
         updatedAt: new Date().toISOString(),
-      })
-      .where(eq(usage.id, existing.id));
-  } else {
-    await database().insert(usage).values({
-      figmaUserId,
-      exportCount: 1,
+      },
     });
-  }
 }
 
 export async function incrementMediaUsage(figmaUserId: string): Promise<void> {
-  const [existing] = await database()
-    .select()
-    .from(usage)
-    .where(eq(usage.figmaUserId, figmaUserId))
-    .limit(1);
-
-  if (existing) {
-    await database()
-      .update(usage)
-      .set({
+  await database()
+    .insert(usage)
+    .values({ figmaUserId, mediaExportCount: 1 })
+    .onConflictDoUpdate({
+      target: usage.figmaUserId,
+      set: {
         mediaExportCount: sql`${usage.mediaExportCount} + 1`,
         updatedAt: new Date().toISOString(),
-      })
-      .where(eq(usage.id, existing.id));
-  } else {
-    await database().insert(usage).values({
-      figmaUserId,
-      mediaExportCount: 1,
+      },
     });
-  }
 }
