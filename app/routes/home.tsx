@@ -505,7 +505,8 @@ const AnimatedCard = () => {
                 <span className="text-2xl font-black">Motion Export</span>
               </div>
               <p className="font-medium opacity-70">
-                Export Figma prototype animations to production-ready code or to
+                Export your Figma animations — classic prototypes and the new
+                Figma Motion timeline — two ways: to production-ready code, or to
                 GIF and WebM video.
               </p>
             </div>
