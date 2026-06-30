@@ -120,11 +120,14 @@ export default function TermsOfService({}: Route.ComponentProps) {
                     3.2 Refund Policy
                   </Heading>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>30-day money-back guarantee</li>
-                    <li>Full refund within 30 days of purchase</li>
-                    <li>No questions asked</li>
-                    <li>After 30 days, all sales are final</li>
-                    <li>Refunds processed within 5-10 business days</li>
+                    <li>All sales are final</li>
+                    <li>
+                      The free tier lets you try every feature before you buy
+                    </li>
+                    <li>
+                      If something is broken, email support and we'll make it
+                      right
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -133,8 +136,8 @@ export default function TermsOfService({}: Route.ComponentProps) {
                   BASICALLY,
                 </Heading>
                 <Text className="text-sm">
-                  $9.99 one-time payment. Not happy? Get a full refund within 30
-                  days. After that, all sales are final.
+                  $9.99 one-time payment. Try every feature free first — all
+                  sales are final. If something's broken, email us.
                 </Text>
               </div>
             </div>
@@ -371,7 +374,7 @@ export default function TermsOfService({}: Route.ComponentProps) {
 
             <div className="mt-12 pt-8 border-t border-zinc-200 dark:border-zinc-700">
               <Text className="text-sm text-center">
-                Last Updated: January 1, 2025
+                Last Updated: June 30, 2026
               </Text>
               <Text className="text-xs text-center mt-4 text-zinc-500 dark:text-zinc-400">
                 By purchasing Motion Export, you acknowledge that you have read,

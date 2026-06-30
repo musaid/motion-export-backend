@@ -8,7 +8,7 @@ export function meta({}: Route.MetaArgs) {
     {
       name: 'description',
       content:
-        'Complete documentation for Motion Export Figma plugin. Learn how to export animations to code.',
+        'Complete documentation for Motion Export Figma plugin. Learn how to export animations to code and to GIF/WebM video.',
     },
   ];
 }
@@ -17,6 +17,7 @@ type Section =
   | 'quickstart'
   | 'installation'
   | 'usage'
+  | 'media'
   | 'frameworks'
   | 'troubleshooting';
 
@@ -27,6 +28,7 @@ export default function Docs({}: Route.ComponentProps) {
     { id: 'quickstart', label: 'Quick Start', icon: '🚀' },
     { id: 'installation', label: 'Installation', icon: '📦' },
     { id: 'usage', label: 'Usage Guide', icon: '📖' },
+    { id: 'media', label: 'Video Export', icon: '🎬' },
     { id: 'frameworks', label: 'Frameworks', icon: '⚡' },
     { id: 'troubleshooting', label: 'Troubleshooting', icon: '🔍' },
   ];
@@ -96,7 +98,7 @@ export default function Docs({}: Route.ComponentProps) {
                   <p className="text-lg font-medium">
                     Get started with Motion Export in less than 2 minutes.
                     Export your first animation from Figma to production-ready
-                    code.
+                    code — or to a GIF or WebM video.
                   </p>
                 </div>
 
@@ -185,7 +187,8 @@ export default function Docs({}: Route.ComponentProps) {
 
                   <div>
                     <h2 className="text-4xl font-black mb-8 flex items-center gap-4">
-                      <span className="text-5xl">3️⃣</span> Export to Code
+                      <span className="text-5xl">3️⃣</span> Export to Code or
+                      Video
                     </h2>
                     <ol className="space-y-4 ml-16">
                       <li className="flex items-start gap-4">
@@ -209,7 +212,7 @@ export default function Docs({}: Route.ComponentProps) {
                           →
                         </span>
                         <span className="font-medium text-lg">
-                          Select the animations you want to export
+                          Select the animation you want to export
                         </span>
                       </li>
                       <li className="flex items-start gap-4">
@@ -217,7 +220,8 @@ export default function Docs({}: Route.ComponentProps) {
                           →
                         </span>
                         <span className="font-medium text-lg">
-                          Choose your target framework
+                          For code: pick a framework and copy the output. For
+                          video: choose GIF or WebM
                         </span>
                       </li>
                       <li className="flex items-start gap-4">
@@ -225,7 +229,7 @@ export default function Docs({}: Route.ComponentProps) {
                           →
                         </span>
                         <span className="font-medium text-lg">
-                          Click "Export" and copy the generated code
+                          Click "Export" — your code or video file is ready
                         </span>
                       </li>
                     </ol>
@@ -413,8 +417,52 @@ export default function Docs({}: Route.ComponentProps) {
                             •
                           </span>
                           <span className="font-medium text-lg">
-                            Nested elements are fully supported (industry
-                            first!)
+                            Nested elements that animate inside a transition are
+                            fully supported
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h2 className="text-4xl font-black mb-8">Figma Motion</h2>
+                    <div className="bg-white dark:bg-black rounded-2xl p-8 border-2 border-black dark:border-white">
+                      <p className="font-medium text-lg mb-6">
+                        Figma Motion (open beta, announced at Config) lets you
+                        keyframe animations on a real timeline. Motion Export
+                        reads that timeline directly — it's a separate path from
+                        classic prototype transitions, and both are detected in
+                        the same scan.
+                      </p>
+                      <ul className="space-y-4">
+                        <li className="flex items-start gap-4">
+                          <span className="text-plum font-black text-xl">•</span>
+                          <span className="font-medium text-lg">
+                            Every keyframe, per-property track, and per-keyframe
+                            easing is preserved — not reduced to a start/end
+                            state
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-4">
+                          <span className="text-plum font-black text-xl">•</span>
+                          <span className="font-medium text-lg">
+                            Framer Motion is the highest-fidelity code target —
+                            Figma Motion maps almost 1:1 onto its keyframe model
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-4">
+                          <span className="text-plum font-black text-xl">•</span>
+                          <span className="font-medium text-lg">
+                            CSS @keyframes is supported too; multi-transform
+                            tracks are composed per stop, and springs are
+                            approximated as bezier curves
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-4">
+                          <span className="text-plum font-black text-xl">•</span>
+                          <span className="font-medium text-lg">
+                            Or render the same timeline straight to GIF or WebM
                           </span>
                         </li>
                       </ul>
@@ -452,6 +500,105 @@ export default function Docs({}: Route.ComponentProps) {
                         <span className="text-plum text-2xl font-black">✓</span>
                         <span className="font-medium text-lg">
                           Use Auto Layout for responsive animations
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeSection === 'media' && (
+              <div>
+                <h1 className="text-4xl font-bold mb-8">Video Export</h1>
+
+                <div className="bg-plum/10 dark:bg-plum/20 rounded-2xl p-8 mb-12 border-2 border-plum">
+                  <p className="text-lg font-medium">
+                    Every animation you can export to code can also be rendered
+                    to a GIF or a WebM video — without leaving Figma.
+                  </p>
+                </div>
+
+                <div className="space-y-16">
+                  <div>
+                    <h2 className="text-4xl font-black mb-8">
+                      GIF vs. WebM
+                    </h2>
+                    <div className="grid sm:grid-cols-2 gap-6">
+                      <div className="bg-white dark:bg-black rounded-2xl p-8 border-2 border-black dark:border-white">
+                        <h3 className="text-2xl font-black mb-4 text-plum">
+                          GIF
+                        </h3>
+                        <p className="font-medium text-lg">
+                          Universally supported. Drop it into Slack, Notion,
+                          email, or a GitHub PR and it just plays. Best for short
+                          loops and quick sharing.
+                        </p>
+                      </div>
+                      <div className="bg-white dark:bg-black rounded-2xl p-8 border-2 border-black dark:border-white">
+                        <h3 className="text-2xl font-black mb-4 text-plum">
+                          WebM
+                        </h3>
+                        <p className="font-medium text-lg">
+                          Higher quality and smaller files, with support for a
+                          transparent background so you can overlay the animation
+                          on other content. Best for presentations and docs.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h2 className="text-4xl font-black mb-8">
+                      How to export video
+                    </h2>
+                    <ol className="space-y-4">
+                      <li className="flex items-start gap-4">
+                        <span className="font-black text-plum text-xl">1.</span>
+                        <span className="font-medium text-lg">
+                          Scan your file and find the animation you want
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-4">
+                        <span className="font-black text-plum text-xl">2.</span>
+                        <span className="font-medium text-lg">
+                          On its card, choose GIF or WebM instead of a code
+                          framework
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-4">
+                        <span className="font-black text-plum text-xl">3.</span>
+                        <span className="font-medium text-lg">
+                          Click export — progress shows on the button while it
+                          encodes, then the file downloads
+                        </span>
+                      </li>
+                    </ol>
+                  </div>
+
+                  <div>
+                    <h2 className="text-4xl font-black mb-8">
+                      Free vs. Pro
+                    </h2>
+                    <ul className="space-y-4">
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum text-2xl font-black">✓</span>
+                        <span className="font-medium text-lg">
+                          Free: 2 single-animation video exports (lifetime),
+                          separate from your 5 free code exports
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum text-2xl font-black">✓</span>
+                        <span className="font-medium text-lg">
+                          Pro: unlimited GIF/WebM exports
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-4">
+                        <span className="text-plum text-2xl font-black">✓</span>
+                        <span className="font-medium text-lg">
+                          Pro: export a whole prototype sequence or a full board
+                          as one video
                         </span>
                       </li>
                     </ul>

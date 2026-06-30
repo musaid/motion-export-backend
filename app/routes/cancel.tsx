@@ -125,7 +125,8 @@ export default function Cancel({}: Route.ComponentProps) {
             </div>
 
             <p className="text-center font-medium opacity-60 mt-8">
-              You can still use the free version with 5 lifetime exports
+              You can still use the free version — 5 code exports and 2 video
+              exports
             </p>
           </div>
         </div>

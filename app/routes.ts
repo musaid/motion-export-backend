@@ -9,6 +9,7 @@ import {
 export default [
   index('routes/home.tsx'),
   route('docs', './routes/docs.tsx'),
+  route('changelog', './routes/changelog.tsx'),
   route('privacy', './routes/privacy.tsx'),
   route('terms', './routes/terms.tsx'),
   route('checkout', './routes/checkout.tsx'),

@@ -1,13 +1,16 @@
 import { Link } from 'react-router';
 import type { Route } from './+types/home';
 
+const PLUGIN_URL =
+  'https://www.figma.com/community/plugin/1543550763369836937';
+
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: 'Motion Export - Transform Figma Animations to Code' },
+    { title: 'Motion Export - Figma Animations to Code & Video' },
     {
       name: 'description',
       content:
-        'The first Figma plugin that converts prototype animations into production-ready code for CSS, React, Vue, and more. Save hours on every project.',
+        'Export your Figma prototype animations to production-ready code (CSS, React, Vue, and more) or to GIF and WebM video. No after effects, no rebuilding by hand.',
     },
   ];
 }
@@ -24,7 +27,7 @@ export default function Home({}: Route.ComponentProps) {
             </Link>
             <div className="flex gap-6 items-center">
               <a
-                href="https://www.figma.com/community/plugin/1543550763369836937"
+                href={PLUGIN_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-base font-medium hover:text-plum transition-colors"
@@ -36,6 +39,12 @@ export default function Home({}: Route.ComponentProps) {
                 className="text-base font-medium hover:text-plum transition-colors"
               >
                 Docs
+              </Link>
+              <Link
+                to="/changelog"
+                className="text-base font-medium hover:text-plum transition-colors"
+              >
+                Changelog
               </Link>
               <a
                 href="/checkout"
@@ -56,26 +65,28 @@ export default function Home({}: Route.ComponentProps) {
             <div className="inline-flex items-center gap-3 px-4 py-2 bg-plum/10 dark:bg-plum/20 rounded-full mb-8">
               <span className="w-2 h-2 bg-plum rounded-full animate-pulse" />
               <span className="font-semibold text-sm">
-                Now with 6 framework exports
+                Now supports Figma Motion (beta)
               </span>
             </div>
 
             {/* Heading */}
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6 leading-[1.1]">
-              Export Figma
+              Figma animations to
               <br />
-              <span className="text-plum">Animations to Code</span>
+              <span className="text-plum">code &amp; video</span>
             </h1>
 
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-              The first plugin that perfectly extracts your prototype
-              animations. Ship pixel-perfect motion in seconds, not hours.
+              Works with both classic prototype transitions and the new Figma
+              Motion timeline — export either one to production-ready code for
+              six frameworks, or straight to GIF and WebM. No After Effects, no
+              rebuilding motion by hand.
             </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
               <a
-                href="https://www.figma.com/community/plugin/1543550763369836937"
+                href={PLUGIN_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-8 py-3 bg-white dark:bg-black border-2 border-black dark:border-white hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black rounded-full font-bold transition-all hover:translate-y-[-2px]"
@@ -91,116 +102,184 @@ export default function Home({}: Route.ComponentProps) {
             </div>
 
             <p className="text-sm text-gray-500 dark:text-gray-500">
-              Free tier includes 5 lifetime exports • No credit card required
+              Free: 5 code exports + 2 video exports • No credit card required
             </p>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 border-y border-gray-200 dark:border-gray-800">
+      {/* Figma Motion band */}
+      <section className="py-24 border-t border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-6 sm:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-plum mb-2">
-                87%
-              </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Animations fail without proper tooling
-              </p>
+          <div className="max-w-5xl mx-auto bg-plum/10 dark:bg-plum/20 border-2 border-plum rounded-2xl shadow-[4px_4px_0px_0px_rgba(235,163,237,1)] p-10 sm:p-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-plum text-white dark:text-black rounded-full font-bold text-xs mb-6">
+              NEW · FIGMA MOTION
             </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-plum mb-2">
-                4hrs
-              </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Average time saved per project
+            <h2 className="text-3xl sm:text-4xl font-black mb-5 max-w-3xl">
+              Built for Figma Motion, the new timeline from Config
+            </h2>
+            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed max-w-3xl mb-8">
+              Figma Motion lets you keyframe animations on a real timeline. We
+              read that timeline directly — every keyframe, every per-property
+              track, every per-keyframe easing — instead of flattening it to a
+              simple start-and-end state. Then we hand it back to you as code or
+              video.
+            </p>
+            <ul className="grid sm:grid-cols-3 gap-6">
+              <li>
+                <h3 className="font-bold mb-1">Real keyframes</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Multi-stop timelines preserved, not reduced to from/to.
+                </p>
+              </li>
+              <li>
+                <h3 className="font-bold mb-1">Highest fidelity in Framer</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Figma Motion maps almost 1:1 onto Framer Motion’s keyframe
+                  model.
+                </p>
+              </li>
+              <li>
+                <h3 className="font-bold mb-1">Or render it</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Sample the same timeline straight to a GIF or WebM.
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Two Ways To Export */}
+      <section className="py-24 border-t border-gray-200 dark:border-gray-800">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
+              Two ways to export
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400">
+              Same animation — classic prototype or Figma Motion — your choice of
+              output
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+            {/* Code export */}
+            <div className="p-10 bg-white dark:bg-black border-2 border-black dark:border-white rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] flex flex-col">
+              <div className="text-4xl mb-5">⌘</div>
+              <h3 className="text-2xl font-bold mb-3">Export to code</h3>
+              <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
+                Get clean, ready-to-ship animation code that matches your Figma
+                timing and easing — for the framework your project already uses.
               </p>
+              <div className="flex flex-wrap gap-2 mt-auto">
+                {[
+                  'CSS',
+                  'React',
+                  'Vue 3',
+                  'Vanilla JS',
+                  'Framer Motion',
+                  'React Spring',
+                ].map((framework) => (
+                  <span
+                    key={framework}
+                    className="px-4 py-2 bg-white dark:bg-black border-2 border-black dark:border-white rounded-full font-semibold text-sm"
+                  >
+                    {framework}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-plum mb-2">
-                1,034%
-              </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                ROI on first animation export
+
+            {/* Video export */}
+            <div className="p-10 bg-plum/10 dark:bg-plum/20 border-2 border-plum rounded-2xl shadow-[4px_4px_0px_0px_rgba(235,163,237,1)] flex flex-col">
+              <div className="text-4xl mb-5">🎬</div>
+              <h3 className="text-2xl font-bold mb-3">Export to video</h3>
+              <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
+                Render the exact same animation to a GIF or a transparent WebM —
+                drop it into a deck, a PR, a changelog, or a marketing post
+                without leaving Figma.
               </p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-plum mb-2">
-                30sec
+              <div className="flex flex-wrap gap-2 mt-auto">
+                {['GIF', 'WebM', 'Transparent background'].map((format) => (
+                  <span
+                    key={format}
+                    className="px-4 py-2 bg-white dark:bg-black border-2 border-black dark:border-white rounded-full font-semibold text-sm"
+                  >
+                    {format}
+                  </span>
+                ))}
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                From Figma to production code
-              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Grid */}
-      <section className="py-24">
+      <section className="py-24 bg-gray-50 dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-6 sm:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">
-              Everything you need
+              Built to match your prototype
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-              Professional animation export with zero learning curve
+              It reads what you already designed — nothing to wire up
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="p-8 bg-white dark:bg-black border-2 border-black dark:border-white rounded-2xl hover:border-plum hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] transition-all">
               <div className="text-4xl mb-5">⚡</div>
-              <h3 className="text-xl font-bold mb-3">Smart Detection</h3>
+              <h3 className="text-xl font-bold mb-3">Smart detection</h3>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Automatically finds all animations. Smart Animate, dissolve,
-                slide - we catch everything including nested elements.
+                Finds both classic prototype transitions — Smart Animate,
+                dissolve, slide — and Figma Motion timelines, including animated
+                child elements.
               </p>
             </div>
 
             <div className="p-8 bg-white dark:bg-black border-2 border-black dark:border-white rounded-2xl hover:border-plum hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] transition-all">
               <div className="text-4xl mb-5">🎯</div>
-              <h3 className="text-xl font-bold mb-3">6 Frameworks</h3>
+              <h3 className="text-xl font-bold mb-3">Six frameworks</h3>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                CSS, React, Vue, Vanilla JS, Framer Motion, React Spring. One
-                click, perfect code for your stack.
+                CSS, React, Vue, Vanilla JS, Framer Motion, and React Spring —
+                pick your stack and get the matching code.
+              </p>
+            </div>
+
+            <div className="p-8 bg-white dark:bg-black border-2 border-black dark:border-white rounded-2xl hover:border-plum hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] transition-all">
+              <div className="text-4xl mb-5">🎬</div>
+              <h3 className="text-xl font-bold mb-3">GIF &amp; WebM</h3>
+              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                Render any animation to video, including a transparent WebM for
+                overlaying on top of other content.
               </p>
             </div>
 
             <div className="p-8 bg-white dark:bg-black border-2 border-black dark:border-white rounded-2xl hover:border-plum hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] transition-all">
               <div className="text-4xl mb-5">✨</div>
-              <h3 className="text-xl font-bold mb-3">Pixel Perfect</h3>
+              <h3 className="text-xl font-bold mb-3">Matches your timing</h3>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Exact timing, easing, spring physics. Your animations look
-                identical to your Figma prototypes.
+                Duration, easing curves, and spring settings are read straight
+                from your prototype so the output lines up.
               </p>
             </div>
 
             <div className="p-8 bg-white dark:bg-black border-2 border-black dark:border-white rounded-2xl hover:border-plum hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] transition-all">
               <div className="text-4xl mb-5">🔄</div>
-              <h3 className="text-xl font-bold mb-3">Child Elements</h3>
+              <h3 className="text-xl font-bold mb-3">Child elements</h3>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Industry-first nested animation support. Complex hierarchies
-                export flawlessly.
+                Nested layers that animate inside a transition are picked up and
+                exported alongside their parent.
               </p>
             </div>
 
             <div className="p-8 bg-white dark:bg-black border-2 border-black dark:border-white rounded-2xl hover:border-plum hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] transition-all">
               <div className="text-4xl mb-5">🎛️</div>
-              <h3 className="text-xl font-bold mb-3">Full Control</h3>
+              <h3 className="text-xl font-bold mb-3">Output controls</h3>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Units, colors, variables, minification. Customize everything to
-                match your codebase.
-              </p>
-            </div>
-
-            <div className="p-8 bg-white dark:bg-black border-2 border-black dark:border-white rounded-2xl hover:border-plum hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] transition-all">
-              <div className="text-4xl mb-5">🚀</div>
-              <h3 className="text-xl font-bold mb-3">Production Ready</h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Clean, maintainable, performant code. TypeScript ready, properly
-                structured.
+                Tune units, colors, variables, and minification so the code
+                drops cleanly into your codebase.
               </p>
             </div>
           </div>
@@ -208,15 +287,15 @@ export default function Home({}: Route.ComponentProps) {
       </section>
 
       {/* Code Preview Section */}
-      <section className="py-24 bg-gray-50 dark:bg-gray-950">
+      <section className="py-24">
         <div className="max-w-7xl mx-auto px-6 sm:px-8">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl sm:text-5xl font-bold mb-4">
-                Beautiful code output
+                Clean code output
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-400">
-                Clean, optimized, ready to ship
+                Readable, structured, and ready to drop in
               </p>
             </div>
 
@@ -259,38 +338,19 @@ const AnimatedCard = () => {
                 </code>
               </pre>
             </div>
-
-            {/* Framework Pills */}
-            <div className="flex flex-wrap gap-3 justify-center mt-12">
-              {[
-                'CSS',
-                'React',
-                'Vue 3',
-                'Vanilla JS',
-                'Framer Motion',
-                'React Spring',
-              ].map((framework) => (
-                <span
-                  key={framework}
-                  className="px-5 py-2.5 bg-white dark:bg-black border-2 border-black dark:border-white rounded-full font-semibold text-sm"
-                >
-                  {framework}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section className="py-24">
+      <section className="py-24 bg-gray-50 dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-6 sm:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">
               Simple pricing
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-              Start free, upgrade when you need more
+              Start free, pay once if you need more
             </p>
           </div>
 
@@ -311,11 +371,11 @@ const AnimatedCard = () => {
 
               <ul className="space-y-4 mb-10 flex-grow">
                 {[
-                  '3 exports per day',
-                  'All features included',
+                  '5 code exports (lifetime)',
+                  '2 video exports (lifetime)',
                   'All 6 frameworks',
+                  'GIF & WebM output',
                   'No watermarks',
-                  'Community support',
                 ].map((feature, i) => (
                   <li key={i} className="flex items-center gap-4">
                     <svg
@@ -339,7 +399,7 @@ const AnimatedCard = () => {
               </ul>
 
               <a
-                href="https://www.figma.com/community/plugin/1543550763369836937"
+                href={PLUGIN_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full text-center px-8 py-3 bg-white dark:bg-black border-2 border-black dark:border-white hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black rounded-full font-bold transition-all hover:translate-y-[-2px]"
@@ -350,36 +410,26 @@ const AnimatedCard = () => {
 
             {/* Pro Plan */}
             <div className="relative p-10 bg-plum/10 dark:bg-plum/20 border-2 border-plum rounded-2xl shadow-[4px_4px_0px_0px_rgba(235,163,237,1)] flex flex-col">
-              {/* Popular Badge */}
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="px-4 py-1.5 bg-plum text-white dark:text-black text-xs rounded-full font-bold">
-                  MOST POPULAR
-                </span>
-              </div>
-
               <h3 className="text-2xl font-bold mb-2">Pro</h3>
               <p className="text-gray-600 dark:text-gray-400 mb-8">
-                For professional developers
+                For everyday exporting
               </p>
 
               <div className="mb-10">
-                <span className="text-xl line-through text-gray-400">$29</span>
-                <span className="text-5xl font-bold ml-3">$9.99</span>
+                <span className="text-5xl font-bold">$9.99</span>
                 <span className="text-lg text-gray-500 dark:text-gray-500">
+                  {' '}
                   /lifetime
                 </span>
-                <div className="text-sm text-plum font-semibold mt-2">
-                  Launch Special 🎉
-                </div>
               </div>
 
               <ul className="space-y-4 mb-10 flex-grow">
                 {[
-                  'Unlimited exports',
-                  'Lifetime updates',
-                  'Priority support',
-                  'Team license (5 seats)',
-                  '30-day money back',
+                  'Unlimited code exports',
+                  'Unlimited GIF & WebM exports',
+                  'Export all animations at once',
+                  'Export sequences & full boards',
+                  'Lifetime updates — pay once',
                 ].map((feature, i) => (
                   <li key={i} className="flex items-center gap-4">
                     <svg
@@ -410,40 +460,24 @@ const AnimatedCard = () => {
               </a>
             </div>
           </div>
-
-          {/* ROI Calculator */}
-          <div className="mt-12 text-center p-8 bg-plum/5 dark:bg-plum/10 border-2 border-plum/30 rounded-2xl max-w-3xl mx-auto">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              Quick ROI calculation
-            </p>
-            <p className="text-2xl font-bold mb-2">
-              Save 4 hours × $75/hour ={' '}
-              <span className="text-plum">$300 saved</span>
-            </p>
-            <p className="text-base text-gray-600 dark:text-gray-400">
-              That's a{' '}
-              <span className="text-plum font-semibold">1,034% return</span> on
-              your first project
-            </p>
-          </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 bg-gray-50 dark:bg-gray-950">
+      <section className="py-24">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 text-center">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-4xl sm:text-5xl font-bold mb-6">
-              Ship animations <span className="text-plum">faster</span>
+              Stop rebuilding motion <span className="text-plum">by hand</span>
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 mb-10">
-              Join thousands of developers who've already saved hundreds of
-              hours
+              Install the plugin and export your first animation in a couple of
+              minutes — to code or to video.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <a
-                href="https://www.figma.com/community/plugin/1543550763369836937"
+                href={PLUGIN_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-8 py-3 bg-white dark:bg-black border-2 border-black dark:border-white hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black rounded-full font-bold transition-all hover:translate-y-[-2px]"
@@ -470,8 +504,8 @@ const AnimatedCard = () => {
                 <span className="text-2xl font-black">Motion Export</span>
               </div>
               <p className="font-medium opacity-70">
-                The first Figma plugin for exporting animations to
-                production-ready code.
+                Export Figma prototype animations to production-ready code or to
+                GIF and WebM video.
               </p>
             </div>
 
@@ -480,7 +514,7 @@ const AnimatedCard = () => {
               <ul className="space-y-3">
                 <li>
                   <a
-                    href="https://www.figma.com/community/plugin/1543550763369836937"
+                    href={PLUGIN_URL}
                     className="font-medium opacity-70 hover:opacity-100 hover:text-plum transition-all"
                   >
                     Figma Plugin
@@ -492,6 +526,14 @@ const AnimatedCard = () => {
                     className="font-medium opacity-70 hover:opacity-100 hover:text-plum transition-all"
                   >
                     Documentation
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/changelog"
+                    className="font-medium opacity-70 hover:opacity-100 hover:text-plum transition-all"
+                  >
+                    Changelog
                   </Link>
                 </li>
                 <li>
@@ -560,7 +602,7 @@ const AnimatedCard = () => {
 
           <div className="pt-8 border-t-[3px] border-black dark:border-white flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="font-medium opacity-60">
-              © 2025 Motion Export. All rights reserved.
+              © 2026 Motion Export. All rights reserved.
             </p>
             <div className="flex gap-8">
               <Link
