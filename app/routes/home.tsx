@@ -620,6 +620,11 @@ const AnimatedCard = () => {
               </Link>
             </div>
           </div>
+          <p className="mt-6 text-sm opacity-50">
+            Motion Export is an independent plugin and is not affiliated with,
+            endorsed by, or sponsored by Figma. “Figma” and “Figma Motion” are
+            trademarks of Figma, Inc.
+          </p>
         </div>
       </footer>
     </div>

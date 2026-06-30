@@ -56,6 +56,19 @@ export async function createLicense(data: {
   };
 }
 
+// One purchase = one human, who may use the plugin across several devices. A
+// Figma user ID is per-account, so a legitimate buyer normally occupies a single
+// activation slot; the cap is a generous tolerance ceiling, not a seat-sales
+// model. Enforcing it server-side is what stops a publicly-posted key from
+// granting Pro to an unbounded number of distinct users.
+const MAX_ACTIVATIONS = 5;
+
+type Activation = {
+  figmaUserId: string;
+  activatedAt: string;
+  lastChecked: string;
+};
+
 export async function validateLicense(
   licenseKey: string,
   figmaUserId: string,
@@ -90,54 +103,74 @@ export async function validateLicense(
     return { valid: false, error: `License is ${license.status}` };
   }
 
-  const activations = JSON.parse(license.activations || '[]') as Array<{
-    figmaUserId: string;
-    activatedAt: string;
-    lastChecked: string;
-  }>;
-
-  const existingActivation = activations.find(
-    (a) => a.figmaUserId === figmaUserId,
-  );
-
-  let isFirstActivation = false;
-
-  if (!existingActivation) {
-    isFirstActivation = true;
-    activations.push({
-      figmaUserId,
-      activatedAt: new Date().toISOString(),
-      lastChecked: new Date().toISOString(),
-    });
-  } else {
-    existingActivation.lastChecked = new Date().toISOString();
-  }
-
-  const updateData: Partial<License> = {
-    activations: JSON.stringify(activations),
-    updatedAt: new Date().toISOString(),
+  const now = new Date().toISOString();
+  const newActivation: Activation = {
+    figmaUserId,
+    activatedAt: now,
+    lastChecked: now,
   };
 
-  if (!license.figmaUserId) {
-    updateData.figmaUserId = figmaUserId;
-  }
-
-  if (license.licenseKey !== licenseKey) {
-    updateData.licenseKey = licenseKey;
-  }
-
-  await database()
+  // Atomic check-and-append. A single UPDATE decides the outcome so two
+  // concurrent first-time activations can't both read "under cap" and both
+  // append (the lost-update race that also made any cap unenforceable):
+  //   - if this user already has a slot -> refresh its lastChecked (always OK)
+  //   - else if under the cap          -> append a new slot
+  //   - else                           -> change nothing (row not returned)
+  // `activations` is stored as text; cast through jsonb to manipulate it.
+  const updated = await database()
     .update(licenses)
-    .set(updateData)
-    .where(eq(licenses.id, license.id));
+    .set({
+      activations: sql`
+        CASE
+          WHEN EXISTS (
+            SELECT 1 FROM jsonb_array_elements(COALESCE(${licenses.activations}, '[]')::jsonb) e
+            WHERE e->>'figmaUserId' = ${figmaUserId}
+          ) THEN (
+            SELECT jsonb_agg(
+              CASE WHEN e->>'figmaUserId' = ${figmaUserId}
+                THEN jsonb_set(e, '{lastChecked}', to_jsonb(${now}::text))
+                ELSE e
+              END
+            )::text
+            FROM jsonb_array_elements(COALESCE(${licenses.activations}, '[]')::jsonb) e
+          )
+          WHEN jsonb_array_length(COALESCE(${licenses.activations}, '[]')::jsonb) < ${MAX_ACTIVATIONS}
+            THEN (COALESCE(${licenses.activations}, '[]')::jsonb || ${JSON.stringify(newActivation)}::jsonb)::text
+          ELSE ${licenses.activations}
+        END
+      `,
+      figmaUserId: license.figmaUserId ?? figmaUserId,
+      licenseKey: licenseKey,
+      updatedAt: now,
+    })
+    .where(eq(licenses.id, license.id))
+    .returning();
+
+  const persisted = updated[0] ?? license;
+  const activations = JSON.parse(persisted.activations || '[]') as Activation[];
+  const present = activations.some((a) => a.figmaUserId === figmaUserId);
+
+  // The user is absent only when the cap rejected the append.
+  if (!present) {
+    return {
+      valid: false,
+      error: 'License activation limit reached',
+      license: persisted,
+    };
+  }
+
+  // First activation iff this user wasn't on the license before this call.
+  const priorActivations = JSON.parse(
+    license.activations || '[]',
+  ) as Activation[];
+  const isFirstActivation = !priorActivations.some(
+    (a) => a.figmaUserId === figmaUserId,
+  );
 
   return {
     valid: true,
     isFirstActivation,
-    license: {
-      ...license,
-      activations: JSON.stringify(activations),
-    },
+    license: persisted,
   };
 }
 
