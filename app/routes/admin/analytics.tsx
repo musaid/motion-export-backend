@@ -1,7 +1,7 @@
 import { data, useSearchParams, Form, useNavigation } from 'react-router';
-import { analytics } from '~/database/schema';
+import { analytics, licenses } from '~/database/schema';
 import { requireAdmin } from '~/lib/auth.server';
-import { desc, sql, like, eq, gte, and } from 'drizzle-orm';
+import { desc, sql, like, eq, gte, and, notInArray } from 'drizzle-orm';
 import type { Route } from './+types/analytics';
 import { database } from '~/database/context';
 import { Heading } from '~/components/heading';
@@ -58,6 +58,14 @@ export async function loader({ request }: Route.LoaderArgs) {
   const timeRangeDate =
     timeRanges[timeRange as keyof typeof timeRanges] || timeRanges['7d'];
 
+  // Exclude internal/test accounts from all analytics aggregates. Comma-separated
+  // user_ids in ANALYTICS_EXCLUDE_USER_IDS (e.g. the team's own Figma ids). When
+  // unset, nothing is excluded.
+  const excludedUserIds = (process.env.ANALYTICS_EXCLUDE_USER_IDS || '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+
   // Build query with filters
   const conditions = [gte(analytics.createdAt, timeRangeDate.toISOString())];
   if (event) {
@@ -68,6 +76,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
   if (licenseKey) {
     conditions.push(like(analytics.licenseKey, `%${licenseKey}%`));
+  }
+  if (excludedUserIds.length > 0) {
+    conditions.push(notInArray(analytics.userId, excludedUserIds));
   }
 
   const whereClause = and(...conditions);
@@ -239,6 +250,42 @@ export async function loader({ request }: Route.LoaderArgs) {
       ),
     );
 
+  // Real activation + revenue from the licenses table (the funnel's true end —
+  // purchase_button_clicked is only intent). Scoped to the same time window.
+  const [licenseStats] = await database()
+    .select({
+      activated: sql<number>`count(*) FILTER (WHERE ${licenses.status} = 'active')`,
+      revoked: sql<number>`count(*) FILTER (WHERE ${licenses.status} = 'revoked')`,
+      revenue: sql<number>`COALESCE(SUM(${licenses.amount}) FILTER (WHERE ${licenses.status} = 'active'), 0)`,
+    })
+    .from(licenses)
+    .where(gte(licenses.createdAt, timeRangeDate.toISOString()));
+
+  // Media export funnel (GIF/WebM — the strategic feature). Failure rate is only
+  // meaningful from 2026-06-30 (when media_export_failed instrumentation began),
+  // so it's computed over that window, separate from the all-time started/completed.
+  const [mediaFunnel] = await database()
+    .select({
+      started: sql<number>`COUNT(DISTINCT ${analytics.userId}) FILTER (WHERE ${analytics.event} = 'media_export_started')`,
+      completed: sql<number>`COUNT(DISTINCT ${analytics.userId}) FILTER (WHERE ${analytics.event} = 'media_export_completed')`,
+    })
+    .from(analytics)
+    .where(whereClause);
+
+  const [mediaFailWindow] = await database()
+    .select({
+      completedEvents: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'media_export_completed')`,
+      failedEvents: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'media_export_failed')`,
+    })
+    .from(analytics)
+    .where(
+      and(
+        whereClause,
+        gte(analytics.createdAt, '2026-06-30'),
+        sql`${analytics.event} IN ('media_export_completed', 'media_export_failed')`,
+      ),
+    );
+
   return data({
     analytics: analyticsData,
     pagination: {
@@ -259,6 +306,9 @@ export async function loader({ request }: Route.LoaderArgs) {
     timeSeriesData,
     frameworkData,
     funnelStages,
+    licenseStats: licenseStats || { activated: 0, revoked: 0, revenue: 0 },
+    mediaFunnel: mediaFunnel || { started: 0, completed: 0 },
+    mediaFailWindow: mediaFailWindow || { completedEvents: 0, failedEvents: 0 },
     animationTypes,
     scanDurations: scanDurations[0] || {
       avgDuration: 0,
@@ -663,6 +713,9 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
     timeSeriesData,
     frameworkData,
     funnelStages,
+    licenseStats,
+    mediaFunnel,
+    mediaFailWindow,
     animationTypes,
     scanDurations,
   } = loaderData;
@@ -868,7 +921,92 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
           Track user progression from plugin open to purchase
         </Text>
         <FunnelChart data={funnelStages} />
+        <Text className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
+          Buy-clicks are intent; actual activations & revenue are below (from the
+          licenses table). Most buyers purchase proactively from the always-on
+          upgrade button, not by hitting an export block.
+        </Text>
       </motion.div>
+
+      {/* Activation & Revenue (real, from licenses) + Media Export funnel */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div
+          className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.45 }}
+        >
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-2">
+            Activations & Revenue
+          </h3>
+          <Text className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
+            Real paid licenses in this time range (not just buy-clicks)
+          </Text>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                {licenseStats.activated}
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Activated</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-zinc-900 dark:text-white">
+                ${Number(licenseStats.revenue).toFixed(2)}
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Revenue</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                {licenseStats.revoked}
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Revoked</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.45 }}
+        >
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-2">
+            Media Export (GIF / WebM)
+          </h3>
+          <Text className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
+            The strategic differentiator. Unique users starting vs completing.
+          </Text>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {mediaFunnel.started}
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Started</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {mediaFunnel.completed}
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Completed</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                {mediaFailWindow.completedEvents + mediaFailWindow.failedEvents > 0
+                  ? `${Math.round(
+                      (mediaFailWindow.failedEvents /
+                        (mediaFailWindow.completedEvents +
+                          mediaFailWindow.failedEvents)) *
+                        100,
+                    )}%`
+                  : '—'}
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Fail rate, event-level (since Jun 30; retries inflate this)
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Framework Usage */}
