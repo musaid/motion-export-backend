@@ -12,6 +12,24 @@ const app = express();
 app.use(compression());
 app.disable('x-powered-by');
 
+// WebCodecs encoder page — a self-contained HTML+JS bundle (built in the plugin
+// repo via `npm run build:encoder`, copied to public/encoder/) that the plugin
+// loads in a nested iframe to encode alpha-preserving, frame-accurate video.
+// Must be framable BY Figma but nowhere else, so we set frame-ancestors here
+// rather than a global X-Frame-Options: DENY. See WEBCODECS_BRIDGE_PLAN.md.
+app.use(
+  '/encoder',
+  (req, res, next) => {
+    res.setHeader(
+      'Content-Security-Policy',
+      "frame-ancestors https://www.figma.com https://figma.com",
+    );
+    next();
+  },
+  express.static('public/encoder', { maxAge: '1h' }),
+);
+app.get('/encoder', (req, res) => res.sendFile(process.cwd() + '/public/encoder/encoder.html'));
+
 if (DEVELOPMENT) {
   console.log('Starting development server');
   const viteDevServer = await import('vite').then((vite) =>
