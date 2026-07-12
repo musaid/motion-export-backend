@@ -1,6 +1,7 @@
 import compression from 'compression';
 import express from 'express';
 import morgan from 'morgan';
+import { existsSync } from 'node:fs';
 
 // Short-circuit the type-checking of the built output.
 const BUILD_PATH = './build/server/index.js';
@@ -28,7 +29,13 @@ app.use(
   },
   express.static('public/encoder', { maxAge: '1h' }),
 );
-app.get('/encoder', (req, res) => res.sendFile(process.cwd() + '/public/encoder/encoder.html'));
+app.get('/encoder', (req, res) => {
+  const file = process.cwd() + '/public/encoder/encoder.html';
+  // 404 (not 500) when the page isn't deployed yet, so deploy-order skew doesn't
+  // spam error logs — the plugin falls back to MediaRecorder either way.
+  if (!existsSync(file)) return res.status(404).end();
+  res.sendFile(file);
+});
 
 if (DEVELOPMENT) {
   console.log('Starting development server');
