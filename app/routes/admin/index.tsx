@@ -7,8 +7,22 @@ import { Heading } from '~/components/heading';
 import { Text } from '~/components/text';
 import { Button } from '~/components/button';
 import { Badge } from '~/components/badge';
+import {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableHeader,
+  TableCell,
+} from '~/components/table';
 import { Link } from 'react-router';
 import { formatDateOnly } from '~/lib/format';
+import {
+  BRAND,
+  Section,
+  StatCard,
+  CategoryBars,
+} from '~/components/admin-charts';
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireAdmin(request);
@@ -52,6 +66,20 @@ export async function loader({ request }: Route.LoaderArgs) {
     .where(
       sql`${usage.createdAt} >= ${new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString()} AND ${usage.createdAt} < ${new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()}`,
     );
+
+  // Free-pool stats (folded-in Usage page). The `usage` table tracks per-user
+  // lifetime free exports: `export_count` is the CODE pool (max 5),
+  // `media_export_count` is the MEDIA pool (max 2). One row per distinct
+  // figma_user_id, so counting rows counts free users.
+  const [freePool] = await database()
+    .select({
+      freeUsers: sql<number>`count(*)`,
+      totalCodeExports: sql<number>`COALESCE(SUM(${usage.exportCount}), 0)`,
+      totalMediaExports: sql<number>`COALESCE(SUM(${usage.mediaExportCount}), 0)`,
+      codeExhausted: sql<number>`count(*) filter (where ${usage.exportCount} >= 5)`,
+      mediaExhausted: sql<number>`count(*) filter (where ${usage.mediaExportCount} >= 2)`,
+    })
+    .from(usage);
 
   // Get recent licenses with more details
   const recentLicenses = await database()
@@ -122,24 +150,26 @@ export async function loader({ request }: Route.LoaderArgs) {
         todayDevices: Number(todayUsage?.devices || 0),
         exportGrowth,
       },
+      freePool: {
+        freeUsers: Number(freePool?.freeUsers || 0),
+        totalCodeExports: Number(freePool?.totalCodeExports || 0),
+        totalMediaExports: Number(freePool?.totalMediaExports || 0),
+        codeExhausted: Number(freePool?.codeExhausted || 0),
+        mediaExhausted: Number(freePool?.mediaExhausted || 0),
+      },
     },
     recentLicenses,
     eventBreakdown,
     hourlyActivity: Array.from({ length: 24 }, (_, hour) => ({
       hour,
-      count: hourlyActivity.find((h) => h.hour === hour)?.count || 0,
+      count: Number(hourlyActivity.find((h) => h.hour === hour)?.count || 0),
     })),
   };
 }
 
 export default function AdminDashboard({ loaderData }: Route.ComponentProps) {
   const { stats, recentLicenses, eventBreakdown, hourlyActivity } = loaderData;
-
-  // Find peak hour
-  const peakHour = hourlyActivity.reduce(
-    (max, curr) => (curr.count > max.count ? curr : max),
-    hourlyActivity[0],
-  );
+  const { licenses: lic, usage: use, freePool } = stats;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -150,309 +180,252 @@ export default function AdminDashboard({ loaderData }: Route.ComponentProps) {
     }).format(amount);
   };
 
-  const getEventIcon = (event: string) => {
-    if (event.includes('export')) return '📤';
-    if (event.includes('activate') || event.includes('verify')) return '✅';
-    if (event.includes('error') || event.includes('fail')) return '❌';
-    if (event.includes('start') || event.includes('init')) return '🚀';
-    return '📊';
-  };
+  // Exhaustion rates — guard against a 0-user divide.
+  const codeExhaustionRate =
+    freePool.freeUsers > 0
+      ? Math.round((freePool.codeExhausted / freePool.freeUsers) * 100)
+      : 0;
+  const mediaExhaustionRate =
+    freePool.freeUsers > 0
+      ? Math.round((freePool.mediaExhausted / freePool.freeUsers) * 100)
+      : 0;
+
+  // Today's activity as {name, count} for CategoryBars (24 hourly buckets).
+  const hourlyData = hourlyActivity.map((h) => ({
+    name: `${String(h.hour).padStart(2, '0')}`,
+    count: h.count,
+  }));
+
+  // Top events (7d) as {name, count}.
+  const eventData = eventBreakdown.map((e) => ({
+    name: e.event || 'unknown',
+    count: Number(e.count),
+  }));
+
+  const growthArrow =
+    use.exportGrowth > 0 ? '↑' : use.exportGrowth < 0 ? '↓' : '→';
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="space-y-6 pb-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <Heading>Dashboard Overview</Heading>
-          <Text className="mt-1 text-zinc-600 dark:text-zinc-400">
-            Welcome back! Here's what's happening with Motion Export.
+          <Text className="mt-1">
+            Business at a glance — licenses, revenue, and the free pool.
           </Text>
         </div>
         <div className="flex gap-2">
           <Link to="/admin/licenses">
-            <Button outline>View All Licenses</Button>
+            <Button outline>View Licenses</Button>
           </Link>
-          <Link to="/admin/licenses">
-            <Button>Create License</Button>
+          <Link to="/admin/analytics">
+            <Button>Analytics</Button>
           </Link>
         </div>
       </div>
 
-      {/* Primary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-6 border border-blue-200 dark:border-blue-800">
-          <div className="flex items-start justify-between">
-            <div>
-              <Text className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                Active Licenses
-              </Text>
-              <div className="mt-2 text-3xl font-bold text-blue-900 dark:text-blue-100">
-                {stats.licenses.active}
-              </div>
-              <div className="mt-1 text-sm text-blue-600 dark:text-blue-400">
-                of {stats.licenses.total} total
-              </div>
-            </div>
-            <div className="text-2xl">📊</div>
-          </div>
-          <div className="mt-4 text-xs text-blue-700 dark:text-blue-300">
-            {stats.licenses.activationRate}% activation rate
-          </div>
-        </div>
-
-        <div className="rounded-xl bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-6 border border-green-200 dark:border-green-800">
-          <div className="flex items-start justify-between">
-            <div>
-              <Text className="text-sm font-medium text-green-700 dark:text-green-300">
-                Monthly Revenue
-              </Text>
-              <div className="mt-2 text-3xl font-bold text-green-900 dark:text-green-100">
-                {formatCurrency(stats.licenses.monthlyRevenue)}
-              </div>
-              <div className="mt-1 text-sm text-green-600 dark:text-green-400">
-                Total: {formatCurrency(stats.licenses.revenue)}
-              </div>
-            </div>
-            <div className="text-2xl">💰</div>
-          </div>
-          <div className="mt-4 text-xs text-green-700 dark:text-green-300">
-            {stats.licenses.weeklyNew} new this week
-          </div>
-        </div>
-
-        <div className="rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-6 border border-purple-200 dark:border-purple-800">
-          <div className="flex items-start justify-between">
-            <div>
-              <Text className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                Today's Exports
-              </Text>
-              <div className="mt-2 text-3xl font-bold text-purple-900 dark:text-purple-100">
-                {stats.usage.todayExports.toLocaleString()}
-              </div>
-              <div className="mt-1 text-sm text-purple-600 dark:text-purple-400">
-                {stats.usage.todayDevices} active devices
-              </div>
-            </div>
-            <div className="text-2xl">📤</div>
-          </div>
-          <div className="mt-4 text-xs">
-            <span
-              className={`font-medium ${
-                stats.usage.exportGrowth > 0
-                  ? 'text-green-700 dark:text-green-300'
-                  : stats.usage.exportGrowth < 0
-                    ? 'text-red-700 dark:text-red-300'
-                    : 'text-purple-700 dark:text-purple-300'
-              }`}
-            >
-              {stats.usage.exportGrowth > 0
-                ? '↑'
-                : stats.usage.exportGrowth < 0
-                  ? '↓'
-                  : '→'}{' '}
-              {Math.abs(stats.usage.exportGrowth)}% vs yesterday
-            </span>
-          </div>
-        </div>
-
-        <div className="rounded-xl bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 p-6 border border-amber-200 dark:border-amber-800">
-          <div className="flex items-start justify-between">
-            <div>
-              <Text className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                Peak Activity
-              </Text>
-              <div className="mt-2 text-3xl font-bold text-amber-900 dark:text-amber-100">
-                {peakHour.hour}:00
-              </div>
-              <div className="mt-1 text-sm text-amber-600 dark:text-amber-400">
-                {peakHour.count} events
-              </div>
-            </div>
-            <div className="text-2xl">⏰</div>
-          </div>
-          <div className="mt-4 text-xs text-amber-700 dark:text-amber-300">
-            Most active hour today
-          </div>
-        </div>
+      {/* 1. KPI row */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        <StatCard
+          label={`Active Licenses (of ${lic.total.toLocaleString()})`}
+          value={lic.active.toLocaleString()}
+          series={[]}
+          color="#86efac"
+          delay={0}
+        />
+        <StatCard
+          label={`Revenue (mo ${formatCurrency(lic.monthlyRevenue)})`}
+          value={formatCurrency(lic.revenue)}
+          series={[]}
+          color="#fcd34d"
+          delay={0.05}
+        />
+        <StatCard
+          label="Activation Rate"
+          value={`${lic.activationRate}%`}
+          series={[]}
+          color="#7dd3fc"
+          delay={0.1}
+        />
+        <StatCard
+          label="New This Week"
+          value={lic.weeklyNew.toLocaleString()}
+          series={[]}
+          color="#c4b5fd"
+          delay={0.15}
+        />
+        <StatCard
+          label={`Today's Exports (${growthArrow}${Math.abs(use.exportGrowth)}%)`}
+          value={use.todayExports.toLocaleString()}
+          series={[]}
+          color={BRAND}
+          delay={0.2}
+        />
+        <StatCard
+          label="Free Users"
+          value={freePool.freeUsers.toLocaleString()}
+          series={[]}
+          color="#5eead4"
+          delay={0.25}
+        />
       </div>
 
-      {/* Activity Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activity */}
-        <div className="lg:col-span-2 rounded-xl bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10">
-          <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-                Recent Licenses
-              </h2>
-              <Link
-                to="/admin/licenses"
-                className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-              >
-                View all →
-              </Link>
-            </div>
-          </div>
-          <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-            {recentLicenses.slice(0, 5).map((license) => (
-              <div
-                key={license.id}
-                className="p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-zinc-900 dark:text-white">
-                        {license.email}
-                      </span>
-                      <Badge
-                        color={
-                          license.status === 'active'
-                            ? 'green'
-                            : license.status === 'revoked'
-                              ? 'red'
-                              : 'zinc'
-                        }
-                        className="text-xs"
-                      >
-                        {license.status}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-zinc-600 dark:text-zinc-400">
-                      <span className="font-mono text-xs">
-                        {license.licenseKey.substring(0, 16)}...
-                      </span>
-                      {license.figmaUserId && (
-                        <span className="text-xs">
-                          Figma: {license.figmaUserId}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-zinc-900 dark:text-white">
-                      {formatCurrency(license.amount || 0)}
-                    </div>
-                    <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {formatDateOnly(license.purchasedAt)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* 2. Free Pool */}
+      <Section
+        title="Free Pool"
+        caption="Lifetime free exports per user. Code pool caps at 5, media pool caps at 2. Exhaustion = users who hit the cap (upgrade pressure)."
+        delay={0.3}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <PoolMeter
+            label="Code exports"
+            cap={5}
+            total={freePool.totalCodeExports}
+            exhausted={freePool.codeExhausted}
+            rate={codeExhaustionRate}
+            freeUsers={freePool.freeUsers}
+            color="#86efac"
+          />
+          <PoolMeter
+            label="Media exports"
+            cap={2}
+            total={freePool.totalMediaExports}
+            exhausted={freePool.mediaExhausted}
+            rate={mediaExhaustionRate}
+            freeUsers={freePool.freeUsers}
+            color={BRAND}
+          />
         </div>
+      </Section>
 
-        {/* Event Breakdown */}
-        <div className="rounded-xl bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10">
-          <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-              Top Events (7 days)
-            </h2>
+      {/* 3. Activity today */}
+      <Section
+        title="Activity Today"
+        caption="Events per hour (UTC) across today."
+        delay={0.35}
+      >
+        <CategoryBars data={hourlyData} color="#7dd3fc" height={220} />
+      </Section>
+
+      {/* 4. Top events (7d) */}
+      <Section
+        title="Top Events (7 days)"
+        caption="Most frequent tracked events over the last 7 days."
+        delay={0.4}
+      >
+        <CategoryBars data={eventData} color={BRAND} height={220} />
+      </Section>
+
+      {/* 5. Recent licenses */}
+      <Section
+        title="Recent Licenses"
+        caption="The 10 most recent purchases."
+        delay={0.45}
+      >
+        {recentLicenses.length > 0 ? (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader className="pl-0">Email</TableHeader>
+                <TableHeader>Amount</TableHeader>
+                <TableHeader>Status</TableHeader>
+                <TableHeader className="pr-0">Purchased</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {recentLicenses.map((license) => (
+                <TableRow key={license.id}>
+                  <TableCell className="pl-0">
+                    <span className="text-zinc-900 dark:text-white">
+                      {license.email}
+                    </span>
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {formatCurrency(license.amount || 0)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      color={
+                        license.status === 'active'
+                          ? 'green'
+                          : license.status === 'revoked'
+                            ? 'red'
+                            : 'zinc'
+                      }
+                      className="text-xs"
+                    >
+                      {license.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="pr-0 text-xs text-zinc-500 dark:text-zinc-400">
+                    {formatDateOnly(license.purchasedAt)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="text-center py-8">
+            <Text className="text-zinc-500 dark:text-zinc-400">
+              No licenses yet
+            </Text>
           </div>
-          <div className="p-6 space-y-4">
-            {eventBreakdown.map((event, index) => (
-              <div
-                key={event.event}
-                className="flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">
-                    {getEventIcon(event.event || '')}
-                  </span>
-                  <div>
-                    <div className="font-medium text-zinc-900 dark:text-white text-sm">
-                      {event.event}
-                    </div>
-                    <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {event.count.toLocaleString()} events
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-24 bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${
-                        index === 0
-                          ? 'bg-blue-500'
-                          : index === 1
-                            ? 'bg-green-500'
-                            : index === 2
-                              ? 'bg-purple-500'
-                              : index === 3
-                                ? 'bg-amber-500'
-                                : 'bg-zinc-400'
-                      }`}
-                      style={{
-                        width: `${Math.min(100, (event.count / eventBreakdown[0].count) * 100)}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
+      </Section>
+    </div>
+  );
+}
+
+// Paired free-pool meter: total used + how many users hit the cap.
+function PoolMeter({
+  label,
+  cap,
+  total,
+  exhausted,
+  rate,
+  freeUsers,
+  color,
+}: {
+  label: string;
+  cap: number;
+  total: number;
+  exhausted: number;
+  rate: number;
+  freeUsers: number;
+  color: string;
+}) {
+  return (
+    <div className="rounded-lg ring-1 ring-zinc-950/5 dark:ring-white/10 p-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          {label}
+        </span>
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          cap {cap}
+        </span>
       </div>
-
-      {/* Quick Actions */}
-      <div className="rounded-xl bg-gradient-to-r from-zinc-50 to-zinc-100 dark:from-zinc-800 dark:to-zinc-900 p-6 border border-zinc-200 dark:border-zinc-700">
-        <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
-          Quick Actions
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link to="/admin/licenses" className="group">
-            <div className="p-4 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-700 transition-all hover:shadow-md">
-              <div className="text-2xl mb-2">📝</div>
-              <div className="font-medium text-zinc-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                Create License
-              </div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                Issue a new license manually
-              </div>
-            </div>
-          </Link>
-
-          <Link to="/admin/usage" className="group">
-            <div className="p-4 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-green-300 dark:hover:border-green-700 transition-all hover:shadow-md">
-              <div className="text-2xl mb-2">📊</div>
-              <div className="font-medium text-zinc-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400">
-                Lifetime Usage
-              </div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                View export statistics
-              </div>
-            </div>
-          </Link>
-
-          <Link to="/admin/analytics" className="group">
-            <div className="p-4 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-purple-300 dark:hover:border-purple-700 transition-all hover:shadow-md">
-              <div className="text-2xl mb-2">📈</div>
-              <div className="font-medium text-zinc-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">
-                Event Analytics
-              </div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                Track user interactions
-              </div>
-            </div>
-          </Link>
-
-          <a
-            href="https://dashboard.stripe.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group"
-          >
-            <div className="p-4 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-amber-300 dark:hover:border-amber-700 transition-all hover:shadow-md">
-              <div className="text-2xl mb-2">💳</div>
-              <div className="font-medium text-zinc-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400">
-                Stripe Dashboard
-              </div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                Manage payments
-              </div>
-            </div>
-          </a>
+      <div className="mt-3 flex items-baseline gap-2">
+        <span className="text-2xl font-bold text-zinc-900 dark:text-white tabular-nums">
+          {total.toLocaleString()}
+        </span>
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          total exports used
+        </span>
+      </div>
+      <div className="mt-4">
+        <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 mb-1">
+          <span>
+            {exhausted.toLocaleString()} of {freeUsers.toLocaleString()} exhausted
+          </span>
+          <span className="font-semibold text-zinc-700 dark:text-zinc-300 tabular-nums">
+            {rate}%
+          </span>
+        </div>
+        <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 overflow-hidden">
+          <div
+            className="h-2 rounded-full"
+            style={{ width: `${Math.min(100, rate)}%`, backgroundColor: color }}
+          />
         </div>
       </div>
     </div>

@@ -31,7 +31,6 @@ export default [
     layout('./routes/admin/layout.tsx', [
       index('./routes/admin/index.tsx'),
       route('licenses', './routes/admin/licenses.tsx'),
-      route('usage', './routes/admin/usage.tsx'),
       route('analytics', './routes/admin/analytics.tsx'),
     ]),
   ]),
