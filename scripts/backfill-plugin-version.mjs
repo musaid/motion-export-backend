@@ -22,8 +22,8 @@
  *     analytics harness.
  *
  * Usage:
- *   dotenv -- node scripts/backfill-plugin-version.mjs            # dry run (report only)
- *   dotenv -- node scripts/backfill-plugin-version.mjs --confirm  # apply
+ *   pnpm run backfill:version           # dry run (report only, no writes)
+ *   pnpm run backfill:version:confirm   # apply
  */
 
 import postgres from 'postgres';

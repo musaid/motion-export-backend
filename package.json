@@ -12,7 +12,11 @@
     "lint:fix": "eslint . --fix --ext .js,.jsx,.ts,.tsx",
     "start": "node server.js",
     "typecheck": "react-router typegen && tsc -b",
-    "backup": "dotenv -- bash scripts/backup-database.sh"
+    "backup": "dotenv -- bash scripts/backup-database.sh",
+    "backfill:version": "dotenv -- node scripts/backfill-plugin-version.mjs",
+    "backfill:version:confirm": "dotenv -- node scripts/backfill-plugin-version.mjs --confirm",
+    "strip-test-analytics": "dotenv -- node scripts/strip-test-analytics.mjs",
+    "strip-test-analytics:confirm": "dotenv -- node scripts/strip-test-analytics.mjs --confirm"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",
