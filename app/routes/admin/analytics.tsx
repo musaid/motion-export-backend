@@ -21,7 +21,6 @@ import { Pagination } from '~/components/pagination';
 import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { formatDate } from '~/lib/format';
-import { releaseVersionSql } from '~/lib/release-timeline';
 import {
   AreaChart,
   Area,
@@ -253,17 +252,19 @@ export async function loader({ request }: Route.LoaderArgs) {
     .groupBy(sql`COALESCE(NULLIF(properties::jsonb->>'framework', ''), 'Unknown')`)
     .orderBy(desc(sql`count(*)`));
 
-  // -- Version adoption (reconstructed from created_at) ---------------------
-  // pluginVersion in properties is unreliable (stale literal); resolve the true
-  // release from the event date via releaseVersionSql. Same time-range filter.
+  // -- Version adoption -----------------------------------------------------
+  // pluginVersion was historically an unreliable stale literal, but the
+  // backfill-plugin-version.mjs script corrected it in place from each event's
+  // date, so the column is now trustworthy — group by it directly. Rows with no
+  // version (should be none after backfill) bucket as 'Unknown'.
   const versionAdoption = await database()
     .select({
-      version: sql<string>`${sql.raw(releaseVersionSql('created_at'))}`,
+      version: sql<string>`COALESCE(NULLIF(${analytics.properties}::jsonb->>'pluginVersion', ''), 'Unknown')`,
       count: sql<number>`count(*)`,
     })
     .from(analytics)
     .where(whereClause)
-    .groupBy(sql`${sql.raw(releaseVersionSql('created_at'))}`)
+    .groupBy(sql`${analytics.properties}::jsonb->>'pluginVersion'`)
     .orderBy(desc(sql`count(*)`));
 
   return data({
@@ -955,10 +956,10 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
         <ActivityChart data={dailySeries} />
       </Section>
 
-      {/* 8. Version adoption (reconstructed) */}
+      {/* 8. Version adoption */}
       <Section
         title="Version Adoption"
-        caption="Event volume by TRUE release. Versions are reconstructed from each event's date because older builds mis-reported their version (a stale hardcoded literal)."
+        caption="Event volume by plugin release. Historical rows were corrected from each event's date (older builds mis-reported their version); the recorded version is now trustworthy."
         delay={0.6}
       >
         <CategoryBars data={versionData} color="#c4b5fd" />
