@@ -208,6 +208,53 @@ export async function loader({ request }: Route.LoaderArgs) {
     .groupBy(sql`COALESCE(NULLIF(properties::jsonb->>'format', ''), 'Unknown')`)
     .orderBy(desc(sql`count(*)`));
 
+  // -- Media reliability — completed vs failed, per format + top errors -----
+  // The strategic GIF/WebM/APNG feature's health. media_export_failed
+  // instrumentation began 2026-07-01, so the rate is only meaningful from then;
+  // rows carry `format` and `error`. Scoped to the same window as the rest.
+  const [mediaReliability] = await database()
+    .select({
+      completed: sql<number>`(count(*) FILTER (WHERE ${analytics.event} = 'media_export_completed'))::int`,
+      failed: sql<number>`(count(*) FILTER (WHERE ${analytics.event} = 'media_export_failed'))::int`,
+    })
+    .from(analytics)
+    .where(
+      and(
+        whereClause,
+        sql`${analytics.event} IN ('media_export_completed', 'media_export_failed')`,
+      ),
+    );
+
+  // Per-format failure counts (which encoder fails most — WebM is the usual
+  // culprit). Completed + failed side by side so the UI can show a per-format rate.
+  const mediaByFormatReliability = await database()
+    .select({
+      key: sql<string>`COALESCE(NULLIF(properties::jsonb->>'format', ''), 'Unknown')`,
+      completed: sql<number>`(count(*) FILTER (WHERE ${analytics.event} = 'media_export_completed'))::int`,
+      failed: sql<number>`(count(*) FILTER (WHERE ${analytics.event} = 'media_export_failed'))::int`,
+    })
+    .from(analytics)
+    .where(
+      and(
+        whereClause,
+        sql`${analytics.event} IN ('media_export_completed', 'media_export_failed')`,
+      ),
+    )
+    .groupBy(sql`COALESCE(NULLIF(properties::jsonb->>'format', ''), 'Unknown')`)
+    .orderBy(desc(sql`count(*) FILTER (WHERE ${analytics.event} = 'media_export_failed')`));
+
+  // Top failure messages — the actionable part (rescan / encoder-init / etc.).
+  const mediaErrors = await database()
+    .select({
+      key: sql<string>`COALESCE(NULLIF(properties::jsonb->>'error', ''), 'Unknown error')`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(analytics)
+    .where(and(whereClause, eq(analytics.event, 'media_export_failed')))
+    .groupBy(sql`COALESCE(NULLIF(properties::jsonb->>'error', ''), 'Unknown error')`)
+    .orderBy(desc(sql`count(*)`))
+    .limit(6);
+
   // -- Export scope — single / sequence / board (null => legacy) ------------
   const exportScope = await database()
     .select({
@@ -286,6 +333,9 @@ export async function loader({ request }: Route.LoaderArgs) {
     dailySeries,
     funnelStages,
     mediaFormats,
+    mediaReliability: mediaReliability || { completed: 0, failed: 0 },
+    mediaByFormatReliability,
+    mediaErrors,
     exportScope,
     animationTypes,
     frameworks,
@@ -369,6 +419,9 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
     dailySeries,
     funnelStages,
     mediaFormats,
+    mediaReliability,
+    mediaByFormatReliability,
+    mediaErrors,
     exportScope,
     animationTypes,
     frameworks,
@@ -428,6 +481,26 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
     name: `v${r.version}`,
     count: Number(r.count),
   }));
+
+  // Media reliability: overall failure rate + per-format rates. attempts = 0 →
+  // show 0%, never NaN.
+  const mediaAttempts = mediaReliability.completed + mediaReliability.failed;
+  const failureRate =
+    mediaAttempts > 0
+      ? Math.round((mediaReliability.failed / mediaAttempts) * 100)
+      : 0;
+  const formatFailureRows = mediaByFormatReliability
+    .map((r) => {
+      const attempts = r.completed + r.failed;
+      return {
+        name: r.key,
+        failed: r.failed,
+        attempts,
+        rate: attempts > 0 ? Math.round((r.failed / attempts) * 100) : 0,
+      };
+    })
+    .filter((r) => r.attempts > 0);
+  const errorData = toCat(mediaErrors);
 
   const figmaMotionShare = (() => {
     const total = animationData.reduce((s, d) => s + d.count, 0);
@@ -583,6 +656,92 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
           />
         </Section>
       </div>
+
+      {/* 4b. Media reliability — the strategic feature's health */}
+      <Section
+        title="Media Export Reliability"
+        caption="Failed vs completed GIF/WebM/APNG exports. Instrumented from 2026-07-01; a spike here means the encoder is breaking in the wild."
+        delay={0.42}
+      >
+        <div className="flex flex-col gap-6 lg:flex-row">
+          {/* Overall failure rate */}
+          <div className="flex flex-col justify-center lg:w-48">
+            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              Failure rate
+            </p>
+            <p
+              className={`mt-1 text-4xl font-bold tabular-nums ${
+                failureRate >= 15
+                  ? 'text-red-500'
+                  : failureRate >= 5
+                    ? 'text-amber-500'
+                    : 'text-emerald-500'
+              }`}
+            >
+              {failureRate}%
+            </p>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              {mediaReliability.failed.toLocaleString()} failed of{' '}
+              {mediaAttempts.toLocaleString()} attempts
+            </p>
+          </div>
+
+          {/* Per-format failure rates + top errors */}
+          <div className="flex-1 space-y-4">
+            {formatFailureRows.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                  Failure rate by format
+                </p>
+                <div className="space-y-1.5">
+                  {formatFailureRows.map((r) => (
+                    <div
+                      key={r.name}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                        {r.name}
+                      </span>
+                      <span className="tabular-nums text-zinc-500 dark:text-zinc-400">
+                        {r.rate}%{' '}
+                        <span className="text-zinc-400 dark:text-zinc-600">
+                          ({r.failed}/{r.attempts})
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {errorData.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                  Top errors
+                </p>
+                <div className="space-y-1">
+                  {errorData.map((e) => (
+                    <div
+                      key={e.name}
+                      className="flex items-center justify-between gap-3 text-sm"
+                    >
+                      <span
+                        className="truncate text-zinc-600 dark:text-zinc-400"
+                        title={e.name}
+                      >
+                        {e.name}
+                      </span>
+                      <span className="tabular-nums text-zinc-500 dark:text-zinc-500 shrink-0">
+                        {e.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </Section>
 
       {/* 5. Animation types */}
       <Section
