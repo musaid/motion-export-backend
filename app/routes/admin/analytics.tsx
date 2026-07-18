@@ -361,7 +361,7 @@ function StatCard({
       </p>
       <div className="h-8 mt-2">
         {data.length > 1 ? (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" minWidth={0} height={32}>
             <LineChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
               <Line
                 type="monotone"
@@ -425,7 +425,7 @@ function Donut({
   return (
     <div className="flex flex-col sm:flex-row items-center gap-4">
       <div className="w-full sm:w-1/2 h-56">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" minWidth={0} height={224}>
           <PieChart>
             <Pie
               data={data}
@@ -490,7 +490,7 @@ function CategoryBars({
   }
   const total = data.reduce((s, d) => s + d.count, 0);
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ResponsiveContainer width="100%" minWidth={0} height={height}>
       <BarChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
         <CartesianGrid
           strokeDasharray="3 3"
@@ -607,7 +607,7 @@ function ActivityChart({
     );
   }
   return (
-    <ResponsiveContainer width="100%" height={300}>
+    <ResponsiveContainer width="100%" minWidth={0} height={300}>
       <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="a-scans" x1="0" y1="0" x2="0" y2="1">
