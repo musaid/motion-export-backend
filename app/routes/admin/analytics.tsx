@@ -137,14 +137,18 @@ export async function loader({ request }: Route.LoaderArgs) {
     .from(analytics)
     .where(whereClause);
 
-  // Active licenses + revenue (all-time, from the licenses table — the funnel's
-  // true end). Not time-scoped: "active licenses" is a standing count.
+  // Active licenses + revenue for the selected window, scoped on purchased_at
+  // (when the payment happened). Range-scoped like every other KPI on the page:
+  // on 7d these show new active licenses + revenue in the last 7 days, not the
+  // all-time total. (The 'all' range spans from epoch, so it is effectively
+  // all-time there.)
   const [licenseTotals] = await database()
     .select({
       active: sql<number>`count(*) FILTER (WHERE ${licenses.status} = 'active')`,
       revenue: sql<number>`COALESCE(SUM(${licenses.amount}) FILTER (WHERE ${licenses.status} = 'active'), 0)`,
     })
-    .from(licenses);
+    .from(licenses)
+    .where(gte(licenses.purchasedAt, timeRangeDate.toISOString()));
 
   // -- Daily series (feeds BOTH KPI sparklines and the activity chart) -------
   // For 90d / all we bucket by ISO week to keep the series legible; otherwise day.
@@ -519,14 +523,14 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
           delay={0.1}
         />
         <StatCard
-          label="Active Licenses"
+          label="New Licenses (range)"
           value={kpi.activeLicenses.toLocaleString()}
           series={[]}
           color="#86efac"
           delay={0.15}
         />
         <StatCard
-          label="Revenue"
+          label="Revenue (range)"
           value={`$${kpi.revenue.toFixed(2)}`}
           series={[]}
           color="#fcd34d"
