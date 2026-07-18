@@ -21,9 +21,12 @@ import { Pagination } from '~/components/pagination';
 import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { formatDate } from '~/lib/format';
+import { releaseVersionSql } from '~/lib/release-timeline';
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -32,7 +35,23 @@ import {
   PieChart,
   Pie,
   Cell,
+  LineChart,
+  Line,
 } from 'recharts';
+
+// ---------------------------------------------------------------------------
+// Shared chart palette. Plum (#eba3ed) is the brand accent; the rest are muted
+// complements. GIF / WebM / APNG get stable, distinct colors so the hero media
+// donut reads the same every render.
+// ---------------------------------------------------------------------------
+const BRAND = '#eba3ed';
+const PALETTE = ['#eba3ed', '#7dd3fc', '#86efac', '#fcd34d', '#fca5a5', '#c4b5fd', '#5eead4', '#f9a8d4'];
+const FORMAT_COLORS: Record<string, string> = {
+  gif: '#7dd3fc', // sky
+  webm: '#eba3ed', // brand plum
+  apng: '#fcd34d', // amber (brand new — stands out)
+  Unknown: '#a1a1aa',
+};
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireAdmin(request);
@@ -66,38 +85,46 @@ export async function loader({ request }: Route.LoaderArgs) {
     .map((id) => id.trim())
     .filter(Boolean);
 
-  // Build query with filters
-  const conditions = [gte(analytics.createdAt, timeRangeDate.toISOString())];
+  // whereClause for the raw event LOG (respects the event/userId/licenseKey text
+  // filters + time range + exclusions).
+  const logConditions = [gte(analytics.createdAt, timeRangeDate.toISOString())];
   if (event) {
-    conditions.push(eq(analytics.event, event));
+    logConditions.push(eq(analytics.event, event));
   }
   if (userId) {
-    conditions.push(like(analytics.userId, `%${userId}%`));
+    logConditions.push(like(analytics.userId, `%${userId}%`));
   }
   if (licenseKey) {
-    conditions.push(like(analytics.licenseKey, `%${licenseKey}%`));
+    logConditions.push(like(analytics.licenseKey, `%${licenseKey}%`));
   }
   if (excludedUserIds.length > 0) {
-    conditions.push(notInArray(analytics.userId, excludedUserIds));
+    logConditions.push(notInArray(analytics.userId, excludedUserIds));
   }
+  const logWhere = and(...logConditions);
 
-  const whereClause = and(...conditions);
+  // whereClause for the AGGREGATES (time range + exclusions only — the text
+  // filters are for debugging the log, not for skewing the charts).
+  const aggConditions = [gte(analytics.createdAt, timeRangeDate.toISOString())];
+  if (excludedUserIds.length > 0) {
+    aggConditions.push(notInArray(analytics.userId, excludedUserIds));
+  }
+  const whereClause = and(...aggConditions);
 
+  // -- Raw event log (paginated, uses the text filters) ---------------------
   const analyticsData = await database()
     .select()
     .from(analytics)
-    .where(whereClause)
+    .where(logWhere)
     .orderBy(desc(analytics.createdAt))
     .limit(limit)
     .offset(offset);
 
-  // Get total count
   const [{ count }] = await database()
     .select({ count: sql<number>`count(*)` })
     .from(analytics)
-    .where(whereClause);
+    .where(logWhere);
 
-  // Get event types distribution
+  // -- Event type distribution (for the raw-log filter chips) ---------------
   const eventTypes = await database()
     .select({
       event: analytics.event,
@@ -108,183 +135,136 @@ export async function loader({ request }: Route.LoaderArgs) {
     .groupBy(analytics.event)
     .orderBy(desc(sql`count(*)`));
 
-  // Get stats for selected time range
-  const [rangeStats] = await database()
+  // -- KPI totals (in range) ------------------------------------------------
+  const [kpi] = await database()
     .select({
+      opens: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'plugin_opened')`,
+      scans: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'scan_completed')`,
+      codeExports: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'export_completed')`,
+      mediaExports: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'media_export_completed')`,
       totalEvents: sql<number>`count(*)`,
-      uniqueUsers: sql<number>`COUNT(DISTINCT ${analytics.userId})`,
-      uniqueLicenses: sql<number>`COUNT(DISTINCT ${analytics.licenseKey})`,
     })
     .from(analytics)
     .where(whereClause);
 
-  // Get time-series data based on selected time range
-  // For 24h: hourly, for 7d/30d: daily, for 90d+: weekly
-  let timeSeriesData;
-  let groupByFormat;
-  let dateFormat;
-
-  if (timeRange === '24h') {
-    groupByFormat = 'hour';
-    dateFormat = 'YYYY-MM-DD HH24:00';
-  } else if (timeRange === '7d' || timeRange === '30d') {
-    groupByFormat = 'day';
-    dateFormat = 'YYYY-MM-DD';
-  } else {
-    groupByFormat = 'week';
-    dateFormat = 'IYYY-IW'; // ISO year and week
-  }
-
-  timeSeriesData = await database()
+  // Active licenses + revenue (all-time, from the licenses table — the funnel's
+  // true end). Not time-scoped: "active licenses" is a standing count.
+  const [licenseTotals] = await database()
     .select({
-      period: sql<string>`to_char(date_trunc('${sql.raw(groupByFormat)}', ${analytics.createdAt}), '${sql.raw(dateFormat)}')`,
+      active: sql<number>`count(*) FILTER (WHERE ${licenses.status} = 'active')`,
+      revenue: sql<number>`COALESCE(SUM(${licenses.amount}) FILTER (WHERE ${licenses.status} = 'active'), 0)`,
+    })
+    .from(licenses);
+
+  // -- Daily series (feeds BOTH KPI sparklines and the activity chart) -------
+  // For 90d / all we bucket by ISO week to keep the series legible; otherwise day.
+  const useWeek = timeRange === '90d' || timeRange === 'all';
+  const bucket = useWeek ? 'week' : 'day';
+  const dailySeries = await database()
+    .select({
+      period: sql<string>`to_char(date_trunc('${sql.raw(bucket)}', ${analytics.createdAt}), 'YYYY-MM-DD')`,
+      opens: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'plugin_opened')`,
+      scans: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'scan_completed')`,
+      codeExports: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'export_completed')`,
+      mediaExports: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'media_export_completed')`,
       events: sql<number>`count(*)`,
-      uniqueUsers: sql<number>`COUNT(DISTINCT ${analytics.userId})`,
-      scans: sql<number>`COUNT(*) FILTER (WHERE ${analytics.event} = 'scan_completed')`,
-      exports: sql<number>`COUNT(*) FILTER (WHERE ${analytics.event} = 'export_completed')`,
-      codeCopies: sql<number>`COUNT(*) FILTER (WHERE ${analytics.event} = 'code_copied')`,
     })
     .from(analytics)
     .where(whereClause)
-    .groupBy(
-      sql`date_trunc('${sql.raw(groupByFormat)}', ${analytics.createdAt})`,
-    )
-    .orderBy(
-      sql`date_trunc('${sql.raw(groupByFormat)}', ${analytics.createdAt})`,
-    );
+    .groupBy(sql`date_trunc('${sql.raw(bucket)}', ${analytics.createdAt})`)
+    .orderBy(sql`date_trunc('${sql.raw(bucket)}', ${analytics.createdAt})`);
 
-  // Get framework breakdown from code_copied and code_downloaded events
-  const frameworkData = await database()
+  // -- Acquisition funnel (distinct users per stage) ------------------------
+  // Stage 3 (exported) = distinct users who did ANY export (code OR media).
+  const [funnel] = await database()
     .select({
-      framework: sql<string>`
-        CASE
-          WHEN properties::jsonb->>'framework' IS NOT NULL
-          THEN properties::jsonb->>'framework'
-          ELSE 'unknown'
-        END
-      `,
+      opened: sql<number>`COUNT(DISTINCT ${analytics.userId}) FILTER (WHERE ${analytics.event} = 'plugin_opened')`,
+      scanned: sql<number>`COUNT(DISTINCT ${analytics.userId}) FILTER (WHERE ${analytics.event} = 'scan_completed')`,
+      exported: sql<number>`COUNT(DISTINCT ${analytics.userId}) FILTER (WHERE ${analytics.event} IN ('export_completed', 'media_export_completed'))`,
+      purchaseClicked: sql<number>`COUNT(DISTINCT ${analytics.userId}) FILTER (WHERE ${analytics.event} = 'purchase_button_clicked')`,
+    })
+    .from(analytics)
+    .where(whereClause);
+
+  // Activated = real paid licenses in the same time window (funnel's true end).
+  const [{ activated }] = await database()
+    .select({
+      activated: sql<number>`count(*) FILTER (WHERE ${licenses.status} = 'active')`,
+    })
+    .from(licenses)
+    .where(gte(licenses.createdAt, timeRangeDate.toISOString()));
+
+  const funnelStages = {
+    opened: funnel?.opened || 0,
+    scanned: funnel?.scanned || 0,
+    exported: funnel?.exported || 0,
+    purchaseClicked: funnel?.purchaseClicked || 0,
+    activated: activated || 0,
+  };
+
+  // -- Media formats (hero donut) — gif / webm / apng -----------------------
+  const mediaFormats = await database()
+    .select({
+      key: sql<string>`COALESCE(NULLIF(properties::jsonb->>'format', ''), 'Unknown')`,
+      count: sql<number>`count(*)`,
+    })
+    .from(analytics)
+    .where(and(whereClause, eq(analytics.event, 'media_export_completed')))
+    .groupBy(sql`COALESCE(NULLIF(properties::jsonb->>'format', ''), 'Unknown')`)
+    .orderBy(desc(sql`count(*)`));
+
+  // -- Export scope — single / sequence / board (null => legacy) ------------
+  const exportScope = await database()
+    .select({
+      key: sql<string>`COALESCE(NULLIF(properties::jsonb->>'scope', ''), 'Unknown (legacy)')`,
+      count: sql<number>`count(*)`,
+    })
+    .from(analytics)
+    .where(and(whereClause, eq(analytics.event, 'media_export_completed')))
+    .groupBy(sql`COALESCE(NULLIF(properties::jsonb->>'scope', ''), 'Unknown (legacy)')`)
+    .orderBy(desc(sql`count(*)`));
+
+  // -- Animation types — smart-animate / figma-motion / ... -----------------
+  const animationTypes = await database()
+    .select({
+      key: sql<string>`COALESCE(NULLIF(properties::jsonb->>'animationType', ''), 'Unknown')`,
+      count: sql<number>`count(*)`,
+    })
+    .from(analytics)
+    .where(and(whereClause, eq(analytics.event, 'media_export_completed')))
+    .groupBy(sql`COALESCE(NULLIF(properties::jsonb->>'animationType', ''), 'Unknown')`)
+    .orderBy(desc(sql`count(*)`));
+
+  // -- Code frameworks — css / framer-motion / react / ... ------------------
+  // From code exports (export_completed carries `framework`; code_copied too).
+  const frameworks = await database()
+    .select({
+      key: sql<string>`COALESCE(NULLIF(properties::jsonb->>'framework', ''), 'Unknown')`,
       count: sql<number>`count(*)`,
     })
     .from(analytics)
     .where(
       and(
         whereClause,
-        sql`${analytics.event} IN ('code_copied', 'code_downloaded')`,
+        sql`${analytics.event} IN ('export_completed', 'code_copied')`,
+        sql`properties::jsonb->>'framework' IS NOT NULL`,
       ),
     )
-    .groupBy(sql`properties::jsonb->>'framework'`)
-    .orderBy(desc(sql`count(*)`))
-    .limit(10);
+    .groupBy(sql`COALESCE(NULLIF(properties::jsonb->>'framework', ''), 'Unknown')`)
+    .orderBy(desc(sql`count(*)`));
 
-  // Get conversion funnel data
-  const funnelQuery = await database()
+  // -- Version adoption (reconstructed from created_at) ---------------------
+  // pluginVersion in properties is unreliable (stale literal); resolve the true
+  // release from the event date via releaseVersionSql. Same time-range filter.
+  const versionAdoption = await database()
     .select({
-      event: analytics.event,
-      count: sql<number>`COUNT(DISTINCT ${analytics.userId})`,
+      version: sql<string>`${sql.raw(releaseVersionSql('created_at'))}`,
+      count: sql<number>`count(*)`,
     })
     .from(analytics)
-    .where(
-      and(
-        whereClause,
-        sql`${analytics.event} IN ('plugin_opened', 'scan_completed', 'export_completed', 'code_copied', 'license_modal_opened', 'purchase_button_clicked')`,
-      ),
-    )
-    .groupBy(analytics.event);
-
-  const funnelStages = {
-    plugin_opened: 0,
-    scan_completed: 0,
-    export_completed: 0,
-    code_copied: 0,
-    license_modal_opened: 0,
-    purchase_button_clicked: 0,
-  };
-
-  funnelQuery.forEach((item) => {
-    if (item.event && item.event in funnelStages) {
-      funnelStages[item.event as keyof typeof funnelStages] = item.count;
-    }
-  });
-
-  // Get animation type breakdown from scan_completed events
-  const animationTypesData = await database()
-    .select({
-      properties: analytics.properties,
-    })
-    .from(analytics)
-    .where(and(whereClause, eq(analytics.event, 'scan_completed')))
-    .limit(1000);
-
-  const animationTypeCount: Record<string, number> = {};
-  animationTypesData.forEach((record) => {
-    try {
-      const props = JSON.parse(record.properties || '{}');
-      if (props.animationTypes && Array.isArray(props.animationTypes)) {
-        props.animationTypes.forEach((type: string) => {
-          animationTypeCount[type] = (animationTypeCount[type] || 0) + 1;
-        });
-      }
-    } catch (e) {
-      // Skip invalid JSON
-    }
-  });
-
-  const animationTypes = Object.entries(animationTypeCount)
-    .map(([type, count]) => ({ type, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 10);
-
-  // Get average scan duration
-  const scanDurations = await database()
-    .select({
-      avgDuration: sql<number>`AVG((properties::jsonb->>'scanDuration')::numeric)`,
-      minDuration: sql<number>`MIN((properties::jsonb->>'scanDuration')::numeric)`,
-      maxDuration: sql<number>`MAX((properties::jsonb->>'scanDuration')::numeric)`,
-    })
-    .from(analytics)
-    .where(
-      and(
-        whereClause,
-        eq(analytics.event, 'scan_completed'),
-        sql`properties::jsonb->>'scanDuration' IS NOT NULL`,
-      ),
-    );
-
-  // Real activation + revenue from the licenses table (the funnel's true end —
-  // purchase_button_clicked is only intent). Scoped to the same time window.
-  const [licenseStats] = await database()
-    .select({
-      activated: sql<number>`count(*) FILTER (WHERE ${licenses.status} = 'active')`,
-      revoked: sql<number>`count(*) FILTER (WHERE ${licenses.status} = 'revoked')`,
-      revenue: sql<number>`COALESCE(SUM(${licenses.amount}) FILTER (WHERE ${licenses.status} = 'active'), 0)`,
-    })
-    .from(licenses)
-    .where(gte(licenses.createdAt, timeRangeDate.toISOString()));
-
-  // Media export funnel (GIF/WebM — the strategic feature). Failure rate is only
-  // meaningful from 2026-06-30 (when media_export_failed instrumentation began),
-  // so it's computed over that window, separate from the all-time started/completed.
-  const [mediaFunnel] = await database()
-    .select({
-      started: sql<number>`COUNT(DISTINCT ${analytics.userId}) FILTER (WHERE ${analytics.event} = 'media_export_started')`,
-      completed: sql<number>`COUNT(DISTINCT ${analytics.userId}) FILTER (WHERE ${analytics.event} = 'media_export_completed')`,
-    })
-    .from(analytics)
-    .where(whereClause);
-
-  const [mediaFailWindow] = await database()
-    .select({
-      completedEvents: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'media_export_completed')`,
-      failedEvents: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'media_export_failed')`,
-    })
-    .from(analytics)
-    .where(
-      and(
-        whereClause,
-        gte(analytics.createdAt, '2026-06-30'),
-        sql`${analytics.event} IN ('media_export_completed', 'media_export_failed')`,
-      ),
-    );
+    .where(whereClause)
+    .groupBy(sql`${sql.raw(releaseVersionSql('created_at'))}`)
+    .orderBy(desc(sql`count(*)`));
 
   return data({
     analytics: analyticsData,
@@ -295,37 +275,327 @@ export async function loader({ request }: Route.LoaderArgs) {
       totalPages: Math.ceil(count / limit),
     },
     eventTypes,
-    stats: {
-      range: rangeStats || {
-        totalEvents: 0,
-        uniqueUsers: 0,
-        uniqueLicenses: 0,
-      },
-    },
     timeRange,
-    timeSeriesData,
-    frameworkData,
-    funnelStages,
-    licenseStats: licenseStats || { activated: 0, revoked: 0, revenue: 0 },
-    mediaFunnel: mediaFunnel || { started: 0, completed: 0 },
-    mediaFailWindow: mediaFailWindow || { completedEvents: 0, failedEvents: 0 },
-    animationTypes,
-    scanDurations: scanDurations[0] || {
-      avgDuration: 0,
-      minDuration: 0,
-      maxDuration: 0,
+    kpi: {
+      opens: kpi?.opens || 0,
+      scans: kpi?.scans || 0,
+      totalExports: (kpi?.codeExports || 0) + (kpi?.mediaExports || 0),
+      activeLicenses: licenseTotals?.active || 0,
+      revenue: Number(licenseTotals?.revenue || 0),
+      totalEvents: kpi?.totalEvents || 0,
     },
+    dailySeries,
+    funnelStages,
+    mediaFormats,
+    exportScope,
+    animationTypes,
+    frameworks,
+    versionAdoption,
   });
 }
 
-// Clean Modern Area Chart
-function TrendChart({
+// ---------------------------------------------------------------------------
+// Small reusable wrapper matching the existing section styling.
+// ---------------------------------------------------------------------------
+function Section({
+  title,
+  caption,
+  delay = 0,
+  children,
+}: {
+  title: string;
+  caption?: string;
+  delay?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <motion.div
+      className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay }}
+    >
+      <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
+        {title}
+      </h3>
+      {caption ? (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 mb-4">
+          {caption}
+        </p>
+      ) : (
+        <div className="mb-4" />
+      )}
+      {children}
+    </motion.div>
+  );
+}
+
+// KPI stat card with an inline sparkline.
+function StatCard({
+  label,
+  value,
+  series,
+  color,
+  delay,
+}: {
+  label: string;
+  value: string;
+  series: number[];
+  color: string;
+  delay: number;
+}) {
+  const data = series.map((v, i) => ({ i, v }));
+  return (
+    <motion.div
+      className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-4"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay }}
+    >
+      <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        {label}
+      </p>
+      <p className="mt-1 text-2xl font-bold text-zinc-900 dark:text-white tabular-nums">
+        {value}
+      </p>
+      <div className="h-8 mt-2">
+        {data.length > 1 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+              <Line
+                type="monotone"
+                dataKey="v"
+                stroke={color}
+                strokeWidth={1.5}
+                dot={false}
+                isAnimationActive={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-full" />
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// Generic tooltip for pie / bar charts keyed on {name, count}.
+function CountTooltip({
+  active,
+  payload,
+  total,
+}: {
+  active?: boolean;
+  payload?: any[];
+  total: number;
+}) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0].payload;
+  const pct = total > 0 ? ((p.count / total) * 100).toFixed(1) : '0';
+  return (
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2 shadow-lg">
+      <div className="text-xs font-medium text-zinc-900 dark:text-zinc-100">
+        {p.name}
+      </div>
+      <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
+        {p.count.toLocaleString()} ({pct}%)
+      </div>
+    </div>
+  );
+}
+
+// Donut with legend for {name, count} data + a color resolver.
+function Donut({
+  data,
+  colorFor,
+}: {
+  data: Array<{ name: string; count: number }>;
+  colorFor: (name: string, index: number) => string;
+}) {
+  if (!data.length) {
+    return (
+      <div className="h-56 flex items-center justify-center text-sm text-zinc-400">
+        No data available
+      </div>
+    );
+  }
+  const total = data.reduce((s, d) => s + d.count, 0);
+  return (
+    <div className="flex flex-col sm:flex-row items-center gap-4">
+      <div className="w-full sm:w-1/2 h-56">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={55}
+              outerRadius={80}
+              paddingAngle={2}
+              dataKey="count"
+              nameKey="name"
+            >
+              {data.map((entry, index) => (
+                <Cell key={entry.name} fill={colorFor(entry.name, index)} />
+              ))}
+            </Pie>
+            <Tooltip content={<CountTooltip total={total} />} />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="w-full sm:w-1/2 space-y-2">
+        {data.map((entry, index) => {
+          const pct = total > 0 ? ((entry.count / total) * 100).toFixed(1) : '0';
+          return (
+            <div key={entry.name} className="flex items-center gap-2 text-sm">
+              <span
+                className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: colorFor(entry.name, index) }}
+              />
+              <span className="text-zinc-700 dark:text-zinc-300 flex-1 truncate">
+                {entry.name}
+              </span>
+              <span className="text-zinc-500 dark:text-zinc-400 tabular-nums">
+                {entry.count.toLocaleString()}
+              </span>
+              <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 w-12 text-right tabular-nums">
+                {pct}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Horizontal-ish bar chart for {name, count} categorical data.
+function CategoryBars({
+  data,
+  color = BRAND,
+  height = 240,
+}: {
+  data: Array<{ name: string; count: number }>;
+  color?: string;
+  height?: number;
+}) {
+  if (!data.length) {
+    return (
+      <div className="h-24 flex items-center justify-center text-sm text-zinc-400">
+        No data available
+      </div>
+    );
+  }
+  const total = data.reduce((s, d) => s + d.count, 0);
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <BarChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+        <CartesianGrid
+          strokeDasharray="3 3"
+          stroke="rgb(228 228 231)"
+          opacity={0.3}
+          vertical={false}
+        />
+        <XAxis
+          dataKey="name"
+          tick={{ fill: 'rgb(113 113 122)', fontSize: 11 }}
+          tickLine={false}
+          axisLine={false}
+          interval={0}
+        />
+        <YAxis
+          tick={{ fill: 'rgb(113 113 122)', fontSize: 11 }}
+          tickLine={false}
+          axisLine={false}
+          width={36}
+          allowDecimals={false}
+        />
+        <Tooltip
+          cursor={{ fill: 'rgba(161,161,170,0.1)' }}
+          content={<CountTooltip total={total} />}
+        />
+        <Bar dataKey="count" fill={color} radius={[4, 4, 0, 0]} maxBarSize={64} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// Acquisition funnel — stage counts + conversion % between stages.
+function FunnelChart({
+  data,
+}: {
+  data: {
+    opened: number;
+    scanned: number;
+    exported: number;
+    purchaseClicked: number;
+    activated: number;
+  };
+}) {
+  const stages = [
+    { name: 'Plugin Opened', value: data.opened, color: '#7dd3fc' },
+    { name: 'Scan Completed', value: data.scanned, color: '#86efac' },
+    { name: 'Exported (any)', value: data.exported, color: BRAND },
+    { name: 'Buy Clicked', value: data.purchaseClicked, color: '#fcd34d' },
+    { name: 'Activated (paid)', value: data.activated, color: '#86efac' },
+  ];
+  const maxValue = Math.max(...stages.map((s) => s.value), 1);
+
+  return (
+    <div className="space-y-2 py-2">
+      {stages.map((stage, index) => {
+        const width = (stage.value / maxValue) * 100;
+        const conversionRate =
+          index > 0 && stages[index - 1].value > 0
+            ? (stage.value / stages[index - 1].value) * 100
+            : null;
+        return (
+          <motion.div
+            key={stage.name}
+            className="group relative"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.08, duration: 0.4 }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-36 text-sm font-medium text-zinc-700 dark:text-zinc-300 flex-shrink-0">
+                {stage.name}
+              </div>
+              <div className="flex-1">
+                <div
+                  className="h-11 rounded-lg overflow-hidden relative"
+                  style={{ width: `${Math.max(width, 4)}%` }}
+                >
+                  <div
+                    className="h-full"
+                    style={{ backgroundColor: stage.color }}
+                  />
+                  <div className="absolute inset-0 flex items-center px-3 text-sm font-semibold text-zinc-900/80">
+                    {stage.value.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+              <div className="w-16 text-right text-xs font-medium text-zinc-500 dark:text-zinc-400 flex-shrink-0">
+                {conversionRate !== null ? `${conversionRate.toFixed(1)}%` : ''}
+              </div>
+            </div>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Stacked activity chart — scans / code exports / media exports over time.
+function ActivityChart({
   data,
 }: {
   data: Array<{
     period: string;
-    events: number;
-    uniqueUsers: number;
+    scans: number;
+    codeExports: number;
+    mediaExports: number;
   }>;
 }) {
   if (!data || data.length === 0) {
@@ -335,21 +605,21 @@ function TrendChart({
       </div>
     );
   }
-
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <AreaChart
-        data={data}
-        margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-      >
+      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
         <defs>
-          <linearGradient id="events" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="rgb(59 130 246)" stopOpacity={0.1} />
-            <stop offset="95%" stopColor="rgb(59 130 246)" stopOpacity={0} />
+          <linearGradient id="a-scans" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#7dd3fc" stopOpacity={0.4} />
+            <stop offset="95%" stopColor="#7dd3fc" stopOpacity={0} />
           </linearGradient>
-          <linearGradient id="users" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="rgb(168 85 247)" stopOpacity={0.1} />
-            <stop offset="95%" stopColor="rgb(168 85 247)" stopOpacity={0} />
+          <linearGradient id="a-code" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#86efac" stopOpacity={0.4} />
+            <stop offset="95%" stopColor="#86efac" stopOpacity={0} />
+          </linearGradient>
+          <linearGradient id="a-media" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={BRAND} stopOpacity={0.5} />
+            <stop offset="95%" stopColor={BRAND} stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid
@@ -369,6 +639,7 @@ function TrendChart({
           tickLine={false}
           axisLine={false}
           width={40}
+          allowDecimals={false}
         />
         <Tooltip
           content={({ active, payload }) => {
@@ -379,10 +650,7 @@ function TrendChart({
                   {payload[0].payload.period}
                 </div>
                 {payload.map((entry: any) => (
-                  <div
-                    key={entry.name}
-                    className="flex items-center gap-2 text-xs"
-                  >
+                  <div key={entry.name} className="flex items-center gap-2 text-xs">
                     <div
                       className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: entry.color }}
@@ -401,305 +669,33 @@ function TrendChart({
         />
         <Area
           type="monotone"
-          dataKey="events"
-          stroke="rgb(59 130 246)"
+          dataKey="scans"
+          stackId="1"
+          stroke="#7dd3fc"
           strokeWidth={1.5}
-          fill="url(#events)"
-          name="Events"
+          fill="url(#a-scans)"
+          name="Scans"
         />
         <Area
           type="monotone"
-          dataKey="uniqueUsers"
-          stroke="rgb(168 85 247)"
+          dataKey="codeExports"
+          stackId="1"
+          stroke="#86efac"
           strokeWidth={1.5}
-          fill="url(#users)"
-          name="Users"
+          fill="url(#a-code)"
+          name="Code exports"
+        />
+        <Area
+          type="monotone"
+          dataKey="mediaExports"
+          stackId="1"
+          stroke={BRAND}
+          strokeWidth={1.5}
+          fill="url(#a-media)"
+          name="Media exports"
         />
       </AreaChart>
     </ResponsiveContainer>
-  );
-}
-
-// Compact Donut Chart
-function DonutChart({
-  data,
-}: {
-  data: Array<{ framework: string; count: number }>;
-}) {
-  if (!data || data.length === 0) {
-    return (
-      <div className="h-64 flex items-center justify-center text-sm text-zinc-400">
-        No data available
-      </div>
-    );
-  }
-
-  const COLORS = [
-    'rgb(59 130 246)',
-    'rgb(168 85 247)',
-    'rgb(16 185 129)',
-    'rgb(245 158 11)',
-    'rgb(239 68 68)',
-    'rgb(236 72 153)',
-  ];
-
-  const total = data.reduce((sum, item) => sum + item.count, 0);
-
-  return (
-    <ResponsiveContainer width="100%" height={240}>
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          innerRadius={60}
-          outerRadius={80}
-          paddingAngle={2}
-          dataKey="count"
-        >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip
-          content={({ active, payload }) => {
-            if (!active || !payload?.length) return null;
-            const data = payload[0].payload;
-            const percentage = ((data.count / total) * 100).toFixed(1);
-            return (
-              <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2 shadow-lg">
-                <div className="text-xs font-medium text-zinc-900 dark:text-zinc-100">
-                  {data.framework}
-                </div>
-                <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
-                  {data.count.toLocaleString()} ({percentage}%)
-                </div>
-              </div>
-            );
-          }}
-        />
-      </PieChart>
-    </ResponsiveContainer>
-  );
-}
-
-function FrameworkChart({
-  data,
-}: {
-  data: Array<{ framework: string; count: number }>;
-}) {
-  if (!data || data.length === 0) {
-    return (
-      <div className="h-48 flex items-center justify-center text-sm text-zinc-400">
-        No framework data available
-      </div>
-    );
-  }
-
-  const total = data.reduce((sum, item) => sum + item.count, 0);
-  const colors = [
-    'from-purple-500 to-purple-400',
-    'from-blue-500 to-blue-400',
-    'from-green-500 to-green-400',
-    'from-amber-500 to-amber-400',
-    'from-red-500 to-red-400',
-    'from-pink-500 to-pink-400',
-    'from-indigo-500 to-indigo-400',
-    'from-teal-500 to-teal-400',
-    'from-orange-500 to-orange-400',
-    'from-cyan-500 to-cyan-400',
-  ];
-
-  return (
-    <div className="space-y-3">
-      {data.map((item, index) => {
-        const percentage = (item.count / total) * 100;
-
-        return (
-          <motion.div
-            key={item.framework}
-            className="group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05, duration: 0.3 }}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                {item.framework || 'unknown'}
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {item.count.toLocaleString()}
-                </span>
-                <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 min-w-[3rem] text-right">
-                  {percentage.toFixed(1)}%
-                </span>
-              </div>
-            </div>
-            <div className="h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-              <motion.div
-                className={`h-full bg-gradient-to-r ${colors[index % colors.length]} group-hover:opacity-80 transition-opacity`}
-                initial={{ width: 0 }}
-                animate={{ width: `${percentage}%` }}
-                transition={{ delay: index * 0.05 + 0.1, duration: 0.5 }}
-              />
-            </div>
-          </motion.div>
-        );
-      })}
-    </div>
-  );
-}
-
-function FunnelChart({
-  data,
-}: {
-  data: {
-    plugin_opened: number;
-    scan_completed: number;
-    export_completed: number;
-    code_copied: number;
-    license_modal_opened: number;
-    purchase_button_clicked: number;
-  };
-}) {
-  const stages = [
-    {
-      name: 'Plugin Opened',
-      value: data.plugin_opened,
-      color: 'from-blue-500 to-blue-400',
-    },
-    {
-      name: 'Scan Completed',
-      value: data.scan_completed,
-      color: 'from-green-500 to-green-400',
-    },
-    {
-      name: 'Export Completed',
-      value: data.export_completed,
-      color: 'from-purple-500 to-purple-400',
-    },
-    {
-      name: 'Code Copied',
-      value: data.code_copied,
-      color: 'from-amber-500 to-amber-400',
-    },
-    {
-      name: 'License Modal',
-      value: data.license_modal_opened,
-      color: 'from-pink-500 to-pink-400',
-    },
-    {
-      name: 'Purchase Click',
-      value: data.purchase_button_clicked,
-      color: 'from-red-500 to-red-400',
-    },
-  ];
-
-  const maxValue = Math.max(...stages.map((s) => s.value), 1);
-
-  return (
-    <div className="space-y-2 py-4">
-      {stages.map((stage, index) => {
-        const width = (stage.value / maxValue) * 100;
-        const conversionRate =
-          index > 0 && stages[index - 1].value > 0
-            ? (stage.value / stages[index - 1].value) * 100
-            : 100;
-
-        return (
-          <motion.div
-            key={stage.name}
-            className="group relative"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.08, duration: 0.4 }}
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-32 text-sm font-medium text-zinc-700 dark:text-zinc-300 flex-shrink-0">
-                {stage.name}
-              </div>
-              <div className="flex-1 relative">
-                <div
-                  className="h-12 rounded-lg overflow-hidden relative"
-                  style={{ width: `${Math.max(width, 5)}%` }}
-                >
-                  <motion.div
-                    className={`h-full bg-gradient-to-r ${stage.color} group-hover:scale-105 transition-transform origin-left`}
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ delay: index * 0.08 + 0.2, duration: 0.5 }}
-                  />
-                  <div className="absolute inset-0 flex items-center px-3 text-white text-sm font-semibold">
-                    {stage.value.toLocaleString()}
-                  </div>
-                </div>
-              </div>
-              {index > 0 && (
-                <div className="w-20 text-right text-xs font-medium text-zinc-500 dark:text-zinc-400 flex-shrink-0">
-                  {conversionRate.toFixed(1)}%
-                </div>
-              )}
-            </div>
-          </motion.div>
-        );
-      })}
-    </div>
-  );
-}
-
-function AnimationTypesChart({
-  data,
-}: {
-  data: Array<{ type: string; count: number }>;
-}) {
-  if (!data || data.length === 0) {
-    return (
-      <div className="h-8 flex items-center justify-center text-sm text-zinc-400">
-        No animation type data available
-      </div>
-    );
-  }
-
-  const total = data.reduce((sum, item) => sum + item.count, 0);
-  const colors = [
-    'bg-purple-500',
-    'bg-blue-500',
-    'bg-green-500',
-    'bg-amber-500',
-    'bg-red-500',
-    'bg-pink-500',
-    'bg-indigo-500',
-    'bg-teal-500',
-  ];
-
-  return (
-    <div className="flex items-center gap-4 h-8">
-      <AnimatePresence>
-        {data.map((item, index) => {
-          const percentage = (item.count / total) * 100;
-
-          return (
-            <motion.div
-              key={item.type}
-              className={`group relative h-full ${colors[index % colors.length]} hover:opacity-80 transition-opacity rounded-sm`}
-              style={{ width: `${percentage}%` }}
-              initial={{ width: 0 }}
-              animate={{ width: `${percentage}%` }}
-              exit={{ width: 0 }}
-              transition={{ delay: index * 0.05, duration: 0.5 }}
-            >
-              <div className="absolute -top-16 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-3 py-2 rounded text-xs whitespace-nowrap pointer-events-none z-10">
-                <div className="font-semibold">{item.type}</div>
-                <div className="text-zinc-300 dark:text-zinc-600">
-                  {item.count} ({percentage.toFixed(1)}%)
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
-    </div>
   );
 }
 
@@ -708,21 +704,18 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
     analytics,
     pagination,
     eventTypes,
-    stats,
     timeRange,
-    timeSeriesData,
-    frameworkData,
+    kpi,
+    dailySeries,
     funnelStages,
-    licenseStats,
-    mediaFunnel,
-    mediaFailWindow,
+    mediaFormats,
+    exportScope,
     animationTypes,
-    scanDurations,
+    frameworks,
+    versionAdoption,
   } = loaderData;
   const [searchParams] = useSearchParams();
   const navigation = useNavigation();
-
-  // Check if we're navigating (React Router v7 provides this)
   const isNavigating = navigation.state === 'loading';
 
   const getEventColor = (event: string) => {
@@ -759,13 +752,37 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
     }
   };
 
+  // Derive per-metric spark series from the shared daily series.
+  const spark = (key: keyof (typeof dailySeries)[number]) =>
+    dailySeries.map((d) => Number(d[key] as number));
+
+  // Map DB rows to {name, count} for the categorical charts.
+  const toCat = (rows: Array<{ key: string; count: number }>) =>
+    rows.map((r) => ({ name: r.key, count: Number(r.count) }));
+
+  const mediaFormatData = toCat(mediaFormats);
+  const scopeData = toCat(exportScope);
+  const animationData = toCat(animationTypes);
+  const frameworkData = toCat(frameworks);
+  const versionData = versionAdoption.map((r) => ({
+    name: `v${r.version}`,
+    count: Number(r.count),
+  }));
+
+  const figmaMotionShare = (() => {
+    const total = animationData.reduce((s, d) => s + d.count, 0);
+    const fm = animationData
+      .filter((d) => d.name.startsWith('figma-motion'))
+      .reduce((s, d) => s + d.count, 0);
+    return total > 0 ? Math.round((fm / total) * 100) : 0;
+  })();
+
   return (
-    <div className="space-y-8 pb-8">
+    <div className="space-y-6 pb-8">
       <div>
         <Heading>Analytics Dashboard</Heading>
         <Text className="mt-1">
-          Comprehensive insights into user behavior, engagement, and conversion
-          metrics
+          User behavior, engagement, and conversion — the deep hub.
         </Text>
       </div>
 
@@ -779,11 +796,7 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
             { value: '90d', label: 'Last 90 Days' },
             { value: 'all', label: 'All Time' },
           ].map((range) => (
-            <Link
-              key={range.value}
-              to={`?timeRange=${range.value}`}
-              prefetch="intent"
-            >
+            <Link key={range.value} to={`?timeRange=${range.value}`} prefetch="intent">
               {timeRange === range.value ? (
                 <Button color="zinc" className="transition-all">
                   {range.label}
@@ -796,8 +809,6 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
             </Link>
           ))}
         </div>
-
-        {/* Loading indicator - fixed position on right */}
         <div className="ml-auto">
           {isNavigating ? (
             <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
@@ -829,323 +840,152 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <motion.div
-          className="rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg p-6 text-white"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <Text className="text-sm font-medium text-blue-100">
-            Total Events
-          </Text>
-          <motion.p
-            className="text-3xl font-bold mt-2"
-            initial={{ scale: 0.5 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.3 }}
-          >
-            {stats.range.totalEvents.toLocaleString()}
-          </motion.p>
-        </motion.div>
-        <motion.div
-          className="rounded-lg bg-gradient-to-br from-green-500 to-green-600 shadow-lg p-6 text-white"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-        >
-          <Text className="text-sm font-medium text-green-100">
-            Active Users
-          </Text>
-          <motion.p
-            className="text-3xl font-bold mt-2"
-            initial={{ scale: 0.5 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.3 }}
-          >
-            {stats.range.uniqueUsers.toLocaleString()}
-          </motion.p>
-        </motion.div>
-        <motion.div
-          className="rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg p-6 text-white"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-        >
-          <Text className="text-sm font-medium text-purple-100">
-            Active Licenses
-          </Text>
-          <motion.p
-            className="text-3xl font-bold mt-2"
-            initial={{ scale: 0.5 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.4, duration: 0.3 }}
-          >
-            {stats.range.uniqueLicenses.toLocaleString()}
-          </motion.p>
-        </motion.div>
+      {/* 1. KPI row */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        <StatCard
+          label="Opens"
+          value={kpi.opens.toLocaleString()}
+          series={spark('opens')}
+          color="#7dd3fc"
+          delay={0}
+        />
+        <StatCard
+          label="Scans"
+          value={kpi.scans.toLocaleString()}
+          series={spark('scans')}
+          color="#86efac"
+          delay={0.05}
+        />
+        <StatCard
+          label="Total Exports"
+          value={kpi.totalExports.toLocaleString()}
+          series={spark('mediaExports').map(
+            (m, i) => m + Number(dailySeries[i]?.codeExports || 0),
+          )}
+          color={BRAND}
+          delay={0.1}
+        />
+        <StatCard
+          label="Active Licenses"
+          value={kpi.activeLicenses.toLocaleString()}
+          series={[]}
+          color="#86efac"
+          delay={0.15}
+        />
+        <StatCard
+          label="Revenue"
+          value={`$${kpi.revenue.toFixed(2)}`}
+          series={[]}
+          color="#fcd34d"
+          delay={0.2}
+        />
+        <StatCard
+          label="Events (range)"
+          value={kpi.totalEvents.toLocaleString()}
+          series={spark('events')}
+          color="#c4b5fd"
+          delay={0.25}
+        />
       </div>
 
-      {/* Analytics Trend Chart */}
-      <motion.div
-        className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
+      {/* 2. Acquisition funnel */}
+      <Section
+        title="Acquisition Funnel"
+        caption="Distinct users per stage. Exported = anyone who did a code OR media export. Activated = real paid licenses in range (buy-clicks are only intent)."
+        delay={0.3}
       >
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
-              Activity Trends
-            </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-              Events and user engagement over time
-            </p>
-          </div>
-        </div>
-        <TrendChart data={timeSeriesData} />
-      </motion.div>
-
-      {/* User Journey Funnel */}
-      <motion.div
-        className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.4 }}
-      >
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-2">
-          User Journey Funnel
-        </h3>
-        <Text className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
-          Track user progression from plugin open to purchase
-        </Text>
         <FunnelChart data={funnelStages} />
-        <Text className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
-          Buy-clicks are intent; actual activations & revenue are below (from the
-          licenses table). Most buyers purchase proactively from the always-on
-          upgrade button, not by hitting an export block.
-        </Text>
-      </motion.div>
+      </Section>
 
-      {/* Activation & Revenue (real, from licenses) + Media Export funnel */}
+      {/* 3 + 4. Media formats (hero) + Export scope */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div
-          className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.45 }}
+        <Section
+          title="Media Formats"
+          caption="GIF / WebM / APNG from completed media exports. APNG is brand new."
+          delay={0.35}
         >
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-2">
-            Activations & Revenue
-          </h3>
-          <Text className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
-            Real paid licenses in this time range (not just buy-clicks)
-          </Text>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {licenseStats.activated}
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Activated</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-                ${Number(licenseStats.revenue).toFixed(2)}
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Revenue</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                {licenseStats.revoked}
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Revoked</p>
-            </div>
-          </div>
-        </motion.div>
+          <Donut
+            data={mediaFormatData}
+            colorFor={(name, i) =>
+              FORMAT_COLORS[name] || PALETTE[i % PALETTE.length]
+            }
+          />
+        </Section>
 
-        <motion.div
-          className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.45 }}
+        <Section
+          title="Export Scope"
+          caption="Single / sequence / board. Legacy events without a scope are bucketed as Unknown."
+          delay={0.4}
         >
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-2">
-            Media Export (GIF / WebM)
-          </h3>
-          <Text className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
-            The strategic differentiator. Unique users starting vs completing.
-          </Text>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                {mediaFunnel.started}
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Started</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                {mediaFunnel.completed}
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Completed</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                {mediaFailWindow.completedEvents + mediaFailWindow.failedEvents > 0
-                  ? `${Math.round(
-                      (mediaFailWindow.failedEvents /
-                        (mediaFailWindow.completedEvents +
-                          mediaFailWindow.failedEvents)) *
-                        100,
-                    )}%`
-                  : '—'}
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Fail rate, event-level (since Jun 30; retries inflate this)
-              </p>
-            </div>
-          </div>
-        </motion.div>
+          <Donut
+            data={scopeData}
+            colorFor={(_name, i) => PALETTE[i % PALETTE.length]}
+          />
+        </Section>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Framework Usage */}
-        <motion.div
-          className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.5 }}
-        >
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4">
-            Framework Preference
-          </h3>
-          <DonutChart data={frameworkData} />
-        </motion.div>
-
-        {/* Scan Performance */}
-        <motion.div
-          className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.5 }}
-        >
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4">
-            Scan Performance Metrics
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                Average Duration
-              </span>
-              <span className="text-lg font-bold text-zinc-900 dark:text-white">
-                {scanDurations.avgDuration
-                  ? `${Math.round(scanDurations.avgDuration)}ms`
-                  : 'N/A'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                Fastest Scan
-              </span>
-              <span className="text-lg font-bold text-green-600 dark:text-green-400">
-                {scanDurations.minDuration
-                  ? `${Math.round(scanDurations.minDuration)}ms`
-                  : 'N/A'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                Slowest Scan
-              </span>
-              <span className="text-lg font-bold text-red-600 dark:text-red-400">
-                {scanDurations.maxDuration
-                  ? `${Math.round(scanDurations.maxDuration)}ms`
-                  : 'N/A'}
-              </span>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Animation Types Distribution */}
-      <motion.div
-        className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.6 }}
+      {/* 5. Animation types */}
+      <Section
+        title="Animation Types"
+        caption={`From completed media exports. Figma Motion is ~${figmaMotionShare}% — the newest capability.`}
+        delay={0.45}
       >
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4">
-          Animation Types Detected
-        </h3>
-        <AnimationTypesChart data={animationTypes} />
-        <div className="mt-4 flex flex-wrap gap-2">
-          {animationTypes.map((item, index) => {
-            const colors = [
-              'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200',
-              'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200',
-              'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200',
-              'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200',
-              'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200',
-              'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-200',
-              'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200',
-              'bg-teal-100 text-teal-700 dark:bg-teal-900 dark:text-teal-200',
-            ];
-            return (
-              <span
-                key={item.type}
-                className={`px-2 py-1 rounded-md text-xs font-medium ${colors[index % colors.length]}`}
-              >
-                {item.type}: {item.count}
-              </span>
-            );
-          })}
-        </div>
-      </motion.div>
+        <CategoryBars data={animationData} color={BRAND} />
+      </Section>
 
-      {/* Event Types Summary */}
-      <motion.div
-        className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.7 }}
+      {/* 6. Code frameworks */}
+      <Section
+        title="Code Frameworks"
+        caption="Framework chosen on code exports (export_completed + code_copied)."
+        delay={0.5}
       >
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4">
-          Event Distribution
-        </h3>
+        <CategoryBars data={frameworkData} color="#86efac" />
+      </Section>
+
+      {/* 7. Activity over time */}
+      <Section
+        title="Activity Over Time"
+        caption={
+          timeRange === '90d' || timeRange === 'all'
+            ? 'Weekly buckets — scans vs code exports vs media exports.'
+            : 'Daily buckets — scans vs code exports vs media exports.'
+        }
+        delay={0.55}
+      >
+        <ActivityChart data={dailySeries} />
+      </Section>
+
+      {/* 8. Version adoption (reconstructed) */}
+      <Section
+        title="Version Adoption"
+        caption="Event volume by TRUE release. Versions are reconstructed from each event's date because older builds mis-reported their version (a stale hardcoded literal)."
+        delay={0.6}
+      >
+        <CategoryBars data={versionData} color="#c4b5fd" />
+      </Section>
+
+      {/* Event Distribution (raw-log filter chips) */}
+      <Section title="Event Distribution" delay={0.65}>
         <div className="flex flex-wrap gap-2">
-          {eventTypes.slice(0, 15).map((type, index) => (
-            <motion.div
+          {eventTypes.slice(0, 15).map((type) => (
+            <Link
               key={type.event}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.7 + index * 0.03, duration: 0.2 }}
+              to={`?timeRange=${timeRange}&event=${type.event}`}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
             >
-              <Link
-                to={`?timeRange=${timeRange}&event=${type.event}`}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-              >
-                <Badge
-                  color={getEventColor(type.event || '')}
-                  className="text-xs"
-                >
-                  {type.event}
-                </Badge>
-                <span className="text-xs text-zinc-600 dark:text-zinc-400">
-                  {type.count}
-                </span>
-              </Link>
-            </motion.div>
+              <Badge color={getEventColor(type.event || '')} className="text-xs">
+                {type.event}
+              </Badge>
+              <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                {type.count}
+              </span>
+            </Link>
           ))}
         </div>
-      </motion.div>
+      </Section>
 
       {/* Filters */}
-      <motion.div
-        className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 p-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.8 }}
-      >
+      <Section title="Debug: Event Log Filters" delay={0.7}>
         <Form method="get" className="flex flex-col lg:flex-row gap-4">
           <input type="hidden" name="timeRange" value={timeRange} />
           <Input
@@ -1182,14 +1022,14 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
             )}
           </div>
         </Form>
-      </motion.div>
+      </Section>
 
       {/* Events Table */}
       <motion.div
         className="rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.9 }}
+        transition={{ duration: 0.4, delay: 0.75 }}
       >
         <div className="p-6">
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4">
@@ -1218,18 +1058,13 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
                     className="border-b border-zinc-950/5 dark:border-white/5 last:border-0"
                   >
                     <TableCell className="pl-0">
-                      <Badge
-                        color={getEventColor(record.event)}
-                        className="text-xs"
-                      >
+                      <Badge color={getEventColor(record.event)} className="text-xs">
                         {record.event}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       {record.userId ? (
-                        <span className="font-mono text-xs">
-                          {record.userId}
-                        </span>
+                        <span className="font-mono text-xs">{record.userId}</span>
                       ) : (
                         <span className="text-zinc-400">-</span>
                       )}
