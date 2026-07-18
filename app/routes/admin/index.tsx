@@ -2,7 +2,7 @@ import type { Route } from './+types/index';
 import { requireAdmin } from '~/lib/auth.server';
 import { database } from '~/database/context';
 import { licenses, analytics, usage } from '~/database/schema';
-import { desc, sql, gte, eq } from 'drizzle-orm';
+import { desc, sql, gte, eq, and, notInArray } from 'drizzle-orm';
 import { Heading } from '~/components/heading';
 import { Text } from '~/components/text';
 import { Button } from '~/components/button';
@@ -32,6 +32,18 @@ export async function loader({ request }: Route.LoaderArgs) {
   const today = now.toISOString().split('T')[0];
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  // Exclude internal/test accounts from the analytics-table aggregates — the SAME
+  // ANALYTICS_EXCLUDE_USER_IDS the analytics page uses, so both admin pages count
+  // the same population.
+  const excludedUserIds = (process.env.ANALYTICS_EXCLUDE_USER_IDS || '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+  const excludeAnalytics =
+    excludedUserIds.length > 0
+      ? notInArray(analytics.userId, excludedUserIds)
+      : undefined;
 
   // Get license stats with comparison
   const [licenseStats] = await database()
@@ -92,10 +104,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   const eventBreakdown = await database()
     .select({
       event: analytics.event,
-      count: sql<number>`count(*)`,
+      count: sql<number>`count(*)::int`,
     })
     .from(analytics)
-    .where(gte(analytics.createdAt, sevenDaysAgo.toISOString()))
+    .where(
+      and(gte(analytics.createdAt, sevenDaysAgo.toISOString()), excludeAnalytics),
+    )
     .groupBy(analytics.event)
     .orderBy(desc(sql`count(*)`))
     .limit(5);
@@ -104,10 +118,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   const hourlyActivity = await database()
     .select({
       hour: sql<number>`EXTRACT(HOUR FROM created_at::timestamp)`,
-      count: sql<number>`count(*)`,
+      count: sql<number>`count(*)::int`,
     })
     .from(analytics)
-    .where(gte(analytics.createdAt, new Date(today).toISOString()))
+    .where(
+      and(gte(analytics.createdAt, new Date(today).toISOString()), excludeAnalytics),
+    )
     .groupBy(sql`EXTRACT(HOUR FROM created_at::timestamp)`)
     .orderBy(sql`EXTRACT(HOUR FROM created_at::timestamp)`);
 

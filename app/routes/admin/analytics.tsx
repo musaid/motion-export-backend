@@ -26,7 +26,6 @@ import {
   PALETTE,
   Section,
   StatCard,
-  CountTooltip,
   Donut,
   CategoryBars,
   ActivityChart,
@@ -110,7 +109,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     .offset(offset);
 
   const [{ count }] = await database()
-    .select({ count: sql<number>`count(*)` })
+    .select({ count: sql<number>`count(*)::int` })
     .from(analytics)
     .where(logWhere);
 
@@ -118,7 +117,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const eventTypes = await database()
     .select({
       event: analytics.event,
-      count: sql<number>`count(*)`,
+      count: sql<number>`count(*)::int`,
     })
     .from(analytics)
     .where(whereClause)
@@ -128,27 +127,27 @@ export async function loader({ request }: Route.LoaderArgs) {
   // -- KPI totals (in range) ------------------------------------------------
   const [kpi] = await database()
     .select({
-      opens: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'plugin_opened')`,
-      scans: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'scan_completed')`,
-      codeExports: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'export_completed')`,
-      mediaExports: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'media_export_completed')`,
-      totalEvents: sql<number>`count(*)`,
+      opens: sql<number>`(count(*) FILTER (WHERE ${analytics.event} = 'plugin_opened'))::int`,
+      scans: sql<number>`(count(*) FILTER (WHERE ${analytics.event} = 'scan_completed'))::int`,
+      codeExports: sql<number>`(count(*) FILTER (WHERE ${analytics.event} = 'export_completed'))::int`,
+      mediaExports: sql<number>`(count(*) FILTER (WHERE ${analytics.event} = 'media_export_completed'))::int`,
+      totalEvents: sql<number>`count(*)::int`,
     })
     .from(analytics)
     .where(whereClause);
 
-  // Active licenses + revenue for the selected window, scoped on purchased_at
-  // (when the payment happened). Range-scoped like every other KPI on the page:
-  // on 7d these show new active licenses + revenue in the last 7 days, not the
-  // all-time total. (The 'all' range spans from epoch, so it is effectively
-  // all-time there.)
+  // New active licenses + revenue in the selected window. Scoped on created_at —
+  // the SAME column (indexed, non-null) the funnel's 'activated' stage uses
+  // (below), so the KPI card and the funnel endpoint always agree. purchased_at
+  // is nullable, so filtering on it would silently drop manually-granted/imported
+  // active licenses; created_at is always set (defaultNow).
   const [licenseTotals] = await database()
     .select({
-      active: sql<number>`count(*) FILTER (WHERE ${licenses.status} = 'active')`,
+      active: sql<number>`(count(*) FILTER (WHERE ${licenses.status} = 'active'))::int`,
       revenue: sql<number>`COALESCE(SUM(${licenses.amount}) FILTER (WHERE ${licenses.status} = 'active'), 0)`,
     })
     .from(licenses)
-    .where(gte(licenses.purchasedAt, timeRangeDate.toISOString()));
+    .where(gte(licenses.createdAt, timeRangeDate.toISOString()));
 
   // -- Daily series (feeds BOTH KPI sparklines and the activity chart) -------
   // For 90d / all we bucket by ISO week to keep the series legible; otherwise day.
@@ -157,11 +156,13 @@ export async function loader({ request }: Route.LoaderArgs) {
   const dailySeries = await database()
     .select({
       period: sql<string>`to_char(date_trunc('${sql.raw(bucket)}', ${analytics.createdAt}), 'YYYY-MM-DD')`,
-      opens: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'plugin_opened')`,
-      scans: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'scan_completed')`,
-      codeExports: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'export_completed')`,
-      mediaExports: sql<number>`count(*) FILTER (WHERE ${analytics.event} = 'media_export_completed')`,
-      events: sql<number>`count(*)`,
+      // ::int so postgres.js returns numbers, not strings — recharts stacked
+      // areas do arithmetic on these and string values mis-stack.
+      opens: sql<number>`(count(*) FILTER (WHERE ${analytics.event} = 'plugin_opened'))::int`,
+      scans: sql<number>`(count(*) FILTER (WHERE ${analytics.event} = 'scan_completed'))::int`,
+      codeExports: sql<number>`(count(*) FILTER (WHERE ${analytics.event} = 'export_completed'))::int`,
+      mediaExports: sql<number>`(count(*) FILTER (WHERE ${analytics.event} = 'media_export_completed'))::int`,
+      events: sql<number>`count(*)::int`,
     })
     .from(analytics)
     .where(whereClause)
@@ -200,7 +201,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const mediaFormats = await database()
     .select({
       key: sql<string>`COALESCE(NULLIF(properties::jsonb->>'format', ''), 'Unknown')`,
-      count: sql<number>`count(*)`,
+      count: sql<number>`count(*)::int`,
     })
     .from(analytics)
     .where(and(whereClause, eq(analytics.event, 'media_export_completed')))
@@ -211,7 +212,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const exportScope = await database()
     .select({
       key: sql<string>`COALESCE(NULLIF(properties::jsonb->>'scope', ''), 'Unknown (legacy)')`,
-      count: sql<number>`count(*)`,
+      count: sql<number>`count(*)::int`,
     })
     .from(analytics)
     .where(and(whereClause, eq(analytics.event, 'media_export_completed')))
@@ -222,7 +223,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const animationTypes = await database()
     .select({
       key: sql<string>`COALESCE(NULLIF(properties::jsonb->>'animationType', ''), 'Unknown')`,
-      count: sql<number>`count(*)`,
+      count: sql<number>`count(*)::int`,
     })
     .from(analytics)
     .where(and(whereClause, eq(analytics.event, 'media_export_completed')))
@@ -234,7 +235,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const frameworks = await database()
     .select({
       key: sql<string>`COALESCE(NULLIF(properties::jsonb->>'framework', ''), 'Unknown')`,
-      count: sql<number>`count(*)`,
+      count: sql<number>`count(*)::int`,
     })
     .from(analytics)
     .where(
@@ -255,11 +256,13 @@ export async function loader({ request }: Route.LoaderArgs) {
   const versionAdoption = await database()
     .select({
       version: sql<string>`COALESCE(NULLIF(${analytics.properties}::jsonb->>'pluginVersion', ''), 'Unknown')`,
-      count: sql<number>`count(*)`,
+      count: sql<number>`count(*)::int`,
     })
     .from(analytics)
     .where(whereClause)
-    .groupBy(sql`${analytics.properties}::jsonb->>'pluginVersion'`)
+    // Group by the SAME COALESCE expression the SELECT uses, so null/''/missing
+    // rows collapse into one 'Unknown' bucket instead of separate duplicate bars.
+    .groupBy(sql`COALESCE(NULLIF(${analytics.properties}::jsonb->>'pluginVersion', ''), 'Unknown')`)
     .orderBy(desc(sql`count(*)`));
 
   return data({
