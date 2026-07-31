@@ -17,8 +17,9 @@ app.disable('x-powered-by');
 // repo via `npm run build:encoder`, synced into public/encoder/ by
 // `pnpm run sync:encoder`) that the plugin loads in a nested iframe to encode
 // alpha-preserving, frame-accurate video.
-// Must be framable BY Figma but nowhere else, so we set frame-ancestors here
-// rather than a global X-Frame-Options: DENY. See WEBCODECS_BRIDGE_PLAN.md.
+// It must stay framable by the plugin's null-origin iframe, which means no
+// frame-ancestors and no X-Frame-Options on this route (see below).
+// See WEBCODECS_BRIDGE_PLAN.md.
 //
 // Served from the BUILD OUTPUT, not from public/. Vite copies public/ into
 // build/client/ at build time, and the Docker runner stage only copies build/ —
@@ -49,12 +50,10 @@ app.use(
     next();
   },
   // redirect:false is load-bearing. express.static treats a bare directory path
-  // as a redirect to the trailing-slash form, and that 301 carries the encoder
-  // HTML's own `default-src 'none'` CSP WITHOUT frame-ancestors — so Figma
-  // refuses to frame it, the iframe collapses to chrome-error://chromewebdata/,
-  // and every later request from it is blocked as a cross-origin load. Serving
-  // /encoder directly from the route below keeps the frame-ancestors header
-  // above authoritative.
+  // as a redirect to the trailing-slash form, and that 301 carried the encoder
+  // HTML's own CSP, so the iframe collapsed to chrome-error://chromewebdata/
+  // and every later request from it was blocked as a cross-origin load.
+  // Serving /encoder directly from the route below avoids the hop entirely.
   express.static(ENCODER_DIR, { maxAge: '1h', redirect: false }),
 );
 app.get('/encoder', (req, res) => {
