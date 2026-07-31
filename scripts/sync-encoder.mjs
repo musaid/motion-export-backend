@@ -26,7 +26,11 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const srcDir = resolve(here, '../../motion-export-plugin/dist-encoder');
 const outDir = resolve(here, '../public/encoder');
-const FILES = ['encoder.html', 'encoder.js'];
+// encoder.html ONLY — the JS bundle is embedded inside it. Do not copy
+// encoder.js: an external module is fetched with CORS semantics and is blocked
+// from the null-origin plugin iframe, so shipping it would only risk serving a
+// stale copy at a path nothing should be requesting.
+const FILES = ['encoder.html'];
 
 const missing = FILES.filter((f) => !existsSync(resolve(srcDir, f)));
 if (missing.length > 0) {
