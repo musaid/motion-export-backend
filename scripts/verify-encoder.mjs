@@ -20,9 +20,24 @@ const fail = (msg) => {
 
 let res;
 try {
-  res = await fetch(url);
+  // redirect:'manual' is essential. The plugin requests exactly this URL and
+  // frames the response — it does NOT follow redirects the way a browser
+  // address bar does. Following them here would report the eventual 200 and
+  // hide a 301 whose headers break framing (which is exactly what shipped:
+  // express.static's directory redirect returned a CSP with no frame-ancestors,
+  // Figma refused the frame, and the iframe died before reaching the page).
+  res = await fetch(url, { redirect: 'manual' });
 } catch (err) {
   fail(`could not reach ${url}: ${err.message}`);
+}
+
+if (res.status >= 300 && res.status < 400) {
+  fail(
+    `${url} returned ${res.status} → ${res.headers.get('location')}\n` +
+      '  The plugin frames this exact URL and does not follow redirects; the\n' +
+      '  redirect response also drops frame-ancestors, so Figma blocks the\n' +
+      '  frame. Serve /encoder directly (express.static needs redirect:false).',
+  );
 }
 
 if (res.status !== 200) {
