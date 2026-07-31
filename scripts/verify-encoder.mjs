@@ -49,25 +49,46 @@ if (res.status !== 200) {
 }
 
 const csp = res.headers.get('content-security-policy') || '';
-if (!csp.includes('frame-ancestors')) {
-  fail(`${url} is missing the frame-ancestors CSP header (got: "${csp}")`);
+// There must be NO frame-ancestors directive and NO X-Frame-Options. The plugin
+// UI is a sandboxed OPAQUE-ORIGIN iframe between figma.com and this page;
+// frame-ancestors checks every ancestor and an opaque origin matches no source
+// expression — not even '*'. Any value blocks the encoder outright and silently
+// drops every export to MediaRecorder. Assert the absence so a well-meaning
+// "security hardening" pass can't reintroduce a total outage.
+if (/frame-ancestors/i.test(csp)) {
+  fail(
+    `${url} sends a frame-ancestors directive ("${csp}").\n` +
+      '  It must send NONE: the plugin UI iframe has an opaque (null) origin,\n' +
+      "  which matches no source expression — including '*'. Any value here\n" +
+      '  blocks the encoder and forces the MediaRecorder fallback.',
+  );
 }
-for (const origin of ['https://www.figma.com', 'https://figma.com']) {
-  if (!csp.includes(origin)) {
-    fail(`frame-ancestors does not allow ${origin} (got: "${csp}")`);
-  }
+const xfo = res.headers.get('x-frame-options');
+if (xfo) {
+  fail(`${url} sends X-Frame-Options: ${xfo} — it must send none (same reason).`);
 }
 
 const html = await res.text();
-if (!html.includes('encoder.js')) {
-  fail('/encoder did not return the encoder document (no encoder.js reference)');
+
+// The bundle must be EMBEDDED, not referenced. An external `type="module"`
+// script is fetched with CORS semantics, so from the null-origin plugin iframe
+// it is rejected unless the server sends Access-Control-Allow-Origin — and the
+// rejection is silent (onload fires, the module never runs, the handshake times
+// out). Verified in-browser. Assert the inline form so a future "let's split the
+// bundle out again" refactor fails here instead of in production.
+if (/<script[^>]*\bsrc=/i.test(html)) {
+  fail(
+    '/encoder references an external script.\n' +
+      '  The bundle must be inlined: a module fetched from the null-origin\n' +
+      '  plugin iframe is blocked by CORS, silently, and the encoder never\n' +
+      '  starts. Rebuild with `npm run build:encoder` in the plugin repo.',
+  );
+}
+if (!/postMessage/.test(html)) {
+  fail('/encoder does not contain the embedded encoder bundle (no postMessage found)');
 }
 
-const jsRes = await fetch(`${url}/encoder.js`).catch((err) =>
-  fail(`could not fetch encoder.js: ${err.message}`),
+const kb = (html.length / 1024).toFixed(0);
+console.log(
+  `[verify-encoder] OK — ${url} serving (${res.status}), no frame-ancestors, bundle embedded (${kb}KB)`,
 );
-if (jsRes.status !== 200) {
-  fail(`${url}/encoder.js returned ${jsRes.status} (expected 200)`);
-}
-
-console.log(`[verify-encoder] OK — ${url} serving (${res.status}), CSP set, encoder.js reachable`);

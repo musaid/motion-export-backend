@@ -30,10 +30,22 @@ const ENCODER_DIR = process.cwd() + '/build/client/encoder';
 app.use(
   '/encoder',
   (req, res, next) => {
-    res.setHeader(
-      'Content-Security-Policy',
-      "frame-ancestors https://www.figma.com https://figma.com",
-    );
+    // Deliberately NO frame-ancestors directive, and it must not be added back.
+    //
+    // The chain is figma.com → plugin UI iframe → this page, and the plugin UI
+    // is a sandboxed OPAQUE-ORIGIN frame. frame-ancestors checks every ancestor
+    // and an opaque origin serializes to "null", which matches no source
+    // expression — not a host-source, and not even '*'. Verified in-browser
+    // with a null-origin parent: no directive = loads, '*' = blocked,
+    // figma.com = blocked. Any value here disables the encoder outright and
+    // every export silently falls back to MediaRecorder.
+    //
+    // The framing gate is therefore the postMessage origin check in the encoder
+    // page. It has no cookies, storage, or credentials and connect-src 'none',
+    // so the residual exposure is compute, not data.
+    //
+    // X-Frame-Options is NOT set here for the same reason: it has no syntax for
+    // an opaque-origin parent either, and would re-break framing.
     next();
   },
   // redirect:false is load-bearing. express.static treats a bare directory path
