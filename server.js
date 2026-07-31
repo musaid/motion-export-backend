@@ -36,7 +36,14 @@ app.use(
     );
     next();
   },
-  express.static(ENCODER_DIR, { maxAge: '1h' }),
+  // redirect:false is load-bearing. express.static treats a bare directory path
+  // as a redirect to the trailing-slash form, and that 301 carries the encoder
+  // HTML's own `default-src 'none'` CSP WITHOUT frame-ancestors — so Figma
+  // refuses to frame it, the iframe collapses to chrome-error://chromewebdata/,
+  // and every later request from it is blocked as a cross-origin load. Serving
+  // /encoder directly from the route below keeps the frame-ancestors header
+  // above authoritative.
+  express.static(ENCODER_DIR, { maxAge: '1h', redirect: false }),
 );
 app.get('/encoder', (req, res) => {
   const file = ENCODER_DIR + '/encoder.html';
