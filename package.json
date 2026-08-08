@@ -4,8 +4,6 @@
   "type": "module",
   "scripts": {
     "build": "react-router build",
-    "sync:encoder": "node scripts/sync-encoder.mjs",
-    "verify:encoder": "node scripts/verify-encoder.mjs",
     "generate": "dotenv -- drizzle-kit generate",
     "migrate": "dotenv -- drizzle-kit migrate",
     "push": "dotenv -- drizzle-kit push",
