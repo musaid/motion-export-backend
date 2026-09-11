@@ -1,4 +1,9 @@
-import { data, Link, useSearchParams } from 'react-router';
+import {
+  data,
+  Link,
+  useSearchParams,
+  type ShouldRevalidateFunctionArgs,
+} from 'react-router';
 import * as React from 'react';
 import { requireAdmin } from '~/lib/auth.server';
 import { getInvoiceData, getSeller } from '~/lib/invoice.server';
@@ -14,6 +19,19 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
 
   return data({ invoice, seller: getSeller() });
+}
+
+/**
+ * Bill-to edits live in the query string, but they are presentational only —
+ * nothing in the loader depends on them. Without this guard React Router
+ * revalidates on every search-param change, so each keystroke fired another
+ * Stripe request and typing crawled.
+ */
+export function shouldRevalidate({
+  currentParams,
+  nextParams,
+}: ShouldRevalidateFunctionArgs) {
+  return currentParams.licenseId !== nextParams.licenseId;
 }
 
 export function meta({ data: loaderData }: Route.MetaArgs) {
@@ -73,32 +91,67 @@ export default function AdminInvoice({ loaderData }: Route.ComponentProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [editing, setEditing] = React.useState(false);
 
-  // Bill-to overrides live in the URL so they survive printing and can be
-  // shared as a link. Falling back to whatever Stripe collected at checkout.
-  const billName = searchParams.get('name') ?? invoice.billTo.name;
-  const billCompany = searchParams.get('company') ?? invoice.billTo.company;
-  const billAddress =
-    searchParams.get('address') ?? invoice.billTo.addressLines.join('\n');
-  const billEmail = searchParams.get('email') ?? invoice.billTo.email;
+  // Bill-to edits are held in local state so typing is instant, and mirrored
+  // into the URL so a finished invoice stays a shareable link. Driving the
+  // inputs from the URL directly made every keystroke wait on a navigation.
+  const [billTo, setBillTo] = React.useState(() => ({
+    name: searchParams.get('name') ?? invoice.billTo.name,
+    company: searchParams.get('company') ?? invoice.billTo.company,
+    address:
+      searchParams.get('address') ?? invoice.billTo.addressLines.join('\n'),
+    email: searchParams.get('email') ?? invoice.billTo.email,
+  }));
 
-  const addressLines = billAddress
+  const { name: billName, company: billCompany, email: billEmail } = billTo;
+
+  const addressLines = billTo.address
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter(Boolean);
 
-  function updateField(key: string, value: string) {
-    const next = new URLSearchParams(searchParams);
-    // Always set, even when empty: an empty value is a deliberate "clear this
-    // field", which must win over the Stripe-supplied fallback.
-    next.set(key, value);
-    setSearchParams(next, { replace: true, preventScrollReset: true });
+  function updateField(key: keyof typeof billTo, value: string) {
+    setBillTo((prev) => ({ ...prev, [key]: value }));
   }
 
+  // Mirror the edits into the URL once typing settles, so the address bar
+  // stays copyable without a navigation on every character.
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      const next = new URLSearchParams(searchParams);
+      // Always set, even when empty: an empty value is a deliberate "clear
+      // this field", which must win over the Stripe-supplied fallback.
+      for (const [key, value] of Object.entries(billTo)) {
+        next.set(key, value);
+      }
+      if (next.toString() !== searchParams.toString()) {
+        setSearchParams(next, { replace: true, preventScrollReset: true });
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+    // searchParams is intentionally omitted: including it would re-run this
+    // effect from its own write.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [billTo]);
+
   return (
-    <>
+    <div className="invoice-print-root">
       <style>{`
         @media print {
           .no-print { display: none !important; }
+
+          /* The admin shell lives outside this route: the mobile navbar (with
+             its hamburger) and the desktop sidebar both render ahead of the
+             page. Print has no viewport width, so the lg:hidden header is not
+             hidden and both were landing on the paper above the logo. */
+          body > * { visibility: hidden; }
+          .invoice-print-root,
+          .invoice-print-root * { visibility: visible; }
+          .invoice-print-root {
+            position: absolute;
+            inset: 0 auto auto 0;
+            width: 100%;
+          }
+
           .invoice-sheet {
             box-shadow: none !important;
             border: none !important;
@@ -177,7 +230,7 @@ export default function AdminInvoice({ loaderData }: Route.ComponentProps) {
                 Address (one line per row)
               </span>
               <textarea
-                value={billAddress}
+                value={billTo.address}
                 onChange={(e) => updateField('address', e.target.value)}
                 rows={3}
                 placeholder={
@@ -365,6 +418,6 @@ export default function AdminInvoice({ loaderData }: Route.ComponentProps) {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
