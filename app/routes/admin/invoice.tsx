@@ -1,6 +1,7 @@
 import {
   data,
   Link,
+  useFetcher,
   useSearchParams,
   type ShouldRevalidateFunctionArgs,
 } from 'react-router';
@@ -27,10 +28,64 @@ export async function loader({ request, params }: Route.LoaderArgs) {
  * revalidates on every search-param change, so each keystroke fired another
  * Stripe request and typing crawled.
  */
+export async function action({ request, params }: Route.ActionArgs) {
+  await requireAdmin(request);
+
+  const form = await request.formData();
+  if (form.get('_action') !== 'email') {
+    return data({ error: 'Invalid action' }, { status: 400 });
+  }
+
+  const invoice = await getInvoiceData(params.licenseId);
+  if (!invoice) {
+    return data({ error: 'License not found' }, { status: 404 });
+  }
+
+  // The bill-to shown on the page wins: it carries the admin's edits, and the
+  // recipient is whatever they confirmed in the dialog — not the license email,
+  // so the address on screen is always the address that receives the invoice.
+  const to = String(form.get('to') || '').trim();
+  if (!to) {
+    return data({ error: 'No recipient address' }, { status: 400 });
+  }
+
+  const seller = getSeller();
+  const { renderInvoicePdf } = await import('~/lib/invoice-pdf.server');
+  const { sendInvoiceEmail } = await import('~/lib/email.server');
+
+  const pdf = await renderInvoicePdf(invoice, seller, {
+    name: String(form.get('name') || ''),
+    company: String(form.get('company') || ''),
+    addressLines: String(form.get('address') || '')
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean),
+    email: to,
+  });
+
+  try {
+    await sendInvoiceEmail({
+      to,
+      invoiceNumber: invoice.invoiceNumber,
+      amountLabel: formatMoney(invoice.netAmount, invoice.currency),
+      pdf,
+    });
+  } catch (error) {
+    console.error('Failed to send invoice email:', error);
+    return data({ error: 'Failed to send email' }, { status: 500 });
+  }
+
+  return data({ sentTo: to });
+}
+
 export function shouldRevalidate({
   currentParams,
   nextParams,
+  formMethod,
 }: ShouldRevalidateFunctionArgs) {
+  // Emailing does not change the invoice, so there is nothing to refetch after
+  // a submission either; only a different license needs fresh Stripe data.
+  if (formMethod && formMethod !== 'GET') return false;
   return currentParams.licenseId !== nextParams.licenseId;
 }
 
@@ -86,10 +141,17 @@ function Logo() {
   );
 }
 
-export default function AdminInvoice({ loaderData }: Route.ComponentProps) {
+export default function AdminInvoice({
+  loaderData,
+  actionData,
+}: Route.ComponentProps) {
   const { invoice, seller } = loaderData;
   const [searchParams, setSearchParams] = useSearchParams();
   const [editing, setEditing] = React.useState(false);
+  const [confirming, setConfirming] = React.useState(false);
+  const fetcher = useFetcher<typeof action>();
+  const sending = fetcher.state !== 'idle';
+  const result = fetcher.data ?? actionData;
 
   // Bill-to edits are held in local state so typing is instant, and mirrored
   // into the URL so a finished invoice stays a shareable link. Driving the
@@ -181,6 +243,14 @@ export default function AdminInvoice({ loaderData }: Route.ComponentProps) {
           </button>
           <button
             type="button"
+            onClick={() => setConfirming(true)}
+            disabled={sending}
+            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          >
+            {sending ? 'Sending…' : 'Email invoice'}
+          </button>
+          <button
+            type="button"
             onClick={() => window.print()}
             className="rounded-lg px-4 py-2 text-sm font-medium text-white"
             style={{ backgroundColor: BRAND }}
@@ -189,6 +259,81 @@ export default function AdminInvoice({ loaderData }: Route.ComponentProps) {
           </button>
         </div>
       </div>
+
+      {result && 'sentTo' in result && (
+        <div className="no-print mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-200">
+          Invoice {invoice.invoiceNumber} emailed to{' '}
+          <strong>{String(result.sentTo)}</strong>.
+        </div>
+      )}
+
+      {result && 'error' in result && (
+        <div className="no-print mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
+          {String(result.error)}
+        </div>
+      )}
+
+      {confirming && (
+        <div className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-900">
+            <h2 className="text-base font-semibold text-zinc-900 dark:text-white">
+              Send this invoice?
+            </h2>
+            <dl className="mt-4 space-y-2 text-sm">
+              <div className="flex justify-between gap-4">
+                <dt className="text-zinc-500">Invoice</dt>
+                <dd className="font-medium">{invoice.invoiceNumber}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-zinc-500">Amount</dt>
+                <dd className="font-medium">
+                  {formatMoney(invoice.netAmount, invoice.currency)}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-zinc-500">To</dt>
+                <dd className="font-medium break-all text-right">
+                  {billEmail}
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-4 text-xs text-zinc-500">
+              The PDF is generated from what is shown on this page, and goes
+              only to the address above.
+            </p>
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={sending || !billEmail}
+                onClick={() => {
+                  fetcher.submit(
+                    {
+                      _action: 'email',
+                      to: billEmail,
+                      name: billName,
+                      company: billCompany,
+                      address: billTo.address,
+                    },
+                    { method: 'post' },
+                  );
+                  setConfirming(false);
+                }}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                style={{ backgroundColor: BRAND }}
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {invoice.stripeUnavailable && (
         <div className="no-print mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">

@@ -75,3 +75,53 @@ export async function sendLicenseEmail(email: string, licenseKey: string) {
     console.error('Failed to send email:', error);
   }
 }
+
+/**
+ * Email an invoice PDF to the customer. The recipient is passed explicitly
+ * rather than read from the license, so the address the admin confirmed in the
+ * UI is the address that receives it.
+ */
+export async function sendInvoiceEmail(options: {
+  to: string;
+  invoiceNumber: string;
+  amountLabel: string;
+  pdf: Buffer;
+}) {
+  const { to, invoiceNumber, amountLabel, pdf } = options;
+
+  await resend.emails.send({
+    from: 'Motion Export <noreply@motionexport.com>',
+    to,
+    subject: `Invoice ${invoiceNumber} — Motion Export`,
+    html: `
+      <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <p style="color: #4b5563; font-size: 16px; line-height: 1.5;">Hi,</p>
+        <p style="color: #4b5563; font-size: 16px; line-height: 1.5;">
+          Your invoice for Motion Export Pro is attached as a PDF.
+        </p>
+        <table style="margin: 24px 0; border-collapse: collapse;">
+          <tr>
+            <td style="color: #6b7280; font-size: 14px; padding: 4px 16px 4px 0;">Invoice</td>
+            <td style="color: #1f2937; font-size: 14px; font-weight: 600;">${invoiceNumber}</td>
+          </tr>
+          <tr>
+            <td style="color: #6b7280; font-size: 14px; padding: 4px 16px 4px 0;">Amount</td>
+            <td style="color: #1f2937; font-size: 14px; font-weight: 600;">${amountLabel}</td>
+          </tr>
+        </table>
+        <p style="color: #4b5563; font-size: 16px; line-height: 1.5;">
+          If you need anything changed on it, just reply to this email.
+        </p>
+        <p style="color: #4b5563; font-size: 16px; line-height: 1.5;">
+          <strong style="color: #4b5563;">The Motion Export Team</strong>
+        </p>
+      </div>
+    `,
+    attachments: [
+      {
+        filename: `invoice-${invoiceNumber}.pdf`,
+        content: pdf,
+      },
+    ],
+  });
+}
