@@ -32,6 +32,7 @@ export default [
       index('./routes/admin/index.tsx'),
       route('licenses', './routes/admin/licenses.tsx'),
       route('analytics', './routes/admin/analytics.tsx'),
+      route('licenses/:licenseId/invoice', './routes/admin/invoice.tsx'),
     ]),
   ]),
 ] satisfies RouteConfig;

@@ -398,6 +398,14 @@ export default function AdminLicenses({
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
+                        <Button
+                          href={`/admin/licenses/${license.id}/invoice`}
+                          outline
+                          className="text-sm"
+                          title="View printable invoice"
+                        >
+                          Invoice
+                        </Button>
                         <Form method="post" className="inline">
                           <input
                             type="hidden"
