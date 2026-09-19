@@ -2,12 +2,28 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function sendLicenseEmail(email: string, licenseKey: string) {
+export async function sendLicenseEmail(
+  email: string,
+  licenseKey: string,
+  /**
+   * Invoice PDF to attach. Set on a purchase, so the customer's receipt
+   * arrives with their key; omitted for recovery and admin resends, which are
+   * not purchases and have nothing to invoice.
+   */
+  invoice?: { filename: string; content: Buffer },
+) {
   try {
     await resend.emails.send({
       from: 'Motion Export <noreply@motionexport.com>',
       to: email,
       subject: 'Your Motion Export Pro License',
+      ...(invoice
+        ? {
+            attachments: [
+              { filename: invoice.filename, content: invoice.content },
+            ],
+          }
+        : {}),
       html: `
         <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <!-- Header with Logo -->
@@ -39,6 +55,16 @@ export async function sendLicenseEmail(email: string, licenseKey: string) {
               <li>Enjoy unlimited exports!</li>
             </ol>
           </div>
+
+          ${
+            invoice
+              ? `<div style="border-left: 4px solid #6366f1; padding-left: 20px; margin: 30px 0;">
+            <p style="color: #4b5563; line-height: 1.6; margin: 0;">
+              Your invoice is attached to this email as a PDF, for your records or an expense claim.
+            </p>
+          </div>`
+              : ''
+          }
 
           <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;">
             <h3 style="color: #92400e; font-size: 18px; margin-top: 0;">Lost your license key?</h3>

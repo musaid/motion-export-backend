@@ -89,7 +89,7 @@ export async function action({ request }: Route.ActionArgs) {
         }
 
         // Create license
-        const { licenseKey } = await createLicense({
+        const { license, licenseKey } = await createLicense({
           email: customerEmail,
           stripeCustomerId: (session.customer as string) || null,
           stripeSessionId: session.id,
@@ -97,8 +97,37 @@ export async function action({ request }: Route.ActionArgs) {
           currency: session.currency || 'usd',
         });
 
-        // Send email with license key
-        await sendLicenseEmail(customerEmail, licenseKey);
+        // Build the invoice PDF to attach. Stripe's own receipt emails are
+        // off, so this is the customer's only proof of purchase — but the key
+        // matters more than the receipt, so a failure here must not stop the
+        // email going out. Worst case they get the key and can ask for an
+        // invoice from the admin panel as before.
+        let invoiceAttachment:
+          | { filename: string; content: Buffer }
+          | undefined;
+        try {
+          const { getInvoiceData, getSeller } = await import(
+            '~/lib/invoice.server'
+          );
+          const { renderInvoicePdf } = await import('~/lib/invoice-pdf.server');
+          const invoice = await getInvoiceData(license.id);
+          if (invoice) {
+            invoiceAttachment = {
+              filename: `invoice-${invoice.invoiceNumber}.pdf`,
+              content: await renderInvoicePdf(invoice, getSeller(), {
+                name: invoice.billTo.name,
+                company: invoice.billTo.company,
+                addressLines: invoice.billTo.addressLines,
+                email: invoice.billTo.email,
+              }),
+            };
+          }
+        } catch (error) {
+          console.error('Failed to build invoice for purchase email:', error);
+        }
+
+        // Send email with license key, and the invoice when we have one
+        await sendLicenseEmail(customerEmail, licenseKey, invoiceAttachment);
         console.log(`License created for ${customerEmail}`);
 
         // Send Telegram notification (fire-and-forget)
